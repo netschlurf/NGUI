@@ -1,0 +1,7 @@
+.ngui-window.minimized {
+    border-radius: 5px;
+    transition: all 0.2s;
+}
+.ngui-window.minimized:hover {
+    background: #5a6575;
+}

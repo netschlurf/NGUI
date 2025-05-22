@@ -1,0 +1,188 @@
+<!-- Tabs -->
+<div class="flex border-b text-xs text-gray-500 bg-gray-50">
+    <button class="px-3 py-2 border-b-2 border-blue-500 text-blue-600">Logs</button>
+    <button class="px-3 py-2 hover:text-blue-600">Errors</button>
+    <button class="px-3 py-2 hover:text-blue-600">Stats</button>
+  </div>
+  
+  <!-- Controls -->
+  <div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs">
+    <div class="flex gap-2">
+      <input type="text" id="searchInput" placeholder="Search logs..." class="px-3 py-1 rounded border border-gray-300 focus:outline-none focus:ring focus:ring-blue-200">
+      <select id="levelFilter" class="px-2 py-1 border rounded bg-white">
+        <option value="all">All Levels</option>
+        <option value="INFO">Info</option>
+        <option value="WARN">Warning</option>
+        <option value="ERROR">Error</option>
+      </select>
+    </div>
+    <div class="flex items-center gap-2">
+      <label class="flex items-center gap-1 text-gray-700">
+        <input type="checkbox" id="autoScroll" class="accent-blue-600"> Auto-Scroll
+      </label>
+      <button onclick="pauseLogs()" class="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600">Pause</button>
+      <button onclick="clearLogs()" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">Clear</button>
+      <button onclick="exportLogs()" class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-800">Export</button>
+    </div>
+  </div>
+  
+  <!-- Log Table -->
+  <div class="overflow-y-auto h-96">
+    <table class="min-w-full text-xs font-mono text-left table-auto">
+      <thead class="bg-gray-200 text-gray-600 uppercase">
+        <tr>
+          <th class="px-4 py-2">Time</th>
+          <th class="px-4 py-2">Level</th>
+          <th class="px-4 py-2">Message</th>
+          <th class="px-4 py-2">Source</th>
+          <th class="px-4 py-2">Thread</th>
+        </tr>
+      </thead>
+      <tbody id="logOutput" class="bg-white">
+        <tr class="log-entry" data-level="INFO">
+          <td class="px-4 py-1 text-gray-400">12:30:01</td>
+          <td class="px-4 py-1 text-green-500">INFO</td>
+          <td class="px-4 py-1">Server started on port 8080</td>
+          <td class="px-4 py-1 text-gray-600">server.js</td>
+          <td class="px-4 py-1 text-gray-500">MainThread</td>
+        </tr>
+        <tr class="log-entry" data-level="WARN">
+          <td class="px-4 py-1 text-gray-400">12:30:05</td>
+          <td class="px-4 py-1 text-yellow-500">WARN</td>
+          <td class="px-4 py-1">Slow response detected</td>
+          <td class="px-4 py-1 text-gray-600">api.js</td>
+          <td class="px-4 py-1 text-gray-500">Worker-2</td>
+        </tr>
+        <tr class="log-entry" data-level="ERROR">
+          <td class="px-4 py-1 text-gray-400">12:30:12</td>
+          <td class="px-4 py-1 text-red-500">ERROR</td>
+          <td class="px-4 py-1">Failed to connect to database</td>
+          <td class="px-4 py-1 text-gray-600">db.js</td>
+          <td class="px-4 py-1 text-gray-500">MainThread</td>
+        </tr>
+        <tr class="log-entry" data-level="INFO">
+          <td class="px-4 py-1 text-gray-400">12:30:18</td>
+          <td class="px-4 py-1 text-green-500">INFO</td>
+          <td class="px-4 py-1">Reconnected to DB</td>
+          <td class="px-4 py-1 text-gray-600">db.js</td>
+          <td class="px-4 py-1 text-gray-500">MainThread</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="space-x-4">
+    <button onclick="openModal1()" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Open Info Modal</button>
+    <button onclick="openModal2()" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">Open Yes/No Modal</button>
+    <button onclick="openModal3()" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600">Open Input Modal</button>
+    <button onclick="openWindow1()" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Full Feature Window</button>
+    <button onclick="openWindow2()" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600">Close Only Window</button>
+    <button onclick="openWindow3()" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600">Minimize Window</button>    
+</div>
+  
+  <script>
+    function OnPageLoad() {
+      console.log("Log Analysis Webapp loaded");
+  
+      document.getElementById("levelFilter").addEventListener("change", function () {
+        const selected = this.value;
+        const entries = document.querySelectorAll(".log-entry");
+        entries.forEach(entry => {
+          const level = entry.getAttribute("data-level");
+          entry.style.display = (selected === "all" || level === selected) ? "table-row" : "none";
+        });
+      });
+  
+      document.getElementById("searchInput").addEventListener("input", function () {
+        const query = this.value.toLowerCase();
+        const entries = document.querySelectorAll(".log-entry");
+        entries.forEach(entry => {
+          entry.style.display = entry.textContent.toLowerCase().includes(query) ? "table-row" : "none";
+        });
+      });
+    }
+
+        // Funktionen zum Öffnen der Fenster
+        function openWindow1() {
+            const window = NGUIWindow.Create('window1', 'Vollständiges Fenster', WB_MINIMIZE | WB_MAXIMIZE | WB_CLOSE);
+            window.ShowAsync().then(result => {
+                console.log('Window 1 Result:', result);
+            });
+        }
+
+        function openWindow2() {
+            const window = NGUIWindow.Create('window2', 'Nur Schließen', WB_CLOSE);
+            window.ShowAsync().then(result => {
+                console.log('Window 2 Result:', result);
+            });
+        }
+
+        function openWindow3() {
+            const window = NGUIWindow.Create('window3', 'Minimierbares Fenster', WB_MINIMIZE | WB_CLOSE);
+            window.ShowAsync().then(result => {
+                console.log('Window 3 Result:', result);
+            });
+        }
+
+    function openModal1() {
+            const modal = new NGUIModal(
+                'Info Modal',
+                'Dies ist ein einfaches Info-Modal mit einem OK-Button.',
+                MBOK,
+                'bg-blue-500'
+            );
+            modal.ShowAsync().then(result => {
+                console.log('Modal 1 Result:', result);
+            });
+        }
+
+        function openModal2() {
+            const modal = new NGUIModal(
+                'Bestätigungs-Modal',
+                'Möchten Sie fortfahren?',
+                MBYESNO | MBCANCEL,
+                'bg-green-500'
+            );
+            modal.ShowAsync().then(result => {
+                console.log('Modal 2 Result:', result);
+            });
+        }
+
+        function openModal3() {
+            const modal = new NGUIModal(
+                'Eingabe-Modal',
+                'Bitte geben Sie einen Wert ein:',
+                MBOK | MBCANCEL,
+                'bg-red-500',
+                true,
+                'Ihr Name',
+                'Geben Sie Ihren Namen ein'
+            );
+            modal.ShowAsync().then(result => {
+                console.log('Modal 3 Result:', result);
+            });
+        }    
+  
+    function pauseLogs() {
+      console.log("⏸️ Logging paused");
+      alert("Logging paused (simuliert)");
+    }
+  
+    function clearLogs() {
+      const container = document.getElementById("logOutput");
+      container.innerHTML = '<tr><td colspan="5" class="text-center italic text-gray-400 py-4">[empty]</td></tr>';
+    }
+  
+    function exportLogs() {
+      const rows = Array.from(document.querySelectorAll("#logOutput tr.log-entry"));
+      const logs = rows.map(row => Array.from(row.children).map(cell => cell.textContent.trim()).join(" | ")).join("\n");
+      const blob = new Blob([logs], { type: "text/plain" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "logs.txt";
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+  
+    document.addEventListener("DOMContentLoaded", OnPageLoad);
+  </script>
+  

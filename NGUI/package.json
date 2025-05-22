@@ -1,0 +1,20 @@
+{
+  "name": "NGUISampleApp",
+  "version": "1.0.0",
+  "description": "Ein Node.js Projekt mit automatischer Abhängigkeitsprüfung",
+  "main": "NGUISampleApp.js",
+  "scripts": {
+    "start": "npm install && node NGUISampleApp.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.10.0",
+    "sqlite-sync": "^0.3.9",
+    "sqlite3": "^5.1.6",
+    "ws": "^8.13.0"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "prettier": "^3.5.3"
+  }
+}
