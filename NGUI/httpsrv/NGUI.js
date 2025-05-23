@@ -180,10 +180,16 @@ class NGUI {
      * @returns {string|null} - Full path or null if not found.
      */
     async resolveFilePath(filePath) {
-        const paths = [
-            path.join("../", 'ngui', 'htdocs', filePath),
-            path.join("../", 'htdocs', filePath)
-        ];
+        const paths = [];
+        var myRoot = __dirname.replace("httpsrv", "htdocs");
+        paths.push(path.join(myRoot, filePath));
+
+        for (const handler of this.handlers) {
+            const customPath = await handler.GetHtdocsRoot();
+            if (customPath) {
+                paths.push(path.join(customPath, filePath));
+            }
+        }
 
         for (const fullPath of paths) {
             try {
@@ -230,7 +236,7 @@ class NGUI {
      */
     invokeCustomHandlers(ws, msg) {
         for (const handler of this.handlers) {
-            if (handler(ws, msg)) {
+            if (handler.OnHandle(ws, msg)) {
                 return;
             }
         }
