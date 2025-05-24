@@ -17,6 +17,10 @@ class NGUI {
         this.server = null;
         this.wss = null;
         this.handlers = [];
+        this.commandMap = {
+            'LoadPage': this.serveResource.bind(this),
+            'LoadResource': this.serveResource.bind(this),
+        };
     }
 
     /**
@@ -79,18 +83,13 @@ class NGUI {
             return;
         }
 
-        switch (msg.cmd) {
-            case 'LoadPage':
-            case 'LoadResource':
-                this.serveResource(msg, ws);
-                break;
-            case 'DpSet':
-            case 'DpGet':
-            case 'DpConnect':
-                this.handleDataPointCommand(msg);
-                break;
-            default:
-                this.invokeCustomHandlers(ws, msg);
+        if (this.commandMap[msg.cmd]) {
+            this.commandMap[msg.cmd](msg, ws);
+            return;
+        }
+        else
+        {
+            this.invokeCustomHandlers(ws, msg);
         }
     }
 
@@ -215,22 +214,13 @@ class NGUI {
     }
 
     /**
-     * Handles data point commands (DpSet, DpGet, DpConnect).
-     * @param {Object} msg - Incoming message.
-     */
-    handleDataPointCommand(msg) {
-        console.log(`Data point command: ${msg.cmd}`);
-        // TODO: Implement logic for DpSet, DpGet, DpConnect
-    }
-
-    /**
      * Invokes custom handlers for WebSocket messages.
      * @param {WebSocket} ws - WebSocket instance.
      * @param {Object} msg - Incoming message.
      */
     invokeCustomHandlers(ws, msg) {
         for (const handler of this.handlers) {
-            if (handler(ws, msg)) {
+            if (handler.OnHandle(ws, msg)) {
                 return;
             }
         }

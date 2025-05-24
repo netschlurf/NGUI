@@ -4,6 +4,7 @@ class NGUICB
     {
         this.tok = 0;
         this.callback = null;
+        this.persistent = false; // If false, the callback will be removed after execution
     }
 }
 
@@ -58,7 +59,6 @@ class NGUIConnection
         var cb = new NGUICB();
         cb.tok = msg.tok;
         cb.callback = callback;
-        this.callBacks.push(cb);
         this.Connection.send(JSON.stringify(msg));
     }    
 	
@@ -70,47 +70,18 @@ class NGUIConnection
         var cb = new NGUICB();
         cb.tok = msg.tok;
         cb.callback = callback;
-        cb.target = target;
-        this.callBacks.push(cb);
         this.Connection.send(JSON.stringify(msg));
-    }	
-	
-    DpConnect(obj, target, callback)
-    {
-        console.log("Connectasdasd")
-        var msg = new NGUIMsg();
-        msg.cmd = "DpConnect";
-        msg.args.data = obj;
-        var cb = new NGUICB();
-        cb.tok = msg.tok;
-        cb.callback = callback;
-        cb.target = target;
-        this.callBacks.push(cb);
-        this.Connection.send(JSON.stringify(msg));
-    }	
-
-    SetArmValues(obj, target, callback)
+    }
+    
+    SendCustomCommand(command, args, callback, callbackPersistent = false)
     {
         var msg = new NGUIMsg();
-        msg.cmd = "SetArmValues";
-        msg.args.data = obj;
+        msg.cmd =command;
+        msg.args = args;
         var cb = new NGUICB();
+        cb.persistent = callbackPersistent;
         cb.tok = msg.tok;
         cb.callback = callback;
-        cb.target = target;
-        this.callBacks.push(cb);
-        this.Connection.send(JSON.stringify(msg));
-    }	
-	
-    SetPercentage(obj, target, callback)
-    {
-        var msg = new NGUIMsg();
-        msg.cmd = "SetPercentage";
-        msg.args.data = obj;
-        var cb = new NGUICB();
-        cb.tok = msg.tok;
-        cb.callback = callback;
-        cb.target = target;
         this.callBacks.push(cb);
         this.Connection.send(JSON.stringify(msg));
     }	
@@ -157,7 +128,10 @@ class NGUIConnection
                     {
                         rcv.target = this.callBacks[i].target;
                         this.callBacks[i].callback(rcv);
-                        this.callBacks.splice(i, 1);
+                        if(!this.callBacks[i].persistent)
+                        {
+                            this.callBacks.splice(i, 1);
+                        }
                         break;
                     }
                 }     
@@ -170,11 +144,19 @@ class NGUIConnection
     }
 }
 
-class NGUIUI
+class NGUIClient
 {
     constructor()
     {
         this.Connection = null;
+        this.DbClient = null;
+    }
+
+    GetDbClient()
+    {
+        if (this.DbClient === null)
+            this.DbClient = new IME_DBClient(this.Connection);
+        return this.DbClient;
     }
 
     Connect(url, onOpen)
@@ -215,23 +197,14 @@ class NGUIUI
 
     SendData(obj, callback)
     {
-        this.Connection.SendData(obj, null, callback);
+        this.Connection.SendData(obj, callback);
     }    
 
-    SetTowerValues(obj, target)
+    
+    SendCustomCommand(command, args, callback)
     {
-        this.Connection.SetTowerValues(obj, target, this.OnMessage.bind(this));
-    }    
-	
-    SetArmValues(obj, target)
-    {
-        this.Connection.SetArmValues(obj, target, this.OnMessage.bind(this));
-    }  	
-	
-    SetPercentage(obj, target)
-    {
-        this.Connection.SetPercentage(obj, target, this.OnMessage.bind(this));
-    }  	
+        this.Connection.SendCustomCommand(command, args, callback);
+    }        
 
     OnOpen(event)
     {
@@ -332,4 +305,95 @@ class NGUIUI
             style.innerHTML = script;
         }            
     }    
+}
+
+class IME_DBClient
+{
+    constructor(connection)
+    {
+        this.Connection = connection;
+        this.DpConnectionTable = new Map();
+    }
+
+    DpGet(dpName, callback)
+    {
+        const request = { dpName: dpName };
+        this.Connection.SendCustomCommand("DpGet", request, callback);
+    }
+    
+    DpSet(dpName, value, callback)
+    {
+        const request = { dpName: dpName, value: value};
+        this.Connection.SendCustomCommand("DpSet", request, callback);
+    }
+
+    OnDpConnect(rcv)
+    {
+        if(rcv.data.rc == 200) {
+            return; // connection confirmation good
+        }
+        if (this.DpConnectionTable.has(rcv.data.data.dpName)) {
+            var callbacks = this.DpConnectionTable.get(rcv.data.data.dpName);
+            for (var i = 0; i < callbacks.length; i++) {
+                callbacks[i](rcv.data);
+            }
+        }
+    }
+
+    OnDpDisconnect(rcv)
+    {
+        if(rcv.data.rc == 200) {
+            return; // connection confirmation good
+        }
+        if (this.DpConnectionTable.has(rcv.data.data.dpName)) {
+            var callbacks = this.DpConnectionTable.get(rcv.data.data.dpName);
+            for (var i = 0; i < callbacks.length; i++) {
+                callbacks[i](rcv.data);
+            }
+        }
+    }    
+    
+    DpConnect(dpName, callback)
+    {
+        if (this.DpConnectionTable.has(dpName)) {
+            this.DpConnectionTable.get(dpName).push(callback);
+            return;
+        }
+        else
+        {
+            var dpCallbacks = new Array();
+            dpCallbacks.push(callback);
+            this.DpConnectionTable.set(dpName, dpCallbacks);
+            const request = { dpName: dpName };
+            this.Connection.SendCustomCommand("DpConnect", request, this.OnDpConnect.bind(this), true);
+        }
+    }
+    
+    DpDisconnect(dpName, callback)
+    {
+        const request = { dpName: dpName };
+        if (this.DpConnectionTable.has(dpName)) {
+            if(this.DpConnectionTable.get(dpName).length > 0) {
+                var callbacks = this.DpConnectionTable.get(dpName);
+                for (var i = 0; i < callbacks.length; i++) {
+                    if( callbacks[i] == callback) {
+                        callbacks.splice(i, 1);
+                        break;
+                    }
+                }
+            }
+        }
+        if(this.DpConnectionTable.has(dpName) && this.DpConnectionTable.get(dpName).length == 0) 
+        {
+            this.DpConnectionTable.delete(dpName);
+            this.Connection.SendCustomCommand("DpDisconnect", request, this.OnDpDisconnect.bind(this), true);
+        }
+    }
+    
+    DpCreate(dpName, type, callback)
+    {
+        const request = { dpName: dpName, type: type};
+        this.Connection.SendCustomCommand("DpCreate", request, callback);
+    }       
+
 }

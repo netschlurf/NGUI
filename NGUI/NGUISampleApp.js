@@ -1,9 +1,36 @@
 const NGUI = require('./httpsrv/NGUI.js');
 const { IME_Sqlite3DB } = require('./httpsrv/IME_DB');
+const IME_DBHandler = require('./httpsrv/IME_DBHandler');
+
+const imeDB = new IME_Sqlite3DB('NGUI.db');
+imeDB.Connect();
+const ngui = new NGUI(2808);
+const dbHandler = new IME_DBHandler(imeDB);
+
+ngui.registerHandler(dbHandler);
+ngui.start();
+
+var counter = 0;
+function Cyclic()
+{
+    imeDB.DpSet("myCounter", counter);
+    var test = imeDB.DpGet("myCounter");
+    setTimeout(Cyclic,1000);
+    counter++;
+}
+
+Cyclic()
+
+
+
+/*
 const { IME_Datapoints } = require('./httpsrv/IME_Datapoints');
 
-//const FaktenServer = require('./FaktenServer.js');
-const db = new IME_Sqlite3DB('NGUI.db');
+function OnMyCounter(name, data)
+{
+    console.log(name, data);
+}
+
 function CheckDatabase()
 {
     
@@ -50,26 +77,5 @@ function CheckDatabase()
     return db;
 }
 
-function OnMyCounter(name, data)
-{
-    console.log(name, data);
-}
-
-var IMEDB = CheckDatabase();
-const ngui = new NGUI(2808);
-//const fSrv = new FaktenServer(ngui);
-
-//ngui.RegisterHandler(fSrv);
-ngui.start();
-
-var counter = 0;
-function Cyclic()
-{
-    db.DpSet("upTimeInS", counter);
-    setTimeout(Cyclic,1000);
-    counter++;
-}
-
-Cyclic()
-
+*/
 

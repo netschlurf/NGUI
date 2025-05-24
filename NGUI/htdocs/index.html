@@ -300,16 +300,19 @@ $(function() {
   });
 });
 
-var UI = new NGUIUI();
-UI.Connect("ws://localhost:2808", OnAppOpen);
+var g_NGUI = new NGUIClient();
+g_NGUI.Connect("ws://localhost:2808", OnAppOpen);
+var g_DB = g_NGUI.GetDbClient();
 
 function OnAppOpen()
 {
   console.log("App opened");
-  UI.LoadPage("NGUI_kitchensink.html", "right-bottom", null);
-  UI.LoadPage("loadTest2.html", "right-top", null);
-  UI.LoadResource("AttributesEN.json", null, OnJSON);
+  g_NGUI.LoadPage("NGUI_kitchensink.html", "right-bottom", null);
+  g_NGUI.LoadPage("loadTest2.html", "right-top", null);
+  g_NGUI.LoadResource("AttributesEN.json", null, OnJSON);
 }
+
+
 
 function jsonToFancyTree(data) {
         const result = [];
