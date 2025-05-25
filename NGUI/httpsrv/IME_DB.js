@@ -207,6 +207,77 @@ class IME_Sqlite3DB extends IME_DB {
   DpDisconnect(name) {
     this.#callbacks.delete(name);
   }
+
+  /**
+   * Gibt alle Datenpunktnamen zurück.
+   * Optional kann ein Datenpunkttyp (typeName) als Filter angegeben werden.
+   * Optional kann ein Namensfilter (pattern) angegeben werden.
+   * 
+   * Pattern-Syntax:
+   *   *   : Beliebig viele beliebige Zeichen (z.B. "temp*")
+   *   ?   : Genau ein beliebiges Zeichen (z.B. "data??")
+   *   [ ] : Ein Zeichen aus der Liste oder einem Bereich (z.B. "sensor[12]", "val[a-z]")
+   * 
+   * Beispiele:
+   *   DpNames()                  // alle Namen
+   *   DpNames("TempType")        // alle Namen vom Typ "TempType"
+   *   DpNames(null, "temp*")     // alle Namen, die mit "temp" beginnen
+   *   DpNames("TempType", "*1")  // alle Namen vom Typ "TempType", die auf "1" enden
+   */
+  DpNames(typeName = null, pattern = null) {
+    let query = 'SELECT name FROM DataPoints';
+    const params = [];
+    if (typeName) {
+      query += ' WHERE typeName = ?';
+      params.push(typeName);
+    }
+    const rows = this.#db.prepare(query).all(...params);
+    let names = rows.map(r => r.name);
+
+    if (pattern) {
+      // Pattern in RegExp umwandeln
+      // Escape RegExp-Sonderzeichen außer *, ?, [
+      let regexPattern = pattern
+        .replace(/([.+^${}()|\\])/g, '\\$1') // Escape RegExp-Zeichen
+        .replace(/\*/g, '.*')
+        .replace(/\?/g, '.')
+        .replace(/\[([^\]]*)\]/g, '[$1]');
+      const regex = new RegExp('^' + regexPattern + '$');
+      names = names.filter(name => regex.test(name));
+    }
+    return names;
+  }
+
+  /**
+   * Gibt alle Datenpunkttypen zurück, optional gefiltert nach Pattern.
+   * Pattern-Syntax:
+   *   *   : Beliebig viele beliebige Zeichen (z.B. "Temp*")
+   *   ?   : Genau ein beliebiges Zeichen (z.B. "Type??")
+   *   [ ] : Ein Zeichen aus der Liste oder einem Bereich (z.B. "Type[12]", "Val[a-z]")
+   * Beispiele:
+   *   DpTypes()                // alle Typnamen
+   *   DpTypes("Temp*")         // alle Typnamen, die mit "Temp" beginnen
+   *   DpTypes("*Type")         // alle Typnamen, die auf "Type" enden
+   *   DpTypes("T?pe[12]")      // z.B. "Type1", "Tipe2"
+   * 
+   * @param {string|null} pattern - Optionales Pattern für die Typnamen.
+   * @returns {string[]} Array der Typnamen.
+   */
+  DpTypes(pattern = null) {
+    let rows = this.#db.prepare('SELECT typeName FROM DataPointTypes').all();
+    let types = rows.map(r => r.typeName);
+
+    if (pattern) {
+      let regexPattern = pattern
+        .replace(/([.+^${}()|\\])/g, '\\$1')
+        .replace(/\*/g, '.*')
+        .replace(/\?/g, '.')
+        .replace(/\[([^\]]*)\]/g, '[$1]');
+      const regex = new RegExp('^' + regexPattern + '$');
+      types = types.filter(typeName => regex.test(typeName));
+    }
+    return types;
+  }
 }
 
 module.exports = { IME_DB, IME_Sqlite3DB };

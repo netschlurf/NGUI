@@ -478,4 +478,14 @@ class IME_DBClient {
         this.Connection.SendCustomCommand("DpCreate", request, callback);
     }
 
+    DpNames(typeName, pattern, callback) {
+        const request = { typeName: typeName, pattern: pattern };
+        this.Connection.SendCustomCommand("DpNames", request, callback);
+    }    
+    
+    DpTypes(pattern, callback) {
+        const request = { pattern: pattern };
+        this.Connection.SendCustomCommand("DpTypes", request, callback);
+    }
+
 }

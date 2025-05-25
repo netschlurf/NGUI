@@ -48,6 +48,8 @@ class IME_DBHandler extends NGUIHandlerBase {
             'DpConnect': this.DpConnect.bind(this),
             'DpDisconnect': this.DpDisconnect.bind(this),
             'DpCreate': this.DpCreate.bind(this),
+            'DpNames': this.DpNames.bind(this),
+            'DpTypes': this.DpTypes.bind(this), // <-- hinzugefügt
         };  
         this.DpConnectionMap = new Map();    
     }
@@ -262,6 +264,59 @@ class IME_DBHandler extends NGUIHandlerBase {
         } catch (err) {
             console.error('Error creating data point:', err);
             this.sendResponse(ws, msg, null, 'Error creating data point');
+        }
+    }
+
+    /**
+     * Gibt alle Datenpunktnamen zurück, optional gefiltert nach Typ und/oder Pattern.
+     * Pattern-Syntax:
+     *   *   : Beliebig viele beliebige Zeichen (z.B. "temp*")
+     *   ?   : Genau ein beliebiges Zeichen (z.B. "data??")
+     *   [ ] : Ein Zeichen aus der Liste oder einem Bereich (z.B. "sensor[12]", "val[a-z]")
+     * Beispiele:
+     *   DpNames()                  // alle Namen
+     *   DpNames("TempType")        // alle Namen vom Typ "TempType"
+     *   DpNames(null, "temp*")     // alle Namen, die mit "temp" beginnen
+     *   DpNames("TempType", "*1")  // alle Namen vom Typ "TempType", die auf "1" enden
+     * 
+     * @param {Object} msg - Erwartet msg.args.typeName und/oder msg.args.pattern
+     * @param {WebSocket} ws
+     */
+    DpNames(msg, ws) {
+        try {
+            const typeName = msg.args && msg.args.typeName ? msg.args.typeName : null;
+            const pattern = msg.args && msg.args.pattern ? msg.args.pattern : null;
+            const names = this.db.DpNames(typeName, pattern);
+            this.sendResponse(ws, msg, {cmd: msg.cmd, names: names, rc: 200});
+        } catch (err) {
+            console.error('Error in DpNames:', err);
+            this.sendResponse(ws, msg, null, 'Error getting data point names');
+        }
+    }    
+
+    /**
+     * Gibt alle Datenpunkttypen zurück, optional gefiltert nach Pattern.
+     * Pattern-Syntax:
+     *   *   : Beliebig viele beliebige Zeichen (z.B. "Temp*")
+     *   ?   : Genau ein beliebiges Zeichen (z.B. "Type??")
+     *   [ ] : Ein Zeichen aus der Liste oder einem Bereich (z.B. "Type[12]", "Val[a-z]")
+     * Beispiele:
+     *   DpTypes()                // alle Typnamen
+     *   DpTypes("Temp*")         // alle Typnamen, die mit "Temp" beginnen
+     *   DpTypes("*Type")         // alle Typnamen, die auf "Type" enden
+     *   DpTypes("T?pe[12]")      // z.B. "Type1", "Tipe2"
+     * 
+     * @param {Object} msg - Erwartet msg.args.pattern
+     * @param {WebSocket} ws
+     */
+    DpTypes(msg, ws) {
+        try {
+            const pattern = msg.args && msg.args.pattern ? msg.args.pattern : null;
+            const types = this.db.DpTypes(pattern);
+            this.sendResponse(ws, msg, {cmd: msg.cmd, types: types, rc: 200});
+        } catch (err) {
+            console.error('Error in DpTypes:', err);
+            this.sendResponse(ws, msg, null, 'Error getting data point types');
         }
     }
 }
