@@ -20,18 +20,38 @@ class NGUI {
         this.commandMap = {
             'LoadPage': this.serveResource.bind(this),
             'LoadResource': this.serveResource.bind(this),
-            'Reconnect': this.handleReconnect.bind(this), // Neu: Reconnect-Handler
+            'Reconnect': this.handleReconnect.bind(this),
+            'RegisterCommands': this.registerRemoteHandler.bind(this), // New: Register remote handler
         };
-        // Map für Sessions: ws-Instanz -> { sessionData, timeout }
+        // Map for sessions: ws instance -> { sessionData, timeout }
         this.sessions = new Map();
+        // Map for remote handlers: ws instance -> { commands: string[] }
+        this.remoteHandlers = new Map();
     }
 
     /**
-     * Registers a handler for incoming WebSocket messages.
+     * Registers a local handler for incoming WebSocket messages.
      * @param {function} handler - Callback function for message processing.
      */
     registerHandler(handler) {
         this.handlers.push(handler);
+    }
+
+    /**
+     * Registers a remote handler with its supported command set.
+     * @param {Object} msg - Message containing commands array in args.
+     * @param {WebSocket} ws - WebSocket instance of the remote handler.
+     */
+    registerRemoteHandler(msg, ws) {
+        if (!msg.args || !Array.isArray(msg.args.commands)) {
+            this.sendResponse(ws, msg, '', '400: Missing or invalid commands array');
+            return;
+        }
+
+        this.remoteHandlers.set(ws, { commands: msg.args.commands });
+        console.log(`Registered remote handler with commands: ${msg.args.commands.join(', ')}`);
+
+        this.sendResponse(ws, msg, { status: 'Commands registered', rc: 200 });
     }
 
     /**
@@ -65,16 +85,16 @@ class NGUI {
     handleWebSocketConnection(ws) {
         console.log('WebSocket connected');
 
-        // Neue Session erstellen
+        // Create new session
         const sessionData = {
-            userInfo: { userId: null }, // Platzhalter für Benutzerdaten
-            dpConnects: {}, // Platzhalter für dpConnects-Daten
-            createdAt: new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' }), // 25.05.2025, 07:39
-            reconnectToken: this.generateReconnectToken(), // Token für Reconnect
+            userInfo: { userId: null },
+            dpConnects: {},
+            createdAt: new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' }),
+            reconnectToken: this.generateReconnectToken(),
         };
         this.sessions.set(ws, { sessionData, timeout: null });
 
-        // Sende reconnectToken an den Client
+        // Send reconnectToken to client
         this.sendResponse(ws, { tok: 'init' }, { reconnectToken: sessionData.reconnectToken });
 
         ws.on('message', this.handleWebSocketMessage.bind(this, ws));
@@ -99,7 +119,7 @@ class NGUI {
             return;
         }
 
-        // Aktualisiere userInfo, falls vorhanden
+        // Update userInfo if provided
         const session = this.sessions.get(ws);
         if (session && msg.userId) {
             session.sessionData.userInfo.userId = msg.userId;
@@ -120,7 +140,7 @@ class NGUI {
      */
     handleWebSocketClose(ws) {
         const session = this.sessions.get(ws);
-        
+
         for (const handler of this.handlers) {
             handler.OnWebsocketClosed(ws);
         }
@@ -131,13 +151,15 @@ class NGUI {
 
         console.log(`WebSocket closed for session (userId: ${session.sessionData.userInfo.userId || 'unknown'})`);
 
-        // Starte 30-Sekunden-Timeout für Session-Zerstörung
+        // Remove from remote handlers
+        this.remoteHandlers.delete(ws);
+
+        // Start 30-second timeout for session destruction
         session.timeout = setTimeout(() => {
             console.log(`Destroying session for userId: ${session.sessionData.userInfo.userId || 'unknown'}`);
             this.sessions.delete(ws);
         }, 30 * 1000);
 
-        // Session vorübergehend behalten
         this.sessions.set(ws, session);
     }
 
@@ -155,7 +177,7 @@ class NGUI {
         const reconnectToken = msg.args.reconnectToken;
         let oldWs = null;
 
-        // Suche Session mit passendem reconnectToken
+        // Search for session with matching reconnectToken
         for (const [key, session] of this.sessions.entries()) {
             if (session.sessionData.reconnectToken === reconnectToken) {
                 oldWs = key;
@@ -166,11 +188,11 @@ class NGUI {
         if (oldWs) {
             const session = this.sessions.get(oldWs);
             console.log(`Reconnecting session for userId: ${session.sessionData.userInfo.userId || 'unknown'}`);
-            
-            // Alte Session übernehmen
-            clearTimeout(session.timeout); // Timeout abbrechen
-            this.sessions.delete(oldWs); // Alte ws-Instanz entfernen
-            this.sessions.set(ws, { sessionData: session.sessionData, timeout: null }); // Neue ws-Instanz zuweisen
+
+            // Take over old session
+            clearTimeout(session.timeout);
+            this.sessions.delete(oldWs);
+            this.sessions.set(ws, { sessionData: session.sessionData, timeout: null });
             this.sendResponse(ws, msg, { status: 'Reconnected', userInfo: session.sessionData.userInfo });
         } else {
             this.sendResponse(ws, msg, '', '404: Session not found');
@@ -187,9 +209,9 @@ class NGUI {
         if (this.server) {
             this.server.close(() => console.log('HTTP server closed'));
         }
-        // Alle Sessions löschen
         this.sessions.forEach((session) => clearTimeout(session.timeout));
         this.sessions.clear();
+        this.remoteHandlers.clear();
     }
 
     /**
@@ -307,13 +329,27 @@ class NGUI {
     }
 
     /**
-     * Invokes custom handlers for WebSocket messages.
-     * @param {WebSocket} ws - WebSocket instance.
+     * Invokes custom handlers for WebSocket messages, including remote handlers.
+     * @param {WebSocket} ws - WebSocket instance of the client.
      * @param {Object} msg - Incoming message.
      */
     invokeCustomHandlers(ws, msg) {
+        // Try local handlers first
         for (const handler of this.handlers) {
             if (handler.OnHandle(ws, msg)) {
+                return;
+            }
+        }
+
+        // Try remote handlers
+        for (const [remoteWs, handler] of this.remoteHandlers.entries()) {
+            if (handler.commands.includes(msg.cmd)) {
+                // Forward the message to the remote handler
+                const forwardedMsg = {
+                    ...msg,
+                    originalWsId: ws._id || Math.random().toString(36).substr(2), // Unique ID for original ws
+                };
+                remoteWs.send(JSON.stringify(forwardedMsg));
                 return;
             }
         }

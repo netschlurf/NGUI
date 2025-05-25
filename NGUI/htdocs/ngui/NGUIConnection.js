@@ -493,4 +493,9 @@ class IME_DBClient {
         this.Connection.SendCustomCommand("DpTypes", request, callback);
     }
 
+    DpGetPeriod(dpName, startTs, endTs, callback) {
+        const request = { dpName: dpName , startTs: startTs, endTs: endTs };
+        this.Connection.SendCustomCommand("DpGetPeriod", request, callback);
+    }
+
 }

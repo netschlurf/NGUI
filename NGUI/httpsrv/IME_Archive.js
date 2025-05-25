@@ -7,11 +7,11 @@ const IME_ArchiveHandler = require('./IME_ArchiveHandler');
 
 /**
  * Archive server for HTTP and WebSocket communication on the same port.
- * Connects to NGUI server to retrieve data point names and store time series data.
+ * Connects to NGUI to retrieve data points and store time series data.
  */
 class IME_Archive {
     /**
-     * Constructor.
+     * Initializes the archive server with a database path and port.
      * @param {string} dbPath - Path to the SQLite database file.
      * @param {number} port - Port for HTTP and WebSocket (default: 2809).
      */
@@ -24,6 +24,7 @@ class IME_Archive {
         this.commandMap = {
             'LoadPage': this.serveResource.bind(this),
             'LoadResource': this.serveResource.bind(this),
+            'DpGetPeriod': this.handleForwardedMessage.bind(this), // Handle forwarded DpGetPeriod
         };
         this.db = new IME_ArchiveSqlite3(dbPath);
         this.handler = new IME_ArchiveHandler(this.db);
@@ -62,31 +63,38 @@ class IME_Archive {
     }
 
     /**
-     * Connects to NGUI server to retrieve data point names and establish DpConnect.
-     * Implements automatic reconnection on connection loss.
+     * Connects to NGUI server to retrieve data point names, establish DpConnect,
+     * and register supported commands.
      */
     async connectToNGUI() {
         if (this.isConnecting) return;
-        this.isConnecting = true;
-
-        const reconnectDelay = Math.min(
-            5000 * Math.pow(2, this.reconnectAttempts), // Exponential backoff
-            this.maxReconnectDelay
-        );
-
-        if (this.reconnectAttempts > 0) {
-            console.log(`Attempting to reconnect to NGUI server in ${reconnectDelay / 1000} seconds (attempt ${this.reconnectAttempts + 1})`);
-            await new Promise(resolve => setTimeout(resolve, reconnectDelay));
-        }
-
         try {
+            this.isConnecting = true;
+            const reconnectDelay = Math.min(
+                5000 * Math.pow(2, this.reconnectAttempts), // Exponential backoff
+                this.maxReconnectDelay
+            );
+
+            if (this.reconnectAttempts > 0) {
+                console.log(`Attempting to reconnect to NGUI server in ${reconnectDelay / 1000} seconds (attempt ${this.reconnectAttempts + 1})`);
+                await new Promise(resolve => setTimeout(resolve, reconnectDelay));
+            }
+
             this.nguiWs = new WebSocket('ws://localhost:2808');
             this.isConnecting = false;
 
             this.nguiWs.on('open', async () => {
                 console.log('Connected to NGUI server');
                 this.reconnectAttempts = 0; // Reset attempts on successful connection
+                // Register commands with NGUI
                 try {
+                    await this.requestNGUI(this.nguiWs, {
+                        cmd: 'RegisterCommands',
+                        args: { commands: ['DpGetPeriod'] },
+                        tok: 'register-cmds'
+                    });
+                    console.log('Successfully registered commands with NGUI');
+
                     // Retrieve data point names
                     const dpNames = await this.requestNGUI(this.nguiWs, { cmd: 'DpNames', args: {}, tok: 'archive-init' });
                     console.log('Retrieved data point names:', dpNames);
@@ -99,7 +107,7 @@ class IME_Archive {
                         this.nguiWs.send(JSON.stringify({ cmd: 'DpConnect', args: { dpName }, tok: `connect-${dpName}` }));
                     }
                 } catch (err) {
-                    console.error('Error processing NGUI data:', err);
+                    console.error('Error processing NGUI:', err);
                     this.handleNGUIReconnect();
                 }
             });
@@ -107,12 +115,12 @@ class IME_Archive {
             this.nguiWs.on('message', (message) => {
                 try {
                     const msg = JSON.parse(message);
-                    if (msg.data && msg.data.data.dpName && msg.data.data.value !== undefined) {
+                    if (msg.data && msg.data.dpName && msg.data.value !== undefined) {
                         // Store received data point value in database
-                        this.db.storeDataPoint(msg.data.data.dpName, msg.data.data.value);
+                        this.db.storeDataPoint(msg.data.dpName, msg.data.value);
                     }
                 } catch (err) {
-                    //console.error('Error processing NGUI message:', err);
+                    console.error('Error processing NGUI message:', err);
                 }
             });
 
@@ -143,6 +151,16 @@ class IME_Archive {
         }
         this.reconnectAttempts++;
         this.connectToNGUI();
+    }
+
+    /**
+     * Handles messages forwarded by NGUI (e.g., DpGetPeriod).
+     * @param {Object} msg - The forwarded message.
+     * @param {WebSocket} ws - The WebSocket instance.
+     */
+    handleForwardedMessage(msg, ws) {
+        // Delegate to handler for processing
+        this.handler.OnHandle(ws, msg);
     }
 
     /**
@@ -226,7 +244,7 @@ class IME_Archive {
 
     /**
      * Handles WebSocket close event.
-     * @param {WebSocket} ws - WebSocket instance.
+     * @param {WebSocket} ws - The WebSocket instance.
      */
     handleWebSocketClose(ws) {
         console.log('WebSocket closed');
@@ -255,9 +273,9 @@ class IME_Archive {
     /**
      * Sends a response over WebSocket.
      * @param {WebSocket} ws - WebSocket instance.
-     * @param {Object} msg - Original message.
-     * @param {Object} data - Response data.
-     * @param {string} [err] - Error code, if any.
+     * @param {Object} msg - The original message.
+     * @param {any} data - The response data.
+     * @param {string} [err] - Error message, if any.
      */
     sendResponse(ws, msg, data, err = null) {
         const response = {
@@ -274,7 +292,7 @@ class IME_Archive {
     /**
      * Serves a file from the filesystem for HTTP requests.
      * @param {string} filePath - Relative file path.
-     * @param {http.ServerResponse} res - HTTP response.
+     * @param {WebSocket} res - The response object.
      */
     async serveFile(filePath, res) {
         const fullPath = await this.resolveFilePath(filePath);
@@ -297,8 +315,8 @@ class IME_Archive {
 
     /**
      * Serves a resource for WebSocket requests.
-     * @param {Object} msg - Incoming message.
-     * @param {WebSocket} ws - WebSocket instance.
+     * @param {Object} msg - The incoming message.
+     * @param {WebSocket} ws - The WebSocket instance.
      */
     async serveResource(msg, ws) {
         if (!msg.args || !msg.args.fileName) {
@@ -321,9 +339,9 @@ class IME_Archive {
     }
 
     /**
-     * Resolves the full file path.
+     * Resolves a file path for serving resources.
      * @param {string} filePath - Relative file path.
-     * @returns {string|null} - Full path or null if not found.
+     * @returns {string|null} - Resolved full path or null if not found.
      */
     async resolveFilePath(filePath) {
         const paths = [];
