@@ -1,15 +1,15 @@
-//const NGUIHandlerBase = require('./NGUIHandlerBase');
+const NGUIHandlerBase = require('./NGUIHandlerBase');
 
 /**
  * Handler for WebSocket messages related to time series data archiving.
  */
-class IME_ArchiveHandler  {
+class IME_ArchiveHandler extends NGUIHandlerBase {
     /**
      * Constructor.
      * @param {IME_ArchiveSqlite3} db - The database instance for time series storage.
      */
     constructor(db) {
-        //super();
+        super();
         this.db = db;
         this.commandMap = {
             'DpGetPeriod': this.DpGetPeriod.bind(this),
@@ -38,19 +38,21 @@ class IME_ArchiveHandler  {
      * // Response: {data: {cmd: "DpGetPeriod", dpName: "myCounter", values: [{ts: 1697059200000, value: 1}, ...], rc: 200}, ...}
      */
     DpGetPeriod(msg, ws) {
-        if (!msg.args || !msg.args.dpName || !msg.args.startTs || !msg.args.endTs) {
-            const rsp = {cmd: msg.cmd, dpName: msg.args?.dpName, rc: 300};
+        if (!msg.args || !msg.args.dpName || (msg.args.startTs < 0) || !msg.args.endTs) {
+            const rsp = {cmd: msg.cmd, dpName: msg.args?.dpName, originalWsId: msg.originalWsId,rc: 300};
+            console.log(rsp)
             this.sendResponse(ws, msg, null, rsp);
             return;
         }
 
         try {
             const values = this.db.getPeriod(msg.args.dpName, msg.args.startTs, msg.args.endTs);
-            const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, values, rc: 200};
+            const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, originalWsId: msg.originalWsId, values, rc: 200};
             this.sendResponse(ws, msg, rsp);
         } catch (err) {
             console.error('Error in DpGetPeriod:', err);
-            const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, rc: 400};
+            const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, originalWsId: msg.originalWsId,rc: 400};
+            console.log(rsp)
             this.sendResponse(ws, msg, null, rsp);
         }
     }

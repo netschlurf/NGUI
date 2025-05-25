@@ -115,12 +115,16 @@ class IME_Archive {
             this.nguiWs.on('message', (message) => {
                 try {
                     const msg = JSON.parse(message);
-                    if (msg.data && msg.data.dpName && msg.data.value !== undefined) {
+                    if (msg.data && msg.data.data.cmd == "DpConnect" && msg.data.data.dpName && msg.data.data.value !== undefined) {
                         // Store received data point value in database
-                        this.db.storeDataPoint(msg.data.dpName, msg.data.value);
+                        this.db.storeDataPoint(msg.data.data.dpName, msg.data.data.value);
+                    }
+                    if(msg.cmd && this.commandMap[msg.cmd]) {
+                        // Handle forwarded messages like DpGetPeriod
+                        this.commandMap[msg.cmd](msg, this.nguiWs);
                     }
                 } catch (err) {
-                    console.error('Error processing NGUI message:', err);
+                    //console.error('Error processing NGUI message:', err);
                 }
             });
 

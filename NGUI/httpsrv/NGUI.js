@@ -92,7 +92,7 @@ class NGUI {
             createdAt: new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' }),
             reconnectToken: this.generateReconnectToken(),
         };
-        this.sessions.set(ws, { sessionData, timeout: null });
+        this.sessions.set(ws, { sessionData, timeout: null, ws: ws });
 
         // Send reconnectToken to client
         this.sendResponse(ws, { tok: 'init' }, { reconnectToken: sessionData.reconnectToken });
@@ -115,6 +115,21 @@ class NGUI {
             return;
         }
 
+        if(msg.data && msg.data.originalWsId)
+        {
+            var foundSession = null;
+
+            for (const [ws, session] of this.sessions.entries()) {
+                if(session.ws.originalWsId === msg.data.originalWsId) {
+                foundSession = session;
+                break;
+                }
+            }
+            if (foundSession) {
+                this.sendResponse(foundSession.ws, msg, msg.data);
+            }
+            return;
+        }
         if (!msg || !msg.cmd) {
             return;
         }
@@ -159,7 +174,7 @@ class NGUI {
             console.log(`Destroying session for userId: ${session.sessionData.userInfo.userId || 'unknown'}`);
             this.sessions.delete(ws);
         }, 30 * 1000);
-
+        session.ws = ws;
         this.sessions.set(ws, session);
     }
 
@@ -192,7 +207,7 @@ class NGUI {
             // Take over old session
             clearTimeout(session.timeout);
             this.sessions.delete(oldWs);
-            this.sessions.set(ws, { sessionData: session.sessionData, timeout: null });
+            this.sessions.set(ws, { sessionData: session.sessionData, timeout: null, ws: ws });
             this.sendResponse(ws, msg, { status: 'Reconnected', userInfo: session.sessionData.userInfo });
         } else {
             this.sendResponse(ws, msg, '', '404: Session not found');
@@ -340,7 +355,7 @@ class NGUI {
                 return;
             }
         }
-
+        var bFound = false;
         // Try remote handlers
         for (const [remoteWs, handler] of this.remoteHandlers.entries()) {
             if (handler.commands.includes(msg.cmd)) {
@@ -349,9 +364,15 @@ class NGUI {
                     ...msg,
                     originalWsId: ws._id || Math.random().toString(36).substr(2), // Unique ID for original ws
                 };
+                ws.originalWsId = forwardedMsg.originalWsId;
                 remoteWs.send(JSON.stringify(forwardedMsg));
-                return;
+                bFound = true;
+                break;
             }
+        }
+        if(!bFound) {
+            console.warn(`No handler found for command: ${msg.cmd}`);
+            this.sendResponse(ws, msg, '', '404: Command not found');
         }
     }
 

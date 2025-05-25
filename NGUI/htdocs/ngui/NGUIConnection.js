@@ -425,8 +425,14 @@ class IME_DBClient {
                 }
             }
         }
-        if (this.DpConnectionTable.has(rcv.data.data.dpName)) {
-            var callbacks = this.DpConnectionTable.get(rcv.data.data.dpName);
+        var obj = null;
+        if(rcv.data && rcv.data.dpName)
+            obj = rcv.data        
+        else if(rcv.data.data && rcv.data.data.dpName)
+            obj = rcv.data.data;
+
+        if (this.DpConnectionTable.has(obj.dpName)) {
+            var callbacks = this.DpConnectionTable.get(obj.dpName);
             for (var i = 0; i < callbacks.length; i++) {
                 callbacks[i](rcv.data);
             }
