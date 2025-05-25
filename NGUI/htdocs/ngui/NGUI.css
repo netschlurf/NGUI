@@ -5,3 +5,21 @@
 .ngui-window.minimized:hover {
     background: #5a6575;
 }
+
+    .json-object, .json-array {
+      margin-bottom: 5px;
+    }
+    .json-toggle {
+      cursor: pointer;
+      color: #007bff;
+      user-select: none;
+    }
+    .json-toggle::before {
+      content: '▶ ';
+    }
+    .json-item {
+      margin-left: 20px;
+    }
+    .json-value {
+      color: #333;
+    }

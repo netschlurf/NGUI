@@ -20,6 +20,11 @@ class NGUIHandlerBase
         }
         ws.send(JSON.stringify(response));
     }
+
+    GetHtdocsRoot()
+    {
+      return "";
+    }
   }
 
 class IME_DBHandler extends NGUIHandlerBase

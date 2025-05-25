@@ -159,11 +159,25 @@
 <body>
 <div id="container">
   <div id="tree-container">
+    <div>
+      <div class="p-4 pb-2">
+  <h1 class="text-xl font-bold text-gray-800 mb-1 flex items-center gap-2">
+    <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+    </svg>
+     Explorer Dashboard
+  </h1>
+  <div class="flex items-center gap-2">
+    <img src="https://ui-avatars.com/api/?name=Max+Mustermann&background=0D8ABC&color=fff" alt="Avatar" class="w-8 h-8 rounded-full shadow">
+    <span class="text-sm text-gray-600 font-medium">Max Mustermann</span>
+  </div>
+</div>
+    </div>
     <table id="tree" class="fancytree-ext-table">
       <thead>
         <tr>
-          <th>Name</th>
-          <th style="width: 80px; text-align: right;">Laufzeit (ms)</th>
+          <th style="width: 80px;  text-align: right; font-size:small; font-weight: lighter">Name</th>
+          <th style="width: 80px;  text-align: right; font-size:small; font-weight: lighter;">Laufzeit (ms)</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -308,7 +322,7 @@ function OnAppOpen()
 {
   console.log("App opened");
   g_NGUI.LoadPage("NGUI_kitchensink.html", "right-bottom", null);
-  g_NGUI.LoadPage("loadTest2.html", "right-top", null);
+  g_NGUI.LoadPage("NGUI_DemoTop.html", "right-top", null);
   g_NGUI.LoadResource("AttributesEN.json", null, OnJSON);
 }
 
