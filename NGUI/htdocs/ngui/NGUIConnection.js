@@ -50,6 +50,7 @@ class NGUIConnection {
         var cb = new NGUICB();
         cb.tok = msg.tok;
         cb.callback = callback;
+        this.callBacks.push(cb);
         this.Connection.send(JSON.stringify(msg));
     }
 
@@ -431,7 +432,7 @@ class IME_DBClient {
         else if(rcv.data.data && rcv.data.data.dpName)
             obj = rcv.data.data;
 
-        if (this.DpConnectionTable.has(obj.dpName)) {
+        if (obj && this.DpConnectionTable.has(obj.dpName)) {
             var callbacks = this.DpConnectionTable.get(obj.dpName);
             for (var i = 0; i < callbacks.length; i++) {
                 callbacks[i](rcv.data);
