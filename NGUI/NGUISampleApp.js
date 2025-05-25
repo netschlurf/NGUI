@@ -15,7 +15,7 @@ function Cyclic()
 {
     imeDB.DpSet("myCounter", counter);
     var test = imeDB.DpGet("myCounter");
-    setTimeout(Cyclic,1000);
+    setTimeout(Cyclic,10000);
     counter++;
 }
 
