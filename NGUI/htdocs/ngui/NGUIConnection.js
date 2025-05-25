@@ -418,7 +418,12 @@ class IME_DBClient {
 
     OnDpConnect(rcv) {
         if (rcv.data.rc == 200) {
-            return; // connection confirmation good
+            if (this.DpConnectionTable.has(rcv.data.dpName)) {
+                var callbacks = this.DpConnectionTable.get(rcv.data.dpName);
+                for (var i = 0; i < callbacks.length; i++) {
+                    callbacks[i](rcv);
+                }
+            }
         }
         if (this.DpConnectionTable.has(rcv.data.data.dpName)) {
             var callbacks = this.DpConnectionTable.get(rcv.data.data.dpName);
