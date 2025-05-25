@@ -120,6 +120,10 @@ class NGUI {
      */
     handleWebSocketClose(ws) {
         const session = this.sessions.get(ws);
+        
+        for (const handler of this.handlers) {
+            handler.OnWebsocketClosed(ws);
+        }
         if (!session) {
             console.error('Session not found on close');
             return;
