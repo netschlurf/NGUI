@@ -89,13 +89,13 @@ class IME_DBHandler extends NGUIHandlerBase
         }
 
         try {
-            this.db.DpConnect(msg.args.dpName, (data) => {
+            this.db.DpConnect(msg.args.dpName, (dpName, value) => {
                 const rsp = {};
-                rsp.data = {cmd: msg.cmd, dpName: msg.args.dpName, value: this.db.DpGet(msg.args.dpName)};
+                rsp.data = {cmd: msg.cmd, dpName: dpName, value: value};
                 this.sendResponse(ws, msg, rsp);
             });
-            const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, rc: 200}
-            this.sendResponse(ws, msg, rsp);
+            const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, value: this.db.DpGet(msg.args.dpName), rc: 200}
+            this.sendResponse(ws, msg, rsp);         
         } catch (err) {
             const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, rc: 400}
             this.sendResponse(ws, msg, null, rsp);

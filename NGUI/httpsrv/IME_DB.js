@@ -174,7 +174,7 @@ class IME_Sqlite3DB extends IME_DB {
     const update = this.#db.prepare('UPDATE DataPoints SET value = ? WHERE name = ?');
     var success = update.run(JSON.stringify(value), name);
     if(success.changes == 1) {
-      const callback = this.#callbacks.get(name);
+      const callback = this.#callbacks.get(name, value);
       if (callback) {
         callback(name, value);
       }

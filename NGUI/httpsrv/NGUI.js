@@ -20,7 +20,10 @@ class NGUI {
         this.commandMap = {
             'LoadPage': this.serveResource.bind(this),
             'LoadResource': this.serveResource.bind(this),
+            'Reconnect': this.handleReconnect.bind(this), // Neu: Reconnect-Handler
         };
+        // Map für Sessions: ws-Instanz -> { sessionData, timeout }
+        this.sessions = new Map();
     }
 
     /**
@@ -61,8 +64,21 @@ class NGUI {
      */
     handleWebSocketConnection(ws) {
         console.log('WebSocket connected');
+
+        // Neue Session erstellen
+        const sessionData = {
+            userInfo: { userId: null }, // Platzhalter für Benutzerdaten
+            dpConnects: {}, // Platzhalter für dpConnects-Daten
+            createdAt: new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin' }), // 25.05.2025, 07:39
+            reconnectToken: this.generateReconnectToken(), // Token für Reconnect
+        };
+        this.sessions.set(ws, { sessionData, timeout: null });
+
+        // Sende reconnectToken an den Client
+        this.sendResponse(ws, { tok: 'init' }, { reconnectToken: sessionData.reconnectToken });
+
         ws.on('message', this.handleWebSocketMessage.bind(this, ws));
-        ws.on('close', () => console.log('WebSocket closed'));
+        ws.on('close', () => this.handleWebSocketClose(ws));
     }
 
     /**
@@ -83,13 +99,77 @@ class NGUI {
             return;
         }
 
+        // Aktualisiere userInfo, falls vorhanden
+        const session = this.sessions.get(ws);
+        if (session && msg.userId) {
+            session.sessionData.userInfo.userId = msg.userId;
+            console.log(`Session updated for ws: userId=${msg.userId}`);
+        }
+
         if (this.commandMap[msg.cmd]) {
             this.commandMap[msg.cmd](msg, ws);
             return;
-        }
-        else
-        {
+        } else {
             this.invokeCustomHandlers(ws, msg);
+        }
+    }
+
+    /**
+     * Handles WebSocket close event, keeping session for 30 seconds.
+     * @param {WebSocket} ws - WebSocket instance.
+     */
+    handleWebSocketClose(ws) {
+        const session = this.sessions.get(ws);
+        if (!session) {
+            console.error('Session not found on close');
+            return;
+        }
+
+        console.log(`WebSocket closed for session (userId: ${session.sessionData.userInfo.userId || 'unknown'})`);
+
+        // Starte 30-Sekunden-Timeout für Session-Zerstörung
+        session.timeout = setTimeout(() => {
+            console.log(`Destroying session for userId: ${session.sessionData.userInfo.userId || 'unknown'}`);
+            this.sessions.delete(ws);
+        }, 30 * 1000);
+
+        // Session vorübergehend behalten
+        this.sessions.set(ws, session);
+    }
+
+    /**
+     * Handles reconnect attempts.
+     * @param {Object} msg - Incoming message with reconnectToken.
+     * @param {WebSocket} ws - New WebSocket instance.
+     */
+    handleReconnect(msg, ws) {
+        if (!msg.args || !msg.args.reconnectToken) {
+            this.sendResponse(ws, msg, '', '400: Missing reconnectToken');
+            return;
+        }
+
+        const reconnectToken = msg.args.reconnectToken;
+        let oldWs = null;
+
+        // Suche Session mit passendem reconnectToken
+        for (const [key, session] of this.sessions.entries()) {
+            if (session.sessionData.reconnectToken === reconnectToken) {
+                oldWs = key;
+                break;
+            }
+        }
+
+        if (oldWs) {
+            const session = this.sessions.get(oldWs);
+            console.log(`Reconnecting session for userId: ${session.sessionData.userInfo.userId || 'unknown'}`);
+            
+            // Alte Session übernehmen
+            clearTimeout(session.timeout); // Timeout abbrechen
+            this.sessions.delete(oldWs); // Alte ws-Instanz entfernen
+            this.sessions.set(ws, { sessionData: session.sessionData, timeout: null }); // Neue ws-Instanz zuweisen
+            this.sendResponse(ws, msg, { status: 'Reconnected', userInfo: session.sessionData.userInfo });
+        } else {
+            this.sendResponse(ws, msg, '', '404: Session not found');
         }
     }
 
@@ -103,13 +183,16 @@ class NGUI {
         if (this.server) {
             this.server.close(() => console.log('HTTP server closed'));
         }
+        // Alle Sessions löschen
+        this.sessions.forEach((session) => clearTimeout(session.timeout));
+        this.sessions.clear();
     }
 
     /**
      * Sends a response over WebSocket.
      * @param {WebSocket} ws - WebSocket instance.
      * @param {Object} msg - Original message.
-     * @param {string} data - Response data.
+     * @param {Object} data - Response data.
      * @param {string} [err] - Error code, if any.
      */
     sendResponse(ws, msg, data, err = null) {
@@ -230,6 +313,14 @@ class NGUI {
                 return;
             }
         }
+    }
+
+    /**
+     * Generates a simple reconnect token (for demo purposes).
+     * @returns {string} - Reconnect token.
+     */
+    generateReconnectToken() {
+        return Date.now() + '-' + Math.random().toString(36).substr(2, 9);
     }
 }
 
