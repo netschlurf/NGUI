@@ -17,6 +17,16 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "IME_Archive",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/httpsrv/IME_Archive.js",
+            "args": ["ar01.db"]
+        },
+        {
+            "type": "node",
+            "request": "launch",
             "name": "IME_DBDiag",
             "skipFiles": [
                 "<node_internals>/**"
