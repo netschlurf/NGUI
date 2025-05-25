@@ -1,0 +1,30 @@
+<div class="w-full max-w-6xl p-2" style="height: 150px;">
+  <!-- LogViewer Container -->
+  <div class="bg-white shadow-md rounded-lg overflow-hidden h-full">
+    <div class="flex items-center justify-between bg-gray-100 px-4 py-2">
+      <h2 class="text-lg font-semibold text-gray-800">Log Viewer</h2>
+    </div>
+    <!-- Scrollbar für breite Ansicht, linksbündig -->
+    <div class="overflow-x-auto h-[130px]">
+      <div class="flex space-x-4 p-2 min-w-max justify-start">
+        <!-- Beispiel-Log-Einträge -->
+        <div class="flex-none w-80 border border-gray-200 rounded-lg p-3 bg-gray-50 hover:bg-gray-100">
+          <div class="flex justify-between items-center">
+            <h3 class="text-sm font-medium text-gray-900 truncate">Integration Test</h3>
+            <span class="text-xs text-gray-500">25.05.2025, 00:15</span>
+          </div>
+          <p class="text-xs text-gray-600 truncate mt-1" dpConnectXXX="myString">Überprüfung der API-Integration</p>
+          <div class="mt-1 text-xs text-gray-500" id="logDetails-Integration-Test"></div>
+        </div>
+        <div class="flex-none w-80 border border-gray-200 rounded-lg p-3 bg-gray-50 hover:bg-gray-100">
+          <div class="flex justify-between items-center">
+            <h3 class="text-sm font-medium text-gray-900 truncate">UI Regression Test</h3>
+            <span class="text-xs text-gray-500">24.05.2025, 23:45</span>
+          </div>
+          <p class="text-xs text-gray-600 truncate mt-1">Test der Benutzeroberfläche</p>
+          <div class="mt-1 text-xs text-gray-500" id="logDetails-UI-Regression-Test"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
