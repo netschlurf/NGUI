@@ -27,6 +27,16 @@
         {
             "type": "node",
             "request": "launch",
+            "name": "IME_NetworkMonitor",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/httpsrv/IME_NetworkMonitor.js",
+            "args": ["nw01.db"]
+        },        
+        {
+            "type": "node",
+            "request": "launch",
             "name": "IME_DBDiag",
             "skipFiles": [
                 "<node_internals>/**"

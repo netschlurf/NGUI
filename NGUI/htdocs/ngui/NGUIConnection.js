@@ -505,4 +505,25 @@ class IME_DBClient {
         this.Connection.SendCustomCommand("DpGetPeriod", request, callback);
     }
 
+
+    DiscoverDevices(ipRange, callback) {
+        const request = { ipRange: ipRange };
+        this.Connection.SendCustomCommand("DiscoverDevices", request, callback);
+    }
+    
+    GetSNMPMetrics(ip, version, endTs, callback) {
+        const request = { ip: ip , version: version };
+        this.Connection.SendCustomCommand("GetSNMPMetrics", request, callback);
+    }
+    
+     ListDevices(callback) {
+        const request = {  };
+        this.Connection.SendCustomCommand("ListDevices", request, callback);
+    }
+    
+    ConfigureSNMPTraps(enable, callback) {
+        const request = { enable: enable };
+        this.Connection.SendCustomCommand("ConfigureSNMPTraps", request, callback);
+    }   
+
 }
