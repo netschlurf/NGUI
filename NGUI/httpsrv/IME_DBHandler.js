@@ -38,7 +38,8 @@ class IME_DBHandler extends NGUIHandlerBase
             'DpConnect': this.DpConnect.bind(this),
             'DpDisconnect': this.DpDisconnect.bind(this),
             'DpCreate': this.DpCreate.bind(this),
-        };      
+        };  
+        this.DpConnectionMap = new Map();    
     }
 
     OnHandle(ws, msg) {
@@ -81,19 +82,39 @@ class IME_DBHandler extends NGUIHandlerBase
         }
     }
 
+    OnDpConnect(dpName, value, callBacks)
+    {
+        for(var i=0;i<callBacks.length;i++)
+        {
+            const rsp = {};
+            rsp.data = {cmd: callBacks[i].msg.cmd, dpName: dpName, value: value};
+            this.sendResponse(callBacks[i].ws, callBacks[i].msg, rsp);
+        }
+    }
+
     DpConnect(msg, ws) {
         if (!msg.args || !msg.args.dpName) {
             const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, rc: 300}
             this.sendResponse(ws, msg, null, rsp);
             return;
         }
-
+        var dpName = msg.args.dpName;
         try {
-            this.db.DpConnect(msg.args.dpName, (dpName, value) => {
-                const rsp = {};
-                rsp.data = {cmd: msg.cmd, dpName: dpName, value: value};
-                this.sendResponse(ws, msg, rsp);
-            });
+            if(this.DpConnectionMap.has(dpName))
+            {
+                if(!this.DpConnectionMap[dpName])
+                    this.DpConnectionMap[dpName] = new Array();
+                this.DpConnectionMap[dpName].push({msg: msg, ws: ws});
+            }            
+            else
+            {
+                this.db.DpConnect(msg.args.dpName, (dpName, value) => {
+                    this.OnDpConnect(dpName, value, this.DpConnectionMap[dpName]);
+                });
+                if(!this.DpConnectionMap[dpName])
+                    this.DpConnectionMap[dpName] = new Array();
+                this.DpConnectionMap[dpName].push({msg: msg, ws: ws});
+            }
             const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, value: this.db.DpGet(msg.args.dpName), rc: 200}
             this.sendResponse(ws, msg, rsp);         
         } catch (err) {
