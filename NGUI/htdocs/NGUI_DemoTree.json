@@ -1,0 +1,77 @@
+{
+  "name": "Galaxie Zeta",
+  "type": "galaxy",
+  "children": [
+    {
+      "name": "Sonnensystem Alpha",
+      "type": "solar_system",
+      "children": [
+        {
+          "name": "Planet Ares",
+          "type": "planet",
+          "children": [
+            {
+              "name": "Mond Phobos",
+              "type": "moon"
+            },
+            {
+              "name": "Mond Deimos",
+              "type": "moon"
+            }
+          ]
+        },
+        {
+          "name": "Planet Gaia",
+          "type": "planet",
+          "children": [
+            {
+              "name": "Mond Selene",
+              "type": "moon"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sonnensystem Beta",
+      "type": "solar_system",
+      "children": [
+        {
+          "name": "Planet Kronos",
+          "type": "planet",
+          "children": [
+            {
+              "name": "Mond Titan",
+              "type": "moon"
+            },
+            {
+              "name": "Mond Rhea",
+              "type": "moon"
+            }
+          ]
+        },
+        {
+          "name": "Planet Hyperion",
+          "type": "planet",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "Sonnensystem Gamma",
+      "type": "solar_system",
+      "children": [
+        {
+          "name": "Planet Vulcan",
+          "type": "planet",
+          "children": [
+            {
+              "name": "Mond Ignis",
+              "type": "moon"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
