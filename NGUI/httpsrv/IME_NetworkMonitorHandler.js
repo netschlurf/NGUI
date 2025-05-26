@@ -4,10 +4,6 @@ const NGUIHandlerBase = require('./NGUIHandlerBase');
  * Handler for WebSocket messages related to network monitoring.
  */
 class IME_NetworkMonitorHandler extends NGUIHandlerBase {
-    /**
-     * Constructor.
-     * @param {IME_NetworkMonitorSqlite3} db - The database instance for network data.
-     */
     constructor(db) {
         super();
         this.db = db;
@@ -16,14 +12,12 @@ class IME_NetworkMonitorHandler extends NGUIHandlerBase {
             'GetSNMPMetrics': this.GetSNMPMetrics.bind(this),
             'ListDevices': this.ListDevices.bind(this),
             'ConfigureSNMPTraps': this.ConfigureSNMPTraps.bind(this),
+            'PortScan': this.PortScan.bind(this),
+            'OSFingerprint': this.OSFingerprint.bind(this),
+            'EnumerateServices': this.EnumerateServices.bind(this),
         };
     }
 
-    /**
-     * Processes incoming WebSocket messages and dispatches to command handlers.
-     * @param {WebSocket} ws - The WebSocket instance.
-     * @param {Object} msg - The incoming message with command and arguments.
-     */
     OnHandle(ws, msg) {
         if (this.commandMap[msg.cmd]) {
             this.commandMap[msg.cmd](msg, ws);
@@ -32,11 +26,6 @@ class IME_NetworkMonitorHandler extends NGUIHandlerBase {
         return false;
     }
 
-    /**
-     * Triggers a device discovery scan.
-     * @param {Object} msg - Message with ipRange in args (e.g., '192.168.1.0/24').
-     * @param {WebSocket} ws - The WebSocket instance.
-     */
     async DiscoverDevices(msg, ws) {
         if (!msg.args || !msg.args.ipRange) {
             const rsp = { cmd: msg.cmd, rc: 400, error: 'Missing ipRange' };
@@ -55,11 +44,6 @@ class IME_NetworkMonitorHandler extends NGUIHandlerBase {
         }
     }
 
-    /**
-     * Retrieves SNMP metrics for a device.
-     * @param {Object} msg - Message with ip, community, version, and optional credentials in args.
-     * @param {WebSocket} ws - The WebSocket instance.
-     */
     async GetSNMPMetrics(msg, ws) {
         if (!msg.args || !msg.args.ip || !msg.args.version) {
             const rsp = { cmd: msg.cmd, rc: 400, error: 'Missing ip or version' };
@@ -83,11 +67,6 @@ class IME_NetworkMonitorHandler extends NGUIHandlerBase {
         }
     }
 
-    /**
-     * Lists all discovered devices.
-     * @param {Object} msg - Message (no args required).
-     * @param {WebSocket} ws - The WebSocket instance.
-     */
     ListDevices(msg, ws) {
         try {
             const devices = this.db.getDevices();
@@ -100,11 +79,6 @@ class IME_NetworkMonitorHandler extends NGUIHandlerBase {
         }
     }
 
-    /**
-     * Configures SNMP trap reception.
-     * @param {Object} msg - Message with enable (boolean) in args.
-     * @param {WebSocket} ws - The WebSocket instance.
-     */
     ConfigureSNMPTraps(msg, ws) {
         if (!msg.args || typeof msg.args.enable !== 'boolean') {
             const rsp = { cmd: msg.cmd, rc: 400, error: 'Missing or invalid enable flag' };
@@ -118,6 +92,60 @@ class IME_NetworkMonitorHandler extends NGUIHandlerBase {
             this.sendResponse(ws, msg, rsp);
         } catch (err) {
             console.error('Error in ConfigureSNMPTraps:', err);
+            const rsp = { cmd: msg.cmd, rc: 500, error: err.message };
+            this.sendResponse(ws, msg, null, rsp);
+        }
+    }
+
+    async PortScan(msg, ws) {
+        if (!msg.args || !msg.args.ip) {
+            const rsp = { cmd: msg.cmd, rc: 400, error: 'Missing ip' };
+            this.sendResponse(ws, msg, null, rsp);
+            return;
+        }
+
+        try {
+            const result = await this.db.PortScan(msg.args.ip);
+            const rsp = { cmd: msg.cmd, result, rc: 200 };
+            this.sendResponse(ws, msg, rsp);
+        } catch (err) {
+            console.error('Error in PortScan:', err);
+            const rsp = { cmd: msg.cmd, rc: 500, error: err.message };
+            this.sendResponse(ws, msg, null, rsp);
+        }
+    }
+
+    async OSFingerprint(msg, ws) {
+        if (!msg.args || !msg.args.ip) {
+            const rsp = { cmd: msg.cmd, rc: 400, error: 'Missing ip' };
+            this.sendResponse(ws, msg, null, rsp);
+            return;
+        }
+
+        try {
+            const result = await this.db.OSFingerprinting(msg.args.ip);
+            const rsp = { cmd: msg.cmd, result, rc: 200 };
+            this.sendResponse(ws, msg, rsp);
+        } catch (err) {
+            console.error('Error in OSFingerprint:', err);
+            const rsp = { cmd: msg.cmd, rc: 500, error: err.message };
+            this.sendResponse(ws, msg, null, rsp);
+        }
+    }
+
+    async EnumerateServices(msg, ws) {
+        if (!msg.args || !msg.args.ip) {
+            const rsp = { cmd: msg.cmd, rc: 400, error: 'Missing ip' };
+            this.sendResponse(ws, msg, null, rsp);
+            return;
+        }
+
+        try {
+            const result = await this.db.EnumerateServices(msg.args.ip);
+            const rsp = { cmd: msg.cmd, result, rc: 200 };
+            this.sendResponse(ws, msg, rsp);
+        } catch (err) {
+            console.error('Error in EnumerateServices:', err);
             const rsp = { cmd: msg.cmd, rc: 500, error: err.message };
             this.sendResponse(ws, msg, null, rsp);
         }

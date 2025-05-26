@@ -524,6 +524,21 @@ class IME_DBClient {
     ConfigureSNMPTraps(enable, callback) {
         const request = { enable: enable };
         this.Connection.SendCustomCommand("ConfigureSNMPTraps", request, callback);
-    }   
+    }  
+    
+    PortScan(ip, callback) {
+        const request = { ip: ip };
+        this.Connection.SendCustomCommand("PortScan", request, callback);
+    }
+
+    OSFingerprint(ip, callback) {
+        const request = { ip: ip };
+        this.Connection.SendCustomCommand("OSFingerprint", request, callback);
+    }  
+        
+    EnumerateServices(ip, callback) {
+        const request = { ip: ip };
+        this.Connection.SendCustomCommand("EnumerateServices", request, callback);
+    }
 
 }

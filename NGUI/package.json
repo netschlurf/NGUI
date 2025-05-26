@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",
+    "node-nmap": "^4.0.0",
     "ping": "^0.4.4",
     "snmp-native": "^1.2.0",
     "ws": "^8.18.2"

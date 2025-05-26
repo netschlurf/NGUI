@@ -8,12 +8,6 @@ const IME_NetworkMonitorHandler = require('./IME_NetworkMonitorHandler');
  * Manages a SQLite database for storing device information and network metrics.
  */
 class IME_NetworkMonitor extends IME_ServiceBase {
-    /**
-     * Initializes the network monitor module.
-     * @param {string} dbPath - Path to the SQLite database file.
-     * @param {number} port - Port for HTTP and WebSocket (default: 2810).
-     * @param {Object} config - Configuration object (e.g., NGUI URL, SNMP settings).
-     */
     constructor(dbPath, port = 2810, config = {}) {
         super(port, {
             nguiUrl: 'ws://localhost:2808',
@@ -29,49 +23,33 @@ class IME_NetworkMonitor extends IME_ServiceBase {
             'GetSNMPMetrics': this.handleForwardedMessage.bind(this),
             'ListDevices': this.handleForwardedMessage.bind(this),
             'ConfigureSNMPTraps': this.handleForwardedMessage.bind(this),
+            'PortScan': this.handleForwardedMessage.bind(this),
+            'OSFingerprint': this.handleForwardedMessage.bind(this),
+            'EnumerateServices': this.handleForwardedMessage.bind(this),
         };
     }
 
-    /**
-     * Initializes module-specific resources (database and handler).
-     * @override
-     */
     async initializeModule() {
         this.db = new IME_NetworkMonitorSqlite3(this.dbPath);
         this.db.Connect();
         this.handler = new IME_NetworkMonitorHandler(this.db);
         this.registerHandler(this.handler);
-        // Initialize trap receiver
-        await this.db.setupTrapReceiver();
+        // await this.db.setupTrapReceiver();
     }
 
-    /**
-     * Sets up NGUI connection by registering commands.
-     * @override
-     * @param {WebSocket} ws - NGUI WebSocket instance.
-     */
     async setupNGUIConnection(ws) {
         await this.requestNGUI(ws, {
             cmd: 'RegisterCommands',
-            args: { commands: ['DiscoverDevices', 'GetSNMPMetrics', 'ListDevices', 'ConfigureSNMPTraps'] },
+            args: { commands: ['DiscoverDevices', 'GetSNMPMetrics', 'ListDevices', 'ConfigureSNMPTraps', 'PortScan', 'OSFingerprint', 'EnumerateServices'] },
             tok: 'register-cmds'
         });
         console.log('Successfully registered commands with NGUI');
     }
 
-    /**
-     * Handles forwarded messages from NGUI (e.g., DiscoverDevices, GetSNMPMetrics).
-     * @param {Object} msg - The forwarded message.
-     * @param {WebSocket} ws - The WebSocket instance.
-     */
     handleForwardedMessage(msg, ws) {
         this.handler.OnHandle(ws, msg);
     }
 
-    /**
-     * Cleans up module-specific resources (database connection, trap receiver).
-     * @override
-     */
     cleanupModule() {
         if (this.db) {
             this.db.Disconnect();
