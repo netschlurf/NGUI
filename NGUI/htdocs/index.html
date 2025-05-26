@@ -1,377 +1,306 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TreeGrid mit Fancytree</title>
-<!-- Tailwind CSS CDN -->
-<script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NGUI Demo</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="ngui/3p/tailwind/tailwind.js"></script>
 
-<!-- jQuery -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-<!-- Fancytree -->
-<link href="https://cdn.jsdelivr.net/npm/jquery.fancytree/dist/skin-win8/ui.fancytree.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/jquery.fancytree/dist/jquery.fancytree-all-deps.min.js"></script>
+  <!-- jQuery UI -->
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
+  <!-- Fancytree -->
+  <link href="ngui/3p/fancytree/ui.fancytree.min.css" rel="stylesheet" />
+  <script src="ngui/3p/fancytree/jquery.fancytree-all-deps.min.js"></script>
 
+  <!-- NGUI Scripts -->
+  <script src="ngui/NGUIConnection.js"></script>
+  <script src="ngui/NGUIModalTailwind.js"></script>
+  <script src="ngui/NGUIWindow.js"></script>
+  <script src="ngui/NGUItree.js"></script>
 
-<script src="ngui/NGUIConnection.js"></script>
-<script src="ngui/NGUIModalTailwind.js"></script>
-<script src="ngui/NGUIWindow.js"></script>
-
-<style>
-  /* Grundlegendes Layout und Schriftfamilie für die gesamte Seite */
-  html, body {
-    height: 100%;
-    margin: 0;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  }
-
-  /* Grid-Layout: linker Bereich (Tree), splitter vertikal, rechter Bereich oben und unten mit horizontalem Splitter */
-  #container {
-    display: grid;
-  grid-template-columns: 280px 5px 1fr;
-  grid-template-rows: 170px 5px 1fr;
-  height: 100vh;
-  gap: 0;
-    
-  }
-
-  /* Baum-Tabelle links, volle Höhe, flex column für bessere Steuerung */
-  #tree-container {
-    grid-column: 1 / 2;
-    grid-row: 1 / 4;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* Vertikaler Splitter zwischen Tree und rechter Seite */
-  #splitter-vertical {
-    grid-column: 2 / 3;
-    grid-row: 1 / 4;
-    background: #ddd;
-    cursor: col-resize;
-  }
-
-  /* Rechter Bereich oben mit Rahmen unten und Padding */
-  #right-top {
-    grid-column: 3 / 4;
-    grid-row: 1 / 2;
-    border-bottom: 1px solid #ccc;
-    overflow: auto;
-    padding: 8px;
-  }
-
-  /* Horizontaler Splitter zwischen rechtem oberen und unteren Bereich */
-  #splitter-horizontal {
-    grid-column: 3 / 4;
-    grid-row: 2 / 3;
-    background: #ddd;
-    cursor: row-resize;
-  }
-
-  /* Rechter Bereich unten mit Padding und Scroll */
-  #right-bottom {
-    grid-column: 3 / 4;
-    grid-row: 3 / 4;
-    overflow: auto;
-    padding: 8px;
-  }
-
-  /* Tabelle für TreeGrid - Tabellenlayout und Formatierung */
-  #tree {
-    border-collapse: collapse;
-    width: 100%;
-    table-layout: fixed;
-  }
-
-  /* Tabellenkopf mit Hintergrund, Padding, Schriftgröße und Linien */
-  #tree thead th {
-    background: #f3f4f6; /* Tailwind slate-100 */
-    padding: 4px 8px;
-    font-weight: 600;
-    text-align: left;
-    font-size: 0.875rem;
-    border-bottom: 0px solid #ccc;
-  }
-
-  span.fancytree-title {
-    border: 0px !important;
-    border-style: none !important;
-  }
-
-  /* Zeilen im tbody mit Pointer-Cursor und Schriftgröße */
-  #tree tbody tr {
-    cursor: pointer;
-    font-size: 0.875rem;
-  }
-
-  /* Kein Highlight bei ausgewähltem Eintrag */
-  #tree tbody tr.fancytree-selected {
-    background-color: transparent !important;
-  }
-
-  /* Sanfter Hover-Effekt für Zeilen */
-  #tree tbody tr:hover {
-    background-color: #f9fafb; /* Tailwind gray-50 */
-    transition: background-color 0.3s ease;
-  }
-
-  /* Tabellenzellen mit Padding und Textüberlauf */
-  #tree tbody td {
-    padding: 2px 6px;
-    vertical-align: middle;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* Fancytree Expander (Pfeil) kompakter und mit kleinerem Abstand */
-  .fancytree-expander {
-    width: 14px !important;
-    height: 14px !important;
-    margin-right: 2px !important;
-  }
-
-  /* Knoten-Titel kompakter, kein Padding, kleinere Zeilenhöhe und Schriftgröße */
-  .fancytree-title {
-    padding: 0 !important;
-    line-height: 1.25rem !important;
-    font-size: 0.875rem !important;
-    border: 0 !important; /* Kein Rahmen */
-  }
-
-  /* Fancytree-Icons kompakter mit kleinerer Größe und Abstand */
-  .fancytree-icon {
-    width: 16px !important;
-    height: 16px !important;
-    margin-right: 4px !important;
-  }
-
-  /* Pfeil nur bei Elternknoten anzeigen */
-  .fancytree-expander:empty {
-    width: 14px !important;
-  }
-</style>
-</head>
-<body>
-<div id="container">
-  <div id="tree-container">
-    <div>
-      <div class="p-4 pb-2">
-  <h1 class="text-xl font-bold text-gray-800 mb-1 flex items-center gap-2">
-    <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-    </svg>
-     Explorer Dashboard
-  </h1>
-  <div class="flex items-center gap-2">
-    <img src="https://ui-avatars.com/api/?name=Max+Mustermann&background=0D8ABC&color=fff" alt="Avatar" class="w-8 h-8 rounded-full shadow">
-    <span class="text-sm text-gray-600 font-medium">Max Mustermann</span>
-  </div>
-</div>
-    </div>
-    <table id="tree" class="fancytree-ext-table">
-      <thead>
-        <tr>
-          <th style="width: 80px;  text-align: right; font-size:small; font-weight: lighter">Name</th>
-          <th style="width: 80px;  text-align: right; font-size:small; font-weight: lighter;">Laufzeit (ms)</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-  <div id="splitter-vertical"></div>
-  <div id="right-top">
-    <div id="bereich1"></div>
-  </div>
-  <div id="splitter-horizontal"></div>
-  <div id="right-bottom">
-    <div id="bereich2"></div>
-  </div>
-</div>
-
-<script>
-$(function() {
-  // Fancytree Setup
-  $("#tree").fancytree({
-    extensions: ["table", "glyph"],
-    glyph: {
-      preset: "awesome5",
-      map: {
-        // Flat folder icons mit FontAwesome 4 Glyphen
-        folder: "fa fa-folder-o",
-        folderOpen: "fa fa-folder-open-o",
-        document: "fa fa-file-o"
-      }
-    },
-    table: {
-      indentation: 16,   // Einrückung
-      nodeColumnIdx: 0,  // Name in Spalte 0
-      checkboxColumnIdx: null,
-      widthFixed: true
-    },
-    source: [
-      {
-        title: "Testlauf 1",
-        folder: true,
-        expanded: false,
-        Laufzeit: 1234,
-        children: [
-          {title: "Test 1.1", Laufzeit: 234},
-          {
-            title: "Test 1.2",
-            folder: true,
-            Laufzeit: 111,
-            children: [
-              {title: "Test 1.2.1", Laufzeit: 42},
-              {title: "Test 1.2.2", Laufzeit: 53}
-            ]
-          }
-        ]
-      },
-      {
-        title: "Testlauf 2",
-        folder: true,
-        Laufzeit: 987,
-        children: [
-          {title: "Test 2.1", Laufzeit: 333},
-          {title: "Test 2.2", Laufzeit: 666}
-        ]
-      },
-      {title: "Einzeltest", Laufzeit: 42}
-    ],
-    renderColumns: function(event, data) {
-      var node = data.node,
-          $tdList = $(node.tr).find(">td");
-
-      // Laufzeit in Spalte 1 rechtsbündig anzeigen
-      $tdList.eq(1).text(node.data.Laufzeit !== undefined ? node.data.Laufzeit : "");
-    },
-    click: function(event, data) {
-        OnNodeClick(data)
-      // Nur Knoten öffnen/schließen wenn Expander (Pfeil) geklickt
-      if($(event.target).closest(".fancytree-expander").length){
-        data.node.toggleExpanded();
-        
-        return false; // Default Handling verhindern
-      }
-      // Kein Selection Highlight bei Klick
+  <style>
+    /* Grundlegendes Layout und Schriftfamilie für die gesamte Seite */
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     }
-  });
+
+    .colorFull {
+      color: #cc1168 !important; /* Tailwind blue-600 */
+    }
+
+    /* Grid-Layout: linker Bereich (Tree), splitter vertikal, rechter Bereich oben und unten mit horizontalem Splitter */
+    #container {
+      display: grid;
+      grid-template-columns: 280px 5px 1fr;
+      grid-template-rows: 170px 5px 1fr;
+      height: 100vh;
+      gap: 0;
+    }
+
+    /* Baum-Tabelle links, volle Höhe, flex column für bessere Steuerung */
+    #tree-container {
+      grid-column: 1 / 2;
+      grid-row: 1 / 4;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Vertikaler Splitter zwischen Tree und rechter Seite */
+    #splitter-vertical {
+      grid-column: 2 / 3;
+      grid-row: 1 / 4;
+      background: #ddd;
+      cursor: col-resize;
+    }
+
+    /* Rechter Bereich oben mit Rahmen unten und Padding */
+    #right-top {
+      grid-column: 3 / 4;
+      grid-row: 1 / 2;
+      border-bottom: 1px solid #ccc;
+      overflow: auto;
+      padding: 8px;
+    }
+
+    /* Horizontaler Splitter zwischen rechtem oberen und unteren Bereich */
+    #splitter-horizontal {
+      grid-column: 3 / 4;
+      grid-row: 2 / 3;
+      background: #ddd;
+      cursor: row-resize;
+    }
+
+    /* Rechter Bereich unten mit Padding und Scroll */
+    #right-bottom {
+      grid-column: 3 / 4;
+      grid-row: 3 / 4;
+      overflow: auto;
+      padding: 8px;
+    }
+
+    /* Tabelle für TreeGrid - Tabellenlayout und Formatierung */
+    #treegrid {
+      border-collapse: collapse;
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    /* Tabellenkopf mit Hintergrund, Padding, Schriftgröße und Linien */
+    #treegrid thead th {
+      background: #f3f4f6; /* Tailwind slate-100 */
+      padding: 4px 8px;
+      font-weight: 600;
+      text-align: left;
+      font-size: 0.875rem;
+      border-bottom: 0px solid #ccc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-sizing: border-box;
+      width: 150px; /* Default width, overridden by resizing */
+      position: relative; /* Required for resizable handles */
+    }
+
+    /* Tabellenzellen mit Padding und Textüberlauf */
+    #treegrid tbody td {
+      padding: 2px 6px;
+      vertical-align: middle;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 150px; /* Default width, overridden by resizing */
+      box-sizing: border-box;
+    }
+
+    /* Style for resizable handle */
+    .ui-resizable-e {
+      width: 5px;
+      background: #ccc;
+      cursor: ew-resize;
+    }
+
+    /* Fancytree Expander (Pfeil) kompakter und mit kleinerem Abstand */
+    .fancytree-expander {
+      width: 14px !important;
+      height: 14px !important;
+      margin-right: 2px !important;
+    }
+
+    /* Knoten-Titel kompakter, kein Padding, kleinere Zeilenhöhe und Schriftgröße */
+    .fancytree-title {
+      padding: 0 !important;
+      line-height: 1.25rem !important;
+      font-size: 0.875rem !important;
+      border: 0 !important; /* Kein Rahmen */
+    }
+
+    /* Fancytree-Icons kompakter mit kleinerer Größe und Abstand */
+    .fancytree-icon {
+      width: 16px !important;
+      height: 16px !important;
+      margin-right: 4px !important;
+    }
+
+    /* Pfeil nur bei Elternknoten anzeigen */
+    .fancytree-expander:empty {
+      width: 14px !important;
+    }
+
+    /* Zeilen im tbody mit Pointer-Cursor und Schriftgröße */
+    #treegrid tbody tr {
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+
+    /* Kein Highlight bei ausgewähltem Eintrag */
+    #treegrid tbody tr.fancytree-selected {
+      background-color: transparent !important;
+    }
+
+    /* Sanfter Hover-Effekt für Zeilen */
+    #treegrid tbody tr:hover {
+      background-color: #f9fafb; /* Tailwind gray-50 */
+      transition: background-color 0.3s ease;
+    }
+
+    /* Remove duplicate #tree styles */
+    span.fancytree-title {
+      border: 0px !important;
+      border-style: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="container">
+    <div id="tree-container">
+      <div>
+        <div class="p-4 pb-2">
+          <h1 class="text-xl font-bold text-gray-800 mb-1 flex items-center gap-2">
+            <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Explorer Dashboard
+          </h1>
+          <div class="flex items-center gap-2">
+            <img src="https://ui-avatars.com/api/?name=Max+Mustermann&background=0D8ABC&color=fff" alt="Avatar"
+              class="w-8 h-8 rounded-full shadow">
+            <span class="text-sm text-gray-600 font-medium">Max Mustermann</span>
+          </div>
+        </div>
+      </div>
+<div class="flex gap-2 mb-2 btn-group text-xs">
+<button style="width: 130px;" class="px-2 py-1 bg-gray-700 text-white rounded hover:bg-gray-800" onclick="window.tree.HighLightNode('6')">Highlight</button>
+<hr><button style="width: 130px;" class="px-2 py-1 bg-gray-700 text-white rounded hover:bg-gray-800" onclick="window.tree.ExpandNode('8')">Expand</button>
+<hr><button style="width: 130px;" class="px-2 py-1 bg-gray-700 text-white rounded hover:bg-gray-800" onclick="window.tree.CollapsNode('8')">Collapse</button>
+</div>      
+      <table id="treegrid" class="fancytree-ext-table"></table>
+
+    </div>
+    <div id="splitter-vertical"></div>
+    <div id="right-top">
+      <div id="bereich1"></div>
+    </div>
+    <div id="splitter-horizontal"></div>
+    <div id="right-bottom">
+      <div id="bereich2"></div>
+    </div>
+  </div>
+
+  <script>
+    // guckst du:
+    // https://www.william-troup.com/jsontree-js/examples/themes.html
 
 
-  function OnNodeClick(data)
-  {
+    // Splitter-Logik für vertikal
+    const container = document.getElementById("container");
+    const splitterV = document.getElementById("splitter-vertical");
+    let isResizingV = false;
+    splitterV.addEventListener("mousedown", e => {
+      isResizingV = true;
+      document.body.style.cursor = "col-resize";
+    });
+    window.addEventListener("mouseup", e => {
+      isResizingV = false;
+      document.body.style.cursor = "default";
+    });
+    window.addEventListener("mousemove", e => {
+      if (!isResizingV) return;
+      let newWidth = e.clientX;
+      if (newWidth < 150) newWidth = 150;
+      if (newWidth > window.innerWidth - 150) newWidth = window.innerWidth - 150;
+      container.style.gridTemplateColumns = `${newWidth}px 5px 1fr`;
+    });
 
-  }
+    // Splitter-Logik für horizontal
+    const splitterH = document.getElementById("splitter-horizontal");
+    let isResizingH = false;
+    splitterH.addEventListener("mousedown", e => {
+      isResizingH = true;
+      document.body.style.cursor = "row-resize";
+    });
+    window.addEventListener("mouseup", e => {
+      isResizingH = false;
+      document.body.style.cursor = "default";
+    });
+    window.addEventListener("mousemove", e => {
+      if (!isResizingH) return;
+      let newHeight = e.clientY;
+      const containerRect = container.getBoundingClientRect();
+      let maxHeight = containerRect.height - 150;
+      if (newHeight < containerRect.top + 100) newHeight = containerRect.top + 100;
+      if (newHeight > containerRect.top + maxHeight) newHeight = containerRect.top + maxHeight;
+      const topRowHeight = newHeight - containerRect.top;
+      const bottomRowHeight = containerRect.height - topRowHeight - 5;
+      container.style.gridTemplateRows = `${topRowHeight}px 5px ${bottomRowHeight}px`;
+    });
 
+    var g_NGUI = new NGUIClient();
+    g_NGUI.Connect("ws://localhost:2808", OnAppOpen);
+    var g_DB = g_NGUI.GetDbClient();
 
-
-  // Splitter-Logik für vertikal
-  const container = document.getElementById("container");
-  const splitterV = document.getElementById("splitter-vertical");
-  let isResizingV = false;
-  splitterV.addEventListener("mousedown", e => {
-    isResizingV = true;
-    document.body.style.cursor = "col-resize";
-  });
-  window.addEventListener("mouseup", e => {
-    isResizingV = false;
-    document.body.style.cursor = "default";
-  });
-  window.addEventListener("mousemove", e => {
-    if (!isResizingV) return;
-    let newWidth = e.clientX;
-    if(newWidth < 150) newWidth = 150;
-    if(newWidth > window.innerWidth - 150) newWidth = window.innerWidth - 150;
-    container.style.gridTemplateColumns = `${newWidth}px 5px 1fr`;
-  });
-
-  // Splitter-Logik für horizontal
-  const splitterH = document.getElementById("splitter-horizontal");
-  let isResizingH = false;
-  splitterH.addEventListener("mousedown", e => {
-    isResizingH = true;
-    document.body.style.cursor = "row-resize";
-  });
-  window.addEventListener("mouseup", e => {
-    isResizingH = false;
-    document.body.style.cursor = "default";
-  });
-  window.addEventListener("mousemove", e => {
-    if (!isResizingH) return;
-    let newHeight = e.clientY;
-    const containerRect = container.getBoundingClientRect();
-    let maxHeight = containerRect.height - 150;
-    if(newHeight < containerRect.top + 100) newHeight = containerRect.top + 100;
-    if(newHeight > containerRect.top + maxHeight) newHeight = containerRect.top + maxHeight;
-    const topRowHeight = newHeight - containerRect.top;
-    const bottomRowHeight = containerRect.height - topRowHeight - 5;
-    container.style.gridTemplateRows = `${topRowHeight}px 5px ${bottomRowHeight}px`;
-  });
-});
-
-var g_NGUI = new NGUIClient();
-g_NGUI.Connect("ws://localhost:2808", OnAppOpen);
-var g_DB = g_NGUI.GetDbClient();
-
-function OnAppOpen()
-{
-  console.log("App opened");
-  g_NGUI.LoadPage("NGUI_kitchensink.html", "right-bottom", null);
-  g_NGUI.LoadPage("NGUI_DemoTop.html", "right-top", null);
-  g_NGUI.LoadResource("NGUI_DemoTree.json", null, OnJSON);
-}
-
-
-
-function jsonToFancyTree(data) {
-        const result = [];
-
-        for (const [key, value] of Object.entries(data)) {
-            const node = {
-                title: key,
-                key: key,
-                children: []
-            };
-
-            for (const [sectionKey, sectionValue] of Object.entries(value)) {
-                if (typeof sectionValue === 'object' && !Array.isArray(sectionValue)) {
-                    const child = {
-                        title: sectionKey,
-                        key: key + "_" + sectionKey,
-                        children: Object.entries(sectionValue).map(([k, v]) => ({
-                            title: `${k}: ${Array.isArray(v) ? v.join(", ") : v}`,
-                            key: `${key}_${sectionKey}_${k}`
-                        }))
-                    };
-                    node.children.push(child);
-                }
-            }
-
-            result.push(node);
-        }
-
-        return result;
-    }  
-
-function OnJSON(data)
-  {
-    var converted = jsonToFancyTree(JSON.parse(data.data));
-    const tree = $("#tree").fancytree("getTree");
-
-    tree.reload(converted);    
-  }
-
-  function OnNodeClick(data)
-  {
-    console.log("Node clicked:", data.node.title);
+    function OnAppOpen() {
+      console.log("App opened");
+      g_NGUI.LoadPage("NGUI_kitchensink.html", "right-bottom", null);
+      g_NGUI.LoadPage("NGUI_DemoTop.html", "right-top", null);
+      g_NGUI.LoadResource("NGUI_DemoTree.json", null, OnJSON);
+    }
     
-  }
+    function SelectTreeCfg()
+    {
+          window.tree.setConfig(treeConfigs.material);
+          window.tree.setData(window.parsedData);      
+    }
 
-</script>
+    function OnJSON(data) {
+      try {
+        window.parsedData = JSON.parse(data.data);
+        console.log("Parsed JSON:", parsedData);
+
+        window.tree = new NGUITree('#treegrid', {
+          columns: [
+            { title: 'mass', field: 'mass', dataSource: 'data', formatter: (value) => value !== undefined ? value : '' },
+          ],
+          onNodeClick: (data) => {
+            console.log('Node clicked:', data.node.title, data.node.data);
+          },
+        });
+
+        window.tree.setData(parsedData);
+      } catch (error) {
+        console.error('Error parsing JSON:', error);
+      }
+    }
+  </script>
 </body>
 </html>

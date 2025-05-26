@@ -1,73 +1,159 @@
 {
-  "name": "Galaxie Zeta",
+  "label": "Galaxie Zeta",
+  "id": "1",
   "type": "galaxy",
+  "data": {
+    "size": "500.000 Lichtjahre",
+    "description": "Eine weit entfernte Spiralgalaxie voller Leben und Mysterien"
+  },
   "children": [
     {
-      "name": "Sonnensystem Alpha",
+      "label": "Sonnensystem Alpha",
+      "id": "2",
       "type": "solar_system",
+      "data": {
+        "age": "6 Milliarden Jahre",
+        "star_type": "Gelber Zwerg"
+      },
       "children": [
         {
-          "name": "Planet Ares",
+          "label": "Planet Ares",
+          "id": "3",
           "type": "planet",
+          "data": {
+            "mass": "0.8 Erdmassen",
+            "has_life": false,
+            "orbit_period": "420 Tage"
+          },
           "children": [
             {
-              "name": "Mond Phobos",
-              "type": "moon"
+              "label": "Mond Phobos",
+              "id": "4",
+              "type": "moon",
+              "data": {
+                "radius": "11 km",
+                "composition": "Gestein"
+              },
+              "children": []
             },
             {
-              "name": "Mond Deimos",
-              "type": "moon"
+              "label": "Mond Deimos",
+              "id": "5",
+              "type": "moon",
+              "data": {
+                "radius": "6 km",
+                "orbital_speed": "1.35 km/s"
+              },
+              "children": []
             }
           ]
         },
         {
-          "name": "Planet Gaia",
+          "label": "Planet Gaia",
+          "id": "6",
           "type": "planet",
+          "data": {
+            "mass": "1.0 Erdmassen",
+            "has_life": true,
+            "atmosphere": "Stickstoff-Sauerstoff"
+          },
           "children": [
             {
-              "name": "Mond Selene",
-              "type": "moon"
+              "label": "Mond Selene",
+              "id": "7",
+              "type": "moon",
+              "data": {
+                "tidal_locked": true,
+                "surface_temp": "-53°C"
+              },
+              "children": []
             }
           ]
         }
       ]
     },
     {
-      "name": "Sonnensystem Beta",
+      "label": "Sonnensystem Beta",
+      "id": "8",
       "type": "solar_system",
+      "data": {
+        "age": "4.5 Milliarden Jahre",
+        "star_type": "Roter Riese"
+      },
       "children": [
         {
-          "name": "Planet Kronos",
+          "label": "Planet Kronos",
+          "id": "9",
           "type": "planet",
+          "data": {
+            "mass": "318 Erdmassen",
+            "rings": true,
+            "gravity": "24.79 m/s²"
+          },
           "children": [
             {
-              "name": "Mond Titan",
-              "type": "moon"
+              "label": "Mond Titan",
+              "id": "10",
+              "type": "moon",
+              "data": {
+                "atmosphere": "Dicht, Methanreich",
+                "surface_liquid": true
+              },
+              "children": []
             },
             {
-              "name": "Mond Rhea",
-              "type": "moon"
+              "label": "Mond Rhea",
+              "id": "11",
+              "type": "moon",
+              "data": {
+                "surface_ice": true,
+                "radius": "763 km"
+              },
+              "children": []
             }
           ]
         },
         {
-          "name": "Planet Hyperion",
+          "label": "Planet Hyperion",
+          "id": "12",
           "type": "planet",
+          "data": {
+            "mass": "14 Erdmassen",
+            "axis_tilt": "98°",
+            "notes": "Chaotische Rotation"
+          },
           "children": []
         }
       ]
     },
     {
-      "name": "Sonnensystem Gamma",
+      "label": "Sonnensystem Gamma",
+      "id": "13",
       "type": "solar_system",
+      "data": {
+        "age": "7 Milliarden Jahre",
+        "star_type": "Blauer Riese"
+      },
       "children": [
         {
-          "name": "Planet Vulcan",
+          "label": "Planet Vulcan",
+          "id": "14",
           "type": "planet",
+          "data": {
+            "temperature": "430°C",
+            "volcanic_activity": "Extrem",
+            "day_length": "200 Erdtage"
+          },
           "children": [
             {
-              "name": "Mond Ignis",
-              "type": "moon"
+              "label": "Mond Ignis",
+              "id": "15",
+              "type": "moon",
+              "data": {
+                "lava_lakes": true,
+                "diameter": "1.200 km"
+              },
+              "children": []
             }
           ]
         }
