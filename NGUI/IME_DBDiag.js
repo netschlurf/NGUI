@@ -170,16 +170,6 @@ function runTests() {
   db.DpTypeDelete('DeviceType');
   //assert(!db.DpTypeExists('DeviceType'), 'DeviceType should be deleted');
 
-  if(!db.DpExists("cnt"))
-    db.DpCreate('cnt', 'number');
-  db.DpSet("cnt", 69);
-  var test = db.DpGet("cnt");
-  db.DpSet("cnt", 70);
-
-  db.DpTypeCreate('DeviceType', deviceStructure);
-  let obj = db.DpCreate('MyDevice', 'DeviceType');
-  db.DpSet("MyDevice.DeviceID", "SChinkem");
-  db.DpDelete('MyDevice');
 
   // Test 12: Disconnect
   console.log('Test 12: Disconnect');

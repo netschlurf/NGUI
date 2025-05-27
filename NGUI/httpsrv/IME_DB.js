@@ -52,10 +52,12 @@ class IME_Sqlite3DB extends IME_DB {
   #callbacks = new Map();
   #dpIdentificationTable = new Map(); // path -> { id, type_id, value_type, dpType }
   #dpTypeIdentificationTable = new Map(); // typeName -> { id, dpType }
+  #updateStmt; // Für Cached Prepared Statement
 
   constructor(dbPath) {
     super();
     this.dbPath = dbPath;
+    this.#updateStmt = null;
   }
 
   get _dpIdentificationTableInternal() {
@@ -66,11 +68,18 @@ class IME_Sqlite3DB extends IME_DB {
     return this.#dpTypeIdentificationTable;
   }
 
-  Connect() {
+Connect() {
     try {
       this.#db = new Database(this.dbPath);
+      this.#db.exec('PRAGMA journal_mode=WAL'); // WAL aktivieren
+      this.#db.exec('PRAGMA synchronous=NORMAL'); // Synchronisation optimieren      
       this.#createTables();
       this.#loadCaches();
+      this.#updateStmt = this.#db.prepare(`
+        UPDATE DataPoints
+        SET value = ?, value_type = ?, tstamp = ?
+        WHERE id = ?
+      `);
     } catch (err) {
       throw new Error(`Failed to connect to database: ${err.message}`);
     }
@@ -80,6 +89,7 @@ class IME_Sqlite3DB extends IME_DB {
     if (this.#db) {
       this.#db.close();
       this.#db = null;
+      this.#updateStmt = null;
       this.#callbacks.clear();
       this.#dpIdentificationTable.clear();
       this.#dpTypeIdentificationTable.clear();
@@ -303,30 +313,23 @@ class IME_Sqlite3DB extends IME_DB {
     return this.#dpTypeIdentificationTable.has(typeName);
   }
 
-  DpSet(name, value) {
+DpSet(name, value) {
     const entry = this.#dpIdentificationTable.get(name);
     if (!entry) {
       throw new Error(`DataPoint '${name}' does not exist`);
     }
-
     if (entry.dpType === DpType.STRUCT) {
       throw new Error(`Cannot set value for struct type '${name}'`);
     }
-
     const expectedType = this.#valueTypeToJsType(entry.value_type);
     if (expectedType && typeof value !== expectedType) {
       throw new Error(`Type mismatch for '${name}': expected ${expectedType}, got ${typeof value}`);
     }
 
-    const updateStmt = this.#db.prepare(`
-      UPDATE DataPoints
-      SET value = ?, value_type = ?, tstamp = strftime('%s', 'now')
-      WHERE id = ?
-    `);
-
     const value_type = entry.value_type || this.#jsTypeToValueType(typeof value);
     const dbValue = value_type === ValueType.BOOLEAN ? (value ? 1 : 0) : value;
-    const success = updateStmt.run(dbValue, value_type, entry.id);
+    const tstamp = Math.floor(Date.now() / 1000);
+    const success = this.#updateStmt.run(dbValue, value_type, tstamp, entry.id);
 
     if (success.changes === 1) {
       this.#dpIdentificationTable.set(name, { ...entry, value_type });
@@ -421,10 +424,12 @@ class IME_Sqlite3DB extends IME_DB {
 
   DpConnect(name, callback) {
     this.#callbacks.set(name, callback);
+    return true;
   }
 
   DpDisconnect(name) {
     this.#callbacks.delete(name);
+    return true;
   }
 
   DpDelete(name) {
@@ -443,6 +448,7 @@ class IME_Sqlite3DB extends IME_DB {
       this.#callbacks.delete(name);
     });
     transaction();
+    return true;
   }
 
   DpNames(typeName = null, pattern = null) {
@@ -503,6 +509,7 @@ class IME_Sqlite3DB extends IME_DB {
       this.#dpTypeIdentificationTable.delete(typeName);
     });
     transaction();
+    return true;
   }
 }
 

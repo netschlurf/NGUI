@@ -352,7 +352,7 @@ class NGUI {
         // Try local handlers first
         for (const handler of this.handlers) {
             if (handler.OnHandle(ws, msg)) {
-                return;
+                return true;
             }
         }
         var bFound = false;

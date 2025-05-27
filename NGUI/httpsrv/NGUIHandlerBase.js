@@ -10,7 +10,8 @@ class NGUIHandlerBase {
      * @param {string} [err] - The error code, if any.
      */
     sendResponse(ws, msg, data, err = null) {
-        data.originalWsId = msg.originalWsId;
+        if(msg.originalWsId)
+            data.originalWsId = msg.originalWsId;
         const response = {
             data,
             args: msg.args || null,

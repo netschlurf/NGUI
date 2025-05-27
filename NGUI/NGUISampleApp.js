@@ -13,8 +13,8 @@ ngui.start();
 var counter = 0;
 function Cyclic()
 {
-    imeDB.DpSet("myCounter", counter);
-    var test = imeDB.DpGet("myCounter");
+    //imeDB.DpSet("myCounter", counter);
+    //var test = imeDB.DpGet("myCounter");
     setTimeout(Cyclic,10000);
     counter++;
 }

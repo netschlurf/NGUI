@@ -25,9 +25,10 @@ class IME_DBHandler extends NGUIHandlerBase {
      */
     OnHandle(ws, msg) {
         if (this.commandMap[msg.cmd]) {
-            this.commandMap[msg.cmd](msg, ws);
-            return;
+             this.commandMap[msg.cmd](msg, ws);
+             return true;
         }
+        return false;
     }
 
     /**
@@ -74,7 +75,6 @@ class IME_DBHandler extends NGUIHandlerBase {
         if (!msg.args || !msg.args.type) {
             const rsp = {cmd: msg.cmd, type: msg.args?.type ?? null, rc: 300};
             this.sendResponse(ws, msg, null, rsp);
-            return;
         }
 
         try {
@@ -86,6 +86,7 @@ class IME_DBHandler extends NGUIHandlerBase {
             const rsp = {cmd: msg.cmd, type: msg.args.type, rc: 400};
             this.sendResponse(ws, msg, null, rsp);
         }
+        return true;
     }    
 
     /**
@@ -113,6 +114,7 @@ class IME_DBHandler extends NGUIHandlerBase {
             const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, rc: 400};
             this.sendResponse(ws, msg, null, rsp);
         }
+        return true;
     }    
 
     /**
@@ -130,6 +132,7 @@ class IME_DBHandler extends NGUIHandlerBase {
         try {
             const data = {cmd: msg.cmd, dpName: msg.args.dpName, value: this.db.DpGet(msg.args.dpName)};
             this.sendResponse(ws, msg, data);
+            return true;
         } catch (err) {
             console.error('Error getting data point:', err);
             this.sendResponse(ws, msg, null, 'Error getting data point');
@@ -152,6 +155,7 @@ class IME_DBHandler extends NGUIHandlerBase {
             this.db.DpSet(msg.args.dpName, msg.args.value);
             const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, rc: 200};
             this.sendResponse(ws, msg, rsp);
+            return true;
         } catch (err) {
             const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, rc: 400};
             this.sendResponse(ws, msg, null, rsp);
@@ -202,12 +206,14 @@ class IME_DBHandler extends NGUIHandlerBase {
             // Add the connection
             this.DpConnectionMap.get(dpName).push({msg: msg, ws: ws});
             const rsp = {cmd: msg.cmd, dpName: dpName, value: this.db.DpGet(dpName), rc: 200};
-            this.sendResponse(ws, msg, rsp);         
+            this.sendResponse(ws, msg, rsp);        
         } catch (err) {
             console.error('Error in DpConnect:', err);
             const rsp = {cmd: msg.cmd, dpName: dpName, rc: 400};
             this.sendResponse(ws, msg, null, rsp);
+            
         }
+        return true;
     }
 
     /**
@@ -244,20 +250,24 @@ class IME_DBHandler extends NGUIHandlerBase {
                     this.db.DpDisconnect(dpName, (data) => {
                         const rsp = {cmd: msg.cmd, dpName: dpName, value: this.db.DpGet(dpName), rc: 200};
                         this.sendResponse(ws, msg, rsp);
+                        return true;
                     });
                 } else {
                     const rsp = {cmd: msg.cmd, dpName: dpName, rc: 200};
                     this.sendResponse(ws, msg, rsp);
+                    return true;
                 }
             } else {
                 const rsp = {cmd: msg.cmd, dpName: dpName, rc: 200};
                 this.sendResponse(ws, msg, rsp);
+                return true;
             }
         } catch (err) {
             console.error('Error in DpDisconnect:', err);
             const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, rc: 400};
             this.sendResponse(ws, msg, null, rsp);
         }
+        return true;
     }
 
     /**
@@ -266,19 +276,19 @@ class IME_DBHandler extends NGUIHandlerBase {
      * @param {WebSocket} ws - The WebSocket instance.
      */
     DpCreate(msg, ws) {
-        if (!msg.args || !msg.args.name || !msg.args.type) {
+        if (!msg.args || !msg.args.dpName || !msg.args.type) {
             const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, rc: 300};
             this.sendResponse(ws, msg, null, rsp);
-            return;
         }
 
         try {
-            const dataPoint = this.db.DpCreate(msg.args.name, msg.args.type);
+            const dataPoint = this.db.DpCreate(msg.args.dpName, msg.args.type);
             this.sendResponse(ws, msg, {name: dataPoint.name, type: dataPoint.typeName});
         } catch (err) {
             console.error('Error creating data point:', err);
             this.sendResponse(ws, msg, null, 'Error creating data point');
         }
+        return true;
     }
 
     /**
