@@ -1,64 +1,76 @@
 const Database = require('better-sqlite3');
 
+const ValueType = {
+  STRING: 1,
+  NUMBER: 2,
+  BOOLEAN: 3
+};
+
+const DpType = {
+  STRING: 1,
+  NUMBER: 2,
+  BOOLEAN: 3,
+  STRUCT: 4
+};
+
 class IME_DB {
   Connect() { throw new Error('Connect method must be implemented by subclass'); }
   Disconnect() { throw new Error('Disconnect method must be implemented by subclass'); }
-  DpCreate(name, typ) { throw new Error('DpCreate method must be implemented by subclass'); }
+  DpCreate(name, typeName) { throw new Error('DpCreate method must be implemented by subclass'); }
   DpDelete(name) { throw new Error('DpDelete method must be implemented by subclass'); }
   DpSet(name, value) { throw new Error('DpSet method must be implemented by subclass'); }
   DpGet(name) { throw new Error('DpGet method must be implemented by subclass'); }
   DpConnect(name, callback) { throw new Error('DpConnect method must be implemented by subclass'); }
   DpDisconnect(name, callback) { throw new Error('DpDisconnect method must be implemented by subclass'); }
-  DpTypeCreate(jsonDescription) { throw new Error('DpTypeCreate method must be implemented by subclass'); }
+  DpTypeCreate(name, description) { throw new Error('DpTypeCreate method must be implemented by subclass'); }
   DpTypeDelete(typeName) { throw new Error('DpTypeDelete method must be implemented by subclass'); }
 
-/**
-   * Prüft, ob ein Datenpunktname oder Typname gültig ist.
-   * Erlaubt: Buchstaben (a-z, A-Z), Zahlen (0-9), Bindestrich (-), Unterstrich (_).
-   * Verboten: Sonderzeichen (z.B. Punkt, Stern), Leerzeichen, leerer Name.
-   * 
-   * @param {string} name - Zu prüfender Name
-   * @returns {boolean} - true, wenn der Name gültig ist, sonst false
-   */
   isValidDpName(name) {
     if (!name || typeof name !== 'string') return false;
-    // Nur Buchstaben, Zahlen, - und _ erlaubt
-    return /^[a-zA-Z0-9_-]+$/.test(name);
+    return /^[a-zA-Z0-9_.-]+$/.test(name);
   }
 
-  /**
-   * Wandelt einen beliebigen String in einen gültigen Datenpunktnamen um.
-   * - Ersetzt ungültige Zeichen durch '_'.
-   * - Entfernt führende/trailing ungültige Zeichen.
-   * - Gibt 'default_dp' zurück, wenn das Ergebnis leer ist.
-   * 
-   * @param {string} name - Eingabename
-   * @returns {string} - Gültiger Datenpunktname
-   */
   sanitizeDpName(name) {
     if (!name || typeof name !== 'string') return 'default_dp';
-    // Ersetze ungültige Zeichen durch _, entferne führende/trailing _
     let sanitized = name
-      .replace(/[^a-zA-Z0-9_-]/g, '_') // Alles außer erlaubten Zeichen wird _
-      .replace(/^_+|_+$/g, ''); // Entferne führende/trailing _
-    // Wenn leer oder nur ungültige Zeichen, gib Standardname zurück
+      .replace(/[^a-zA-Z0-9_.-]/g, '_')
+      .replace(/^_+|_+$/g, '');
     return sanitized.length > 0 ? sanitized : 'default_dp';
-  }  
+  }
+
+  get _dpIdentificationTable() {
+    return this._dpIdentificationTableInternal;
+  }
+
+  get _dpTypeIdentificationTable() {
+    return this._dpTypeIdentificationTableInternal;
+  }
 }
 
 class IME_Sqlite3DB extends IME_DB {
   #db;
   #callbacks = new Map();
+  #dpIdentificationTable = new Map(); // path -> { id, type_id, value_type, dpType }
+  #dpTypeIdentificationTable = new Map(); // typeName -> { id, dpType }
 
   constructor(dbPath) {
     super();
     this.dbPath = dbPath;
   }
 
+  get _dpIdentificationTableInternal() {
+    return this.#dpIdentificationTable;
+  }
+
+  get _dpTypeIdentificationTableInternal() {
+    return this.#dpTypeIdentificationTable;
+  }
+
   Connect() {
     try {
       this.#db = new Database(this.dbPath);
       this.#createTables();
+      this.#loadCaches();
     } catch (err) {
       throw new Error(`Failed to connect to database: ${err.message}`);
     }
@@ -69,166 +81,256 @@ class IME_Sqlite3DB extends IME_DB {
       this.#db.close();
       this.#db = null;
       this.#callbacks.clear();
+      this.#dpIdentificationTable.clear();
+      this.#dpTypeIdentificationTable.clear();
     }
   }
 
   #createTables() {
     const createTypesTable = `
       CREATE TABLE IF NOT EXISTS DataPointTypes (
-        typeName TEXT PRIMARY KEY,
-        typeDefinition TEXT NOT NULL
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        parent_id INTEGER,
+        type INTEGER NOT NULL,
+        FOREIGN KEY (parent_id) REFERENCES DataPointTypes(id)
       )`;
 
     const createDataPointsTable = `
       CREATE TABLE IF NOT EXISTS DataPoints (
-        name TEXT PRIMARY KEY,
-        typeName TEXT NOT NULL,
-        value TEXT,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        parent_id INTEGER,
+        type_id INTEGER NOT NULL,
+        value ANY,
+        value_type INTEGER,
         tstamp INTEGER DEFAULT (strftime('%s', 'now')),
-        config TEXT,
-        FOREIGN KEY (typeName) REFERENCES DataPointTypes(typeName)
+        FOREIGN KEY (parent_id) REFERENCES DataPoints(id),
+        FOREIGN KEY (type_id) REFERENCES DataPointTypes(id)
       )`;
 
     this.#db.exec(createTypesTable);
     this.#db.exec(createDataPointsTable);
+
+    this.#db.exec('CREATE INDEX IF NOT EXISTS idx_dp_id ON DataPoints(id)');
+    this.#db.exec('CREATE INDEX IF NOT EXISTS idx_dp_name ON DataPoints(name)');
+    this.#db.exec('CREATE INDEX IF NOT EXISTS idx_dp_type_id ON DataPoints(type_id)');
+    this.#db.exec('CREATE INDEX IF NOT EXISTS idx_type_id ON DataPointTypes(id)');
+    this.#db.exec('CREATE INDEX IF NOT EXISTS idx_type_name ON DataPointTypes(name)');
+
+    const initTypes = this.#db.transaction(() => {
+      const stmt = this.#db.prepare('INSERT OR IGNORE INTO DataPointTypes (name, parent_id, type) VALUES (?, ?, ?)');
+      stmt.run('string', null, DpType.STRING);
+      stmt.run('number', null, DpType.NUMBER);
+      stmt.run('boolean', null, DpType.BOOLEAN);
+    });
+    initTypes();
   }
 
-  /**
-   * Prüft, ob ein Datenpunkt mit dem gegebenen Namen existiert.
-   * 
-   * @param {string} name - Name des Datenpunkts
-   * @returns {boolean} - true, wenn der Datenpunkt existiert, sonst false
-   */
-  DpExists(name) {
-    const row = this.#db.prepare('SELECT 1 FROM DataPoints WHERE name = ?').get(name);
-    return !!row;
-  }
-  
-  DpTypeExists(typeName) {
-    const row = this.#db.prepare('SELECT 1 FROM DataPointTypes WHERE typeName = ?').get(typeName);
-    return !!row; // true, wenn gefunden, sonst false
-  }
-
-DpTypeCreate(jsonDescription) {
-    let parsed = null
-    try
-    {
-      parsed = JSON.parse(jsonDescription);
-    }
-    catch (err) 
-    {
-      parsed = jsonDescription;
+  #loadCaches() {
+    const typeRows = this.#db.prepare('SELECT id, name, type FROM DataPointTypes').all();
+    for (const row of typeRows) {
+      this.#dpTypeIdentificationTable.set(row.name, {
+        id: row.id,
+        dpType: row.type
+      });
     }
 
-    if (!parsed.dpTypeName || !parsed.dpType) {
-      throw new Error('Missing required fields: dpTypeName or dpType');
+    const dpRows = this.#db.prepare(`
+      WITH RECURSIVE pathCTE AS (
+        SELECT dp.id, dp.name, dp.parent_id, dp.type_id, dp.value_type, dpt.type AS dpType, CAST(dp.name AS TEXT) AS path
+        FROM DataPoints dp
+        JOIN DataPointTypes dpt ON dp.type_id = dpt.id
+        WHERE dp.parent_id IS NULL
+        UNION ALL
+        SELECT dp.id, dp.name, dp.parent_id, dp.type_id, dp.value_type, dpt.type, p.path || '.' || dp.name
+        FROM DataPoints dp
+        JOIN DataPointTypes dpt ON dp.type_id = dpt.id
+        JOIN pathCTE p ON dp.parent_id = p.id
+      )
+      SELECT id, type_id, value_type, dpType, path FROM pathCTE
+    `).all();
+    for (const row of dpRows) {
+      this.#dpIdentificationTable.set(row.path, {
+        id: row.id,
+        type_id: row.type_id,
+        value_type: row.value_type,
+        dpType: row.dpType
+      });
     }
-
-    // Name validieren
-    if (!this.isValidDpName(parsed.dpTypeName)) {
-      throw new Error(`Invalid dpTypeName '${parsed.dpTypeName}': Only letters, numbers, '-', and '_' are allowed`);
-    }
-
-    // Existenz prüfen
-    const exists = this.#db.prepare('SELECT 1 FROM DataPointTypes WHERE typeName = ?').get(parsed.dpTypeName);
-    if (exists) {
-      throw new Error(`Type '${parsed.dpTypeName}' already exists`);
-    }
-
-    const stmt = this.#db.prepare(`
-      INSERT INTO DataPointTypes (typeName, typeDefinition)
-      VALUES (?, ?)
-    `);
-    stmt.run(parsed.dpTypeName, JSON.stringify(parsed));
   }
 
-  #generateDefaultValue(typeDef) {
-    if (typeDef.dpType !== 'complex') {
-      return typeDef.dpType === 'string' ? '' :
-             typeDef.dpType === 'number' ? 0 :
-             typeDef.dpType === 'boolean' ? false : null;
+  DpTypeCreate(name, description) {
+    if (!this.isValidDpName(name)) {
+      throw new Error(`Invalid typeName '${name}': Only letters, numbers, '-', and '_' are allowed`);
+    }
+    if (this.DpTypeExists(name)) {
+      throw new Error(`Type '${name}' already exists`);
     }
 
-    const result = {};
-    for (const child of (typeDef.children || [])) {
-      result[child.dpTypeName] = this.#generateDefaultValue(child);
+    const transaction = this.#db.transaction(() => {
+      const typeStmt = this.#db.prepare(`
+        INSERT INTO DataPointTypes (name, parent_id, type)
+        VALUES (?, ?, ?)
+      `);
+      const typeInfo = typeStmt.run(name, null, DpType.STRUCT);
+      const typeId = typeInfo.lastInsertRowid;
+      this.#dpTypeIdentificationTable.set(name, { id: typeId, dpType: DpType.STRUCT });
+
+      this.#createTypeChildren(typeId, description.children || [], name);
+    });
+    transaction();
+  }
+
+  #createTypeChildren(parentTypeId, children, parentTypeName, parentPath = '') {
+    for (const child of children) {
+      if (!child.name || !child.type) {
+        throw new Error('Missing required fields: name or type');
+      }
+
+      let childType = null;
+      let childTypeName = child.type;
+
+      if (child.type === 'struct') {
+        childType = DpType.STRUCT;
+        childTypeName = parentTypeName;
+      } else {
+        childType = child.type === 'string' ? DpType.STRING :
+                   child.type === 'number' ? DpType.NUMBER :
+                   child.type === 'boolean' ? DpType.BOOLEAN :
+                   null;
+        if (!childType) {
+          throw new Error(`Invalid type '${child.type}'`);
+        }
+      }
+
+      const typeStmt = this.#db.prepare(`
+        INSERT INTO DataPointTypes (name, parent_id, type)
+        VALUES (?, ?, ?)
+      `);
+      const typeInfo = typeStmt.run(child.name, parentTypeId, childType);
+      const childTypeId = typeInfo.lastInsertRowid;
+      this.#dpTypeIdentificationTable.set(child.name, { id: childTypeId, dpType: childType });
+
+      if (child.type === 'struct' && child.children) {
+        const childPath = parentPath ? `${parentPath}.${child.name}` : child.name;
+        this.#createTypeChildren(childTypeId, child.children, parentTypeName, childPath);
+      }
     }
-    return result;
   }
 
   DpCreate(dpName, dpTypeName) {
- 
-    if (!dpName || !dpTypeName) {
-      throw new Error('Missing required fields: dpName or dpTypeName');
+    if (!this.isValidDpName(dpName)) {
+      throw new Error(`Invalid dpName '${dpName}'`);
     }
-  
-    // Existenz prüfen
-    const exists = this.#db.prepare('SELECT 1 FROM DataPoints WHERE name = ?').get(dpName);
-    if (exists) {
+    if (this.DpExists(dpName)) {
       throw new Error(`DataPoint '${dpName}' already exists`);
     }
-  
-    // Typ-ID holen
-    const typeDefinition = this.#db.prepare('SELECT typeDefinition FROM DataPointTypes WHERE typeName = ?').get(dpTypeName);
-    if (!typeDefinition) {
+    if (!this.DpTypeExists(dpTypeName)) {
       throw new Error(`DataPointType '${dpTypeName}' does not exist`);
     }
-    const defaultValue = this.#buildDefaultFromType(JSON.parse(typeDefinition.typeDefinition));
-    const stmt = this.#db.prepare(`
-      INSERT INTO DataPoints (name, typeName, value)
-      VALUES (?, ?, ?)
-    `);
-    stmt.run(dpName, dpTypeName, JSON.stringify(defaultValue));
-    return defaultValue;
+
+    let result = null;
+    const transaction = this.#db.transaction(() => {
+      result = this.#createDataPoint(dpName, dpTypeName, dpName, null, true);
+    });
+    transaction();
+    return result;
   }
 
-  #buildDefaultFromType(typeDef) {
-    const getDefault = (type) => {
-      switch (type) {
-        case 'string': return '';
-        case 'number': return 0;
-        case 'boolean': return false;
-        case 'complex': return {};
-        default: return null;
-      }
-    };
-  
-    if (typeDef.dpType === 'complex' && Array.isArray(typeDef.children)) {
-      const obj = {};
-      for (const child of typeDef.children) {
-        obj[child.dpTypeName] = this.#buildDefaultFromType(child);
-      }
-      return obj;
-    } else {
-      return getDefault(typeDef.dpType);
+  #createDataPoint(dpName, dpTypeName, pathPrefix, parentId = null, isTopLevel = false) {
+    const typeEntry = this.#dpTypeIdentificationTable.get(dpTypeName);
+    if (!typeEntry) {
+      throw new Error(`DataPointType '${dpTypeName}' does not exist`);
     }
-  }
-  
-  
 
-  DpDelete(name) {
-    this.#db.prepare('DELETE FROM DataPoints WHERE name = ?').run(name);
-    this.#callbacks.delete(name);
+    const dpType = typeEntry.dpType;
+    const typeId = typeEntry.id;
+
+    let value = null;
+    let value_type = null;
+
+    if (dpType === DpType.STRING) {
+      value = '';
+      value_type = ValueType.STRING;
+    } else if (dpType === DpType.NUMBER) {
+      value = 0;
+      value_type = ValueType.NUMBER;
+    } else if (dpType === DpType.BOOLEAN) {
+      value = 0;
+      value_type = ValueType.BOOLEAN;
+    }
+
+    const dpStmt = this.#db.prepare(`
+      INSERT INTO DataPoints (name, parent_id, type_id, value, value_type, tstamp)
+      VALUES (?, ?, ?, ?, ?, strftime('%s', 'now'))
+    `);
+    const dpInfo = dpStmt.run(dpName, parentId, typeId, value, value_type);
+    const dpId = dpInfo.lastInsertRowid;
+    this.#dpIdentificationTable.set(pathPrefix, {
+      id: dpId,
+      type_id: typeId,
+      value_type,
+      dpType
+    });
+
+    let result = value;
+
+    if (dpType === DpType.STRUCT) {
+      result = {};
+
+      const children = this.#db.prepare(`
+        SELECT id, name, type
+        FROM DataPointTypes
+        WHERE parent_id = ?
+      `).all(typeId);
+
+      for (const child of children) {
+        const childPath = `${pathPrefix}.${child.name}`;
+        const childResult = this.#createDataPoint(child.name, child.name, childPath, dpId, false);
+        result[child.name] = childResult;
+      }
+    }
+
+    return dpType === DpType.BOOLEAN ? Boolean(result) : result;
+  }
+
+  DpExists(name) {
+    return this.#dpIdentificationTable.has(name);
+  }
+
+  DpTypeExists(typeName) {
+    return this.#dpTypeIdentificationTable.has(typeName);
   }
 
   DpSet(name, value) {
-    const dp = this.#db.prepare('SELECT typeName FROM DataPoints WHERE name = ?').get(name);
-    if (!dp) throw new Error(`DataPoint ${name} does not exist`);
-
-    const typeRow = this.#db.prepare('SELECT typeDefinition FROM DataPointTypes WHERE typeName = ?').get(dp.typeName);
-    const typeDef = JSON.parse(typeRow.typeDefinition);
-
-    if (typeDef.dpType === 'complex') {
-      if (typeof value !== 'object') throw new Error('Expected object for complex type');
-      this.#validateComplexType(value, typeDef);
-    } else if (typeof value !== typeDef.dpType) {
-      throw new Error(`Type mismatch for ${name}: expected ${typeDef.dpType}, got ${typeof value}`);
+    const entry = this.#dpIdentificationTable.get(name);
+    if (!entry) {
+      throw new Error(`DataPoint '${name}' does not exist`);
     }
 
-    let update = this.#db.prepare(`UPDATE DataPoints SET value = ?, tstamp = strftime('%s', 'now') WHERE name = ?`);
-    var success = update.run(JSON.stringify(value), name);
-    if(success.changes == 1) {
-      const callback = this.#callbacks.get(name, value);
+    if (entry.dpType === DpType.STRUCT) {
+      throw new Error(`Cannot set value for struct type '${name}'`);
+    }
+
+    const expectedType = this.#valueTypeToJsType(entry.value_type);
+    if (expectedType && typeof value !== expectedType) {
+      throw new Error(`Type mismatch for '${name}': expected ${expectedType}, got ${typeof value}`);
+    }
+
+    const updateStmt = this.#db.prepare(`
+      UPDATE DataPoints
+      SET value = ?, value_type = ?, tstamp = strftime('%s', 'now')
+      WHERE id = ?
+    `);
+
+    const value_type = entry.value_type || this.#jsTypeToValueType(typeof value);
+    const dbValue = value_type === ValueType.BOOLEAN ? (value ? 1 : 0) : value;
+    const success = updateStmt.run(dbValue, value_type, entry.id);
+
+    if (success.changes === 1) {
+      this.#dpIdentificationTable.set(name, { ...entry, value_type });
+      const callback = this.#callbacks.get(name);
       if (callback) {
         callback(name, value);
       }
@@ -236,22 +338,85 @@ DpTypeCreate(jsonDescription) {
   }
 
   DpGet(name) {
-    const row = this.#db.prepare('SELECT value FROM DataPoints WHERE name = ?').get(name);
-    if (!row) throw new Error(`DataPoint ${name} not found`);
-    return JSON.parse(row.value);
+    const entry = this.#dpIdentificationTable.get(name);
+    if (!entry) {
+      throw new Error(`DataPoint '${name}' not found`);
+    }
+
+    if (entry.dpType === DpType.STRUCT) {
+      const children = this.#db.prepare('SELECT id, name FROM DataPoints WHERE parent_id = ?').all(entry.id);
+      const result = {};
+      for (const child of children) {
+        const childPath = `${name}.${child.name}`;
+        result[child.name] = this.DpGet(childPath);
+      }
+      return result;
+    }
+
+    const row = this.#db.prepare('SELECT value, value_type FROM DataPoints WHERE id = ?').get(entry.id);
+    return this.#convertValue(row.value, row.value_type);
   }
 
-  #validateComplexType(value, typeDef) {
-    // for (const child of typeDef.children || []) {
-    //   const val = value[child.dpTypeName];
-    //   if (child.dpType === 'complex') {
-    //     this.#validateComplexType(val, child);
-    //   } else {
-    //     if (typeof val !== child.dpType) {
-    //       throw new Error(`Invalid type for ${child.dpTypeName}, expected ${child.dpType}, got ${typeof val}`);
-    //     }
-    //   }
-    // }
+  #resolvePath(path) {
+    const entry = this.#dpIdentificationTable.get(path);
+    if (entry) {
+      return entry.id;
+    }
+
+    const parts = path.split('.');
+    let query = 'WITH RECURSIVE pathCTE AS (';
+    for (let i = 0; i < parts.length; i++) {
+      query += `SELECT dp.id, dp.parent_id, dp.type_id, dp.value_type, dpt.type AS dpType
+                FROM DataPoints dp
+                JOIN DataPointTypes dpt ON dp.type_id = dpt.id
+                WHERE dp.name = '${parts[i]}'`;
+      if (i > 0) {
+        query += ' AND parent_id = (SELECT id FROM pathCTE LIMIT 1)';
+      }
+      if (i < parts.length - 1) {
+        query += ' UNION ALL ';
+      }
+    }
+    query += ') SELECT id, type_id, value_type, dpType FROM pathCTE LIMIT 1';
+    const row = this.#db.prepare(query).get();
+    if (row) {
+      this.#dpIdentificationTable.set(path, {
+        id: row.id,
+        type_id: row.type_id,
+        value_type: row.value_type,
+        dpType: row.dpType
+      });
+      return row.id;
+    }
+    return null;
+  }
+
+  #valueTypeToJsType(valueType) {
+    switch (valueType) {
+      case ValueType.STRING: return 'string';
+      case ValueType.NUMBER: return 'number';
+      case ValueType.BOOLEAN: return 'boolean';
+      default: return null;
+    }
+  }
+
+  #jsTypeToValueType(jsType) {
+    switch (jsType) {
+      case 'string': return ValueType.STRING;
+      case 'number': return ValueType.NUMBER;
+      case 'boolean': return ValueType.BOOLEAN;
+      default: throw new Error(`Unsupported JavaScript type: ${jsType}`);
+    }
+  }
+
+  #convertValue(value, value_type) {
+    if (value === null) return null;
+    switch (value_type) {
+      case ValueType.STRING: return value;
+      case ValueType.NUMBER: return Number(value);
+      case ValueType.BOOLEAN: return Boolean(value);
+      default: return value;
+    }
   }
 
   DpConnect(name, callback) {
@@ -262,64 +427,31 @@ DpTypeCreate(jsonDescription) {
     this.#callbacks.delete(name);
   }
 
-  /**
-   * Gibt alle Datenpunktnamen zurück.
-   * Optional kann ein Datenpunkttyp (typeName) als Filter angegeben werden.
-   * Optional kann ein Namensfilter (pattern) angegeben werden.
-   * 
-   * Pattern-Syntax:
-   *   *   : Beliebig viele beliebige Zeichen (z.B. "temp*")
-   *   ?   : Genau ein beliebiges Zeichen (z.B. "data??")
-   *   [ ] : Ein Zeichen aus der Liste oder einem Bereich (z.B. "sensor[12]", "val[a-z]")
-   * 
-   * Beispiele:
-   *   DpNames()                  // alle Namen
-   *   DpNames("TempType")        // alle Namen vom Typ "TempType"
-   *   DpNames(null, "temp*")     // alle Namen, die mit "temp" beginnen
-   *   DpNames("TempType", "*1")  // alle Namen vom Typ "TempType", die auf "1" enden
-   */
-  DpNames(typeName = null, pattern = null) {
-    let query = 'SELECT name FROM DataPoints';
-    const params = [];
-    if (typeName) {
-      query += ' WHERE typeName = ?';
-      params.push(typeName);
-    }
-    const rows = this.#db.prepare(query).all(...params);
-    let names = rows.map(r => r.name);
+  DpDelete(name) {
+    const entry = this.#dpIdentificationTable.get(name);
+    if (!entry) return;
 
-    if (pattern) {
-      // Pattern in RegExp umwandeln
-      // Escape RegExp-Sonderzeichen außer *, ?, [
-      let regexPattern = pattern
-        .replace(/([.+^${}()|\\])/g, '\\$1') // Escape RegExp-Zeichen
-        .replace(/\*/g, '.*')
-        .replace(/\?/g, '.')
-        .replace(/\[([^\]]*)\]/g, '[$1]');
-      const regex = new RegExp('^' + regexPattern + '$');
-      names = names.filter(name => regex.test(name));
-    }
-    return names;
+    const transaction = this.#db.transaction(() => {
+      const children = this.#db.prepare('SELECT id, name FROM DataPoints WHERE parent_id = ?').all(entry.id);
+      for (const child of children) {
+        const childPath = `${name}.${child.name}`;
+        this.DpDelete(childPath);
+      }
+
+      this.#db.prepare('DELETE FROM DataPoints WHERE id = ?').run(entry.id);
+      this.#dpIdentificationTable.delete(name);
+      this.#callbacks.delete(name);
+    });
+    transaction();
   }
 
-  /**
-   * Gibt alle Datenpunkttypen zurück, optional gefiltert nach Pattern.
-   * Pattern-Syntax:
-   *   *   : Beliebig viele beliebige Zeichen (z.B. "Temp*")
-   *   ?   : Genau ein beliebiges Zeichen (z.B. "Type??")
-   *   [ ] : Ein Zeichen aus der Liste oder einem Bereich (z.B. "Type[12]", "Val[a-z]")
-   * Beispiele:
-   *   DpTypes()                // alle Typnamen
-   *   DpTypes("Temp*")         // alle Typnamen, die mit "Temp" beginnen
-   *   DpTypes("*Type")         // alle Typnamen, die auf "Type" enden
-   *   DpTypes("T?pe[12]")      // z.B. "Type1", "Tipe2"
-   * 
-   * @param {string|null} pattern - Optionales Pattern für die Typnamen.
-   * @returns {string[]} Array der Typnamen.
-   */
-  DpTypes(pattern = null) {
-    let rows = this.#db.prepare('SELECT typeName FROM DataPointTypes').all();
-    let types = rows.map(r => r.typeName);
+  DpNames(typeName = null, pattern = null) {
+    let names = [];
+    for (const [path, entry] of this.#dpIdentificationTable) {
+      if (!typeName || this.#dpTypeIdentificationTable.get(typeName)?.id === entry.type_id) {
+        names.push(path);
+      }
+    }
 
     if (pattern) {
       let regexPattern = pattern
@@ -328,9 +460,49 @@ DpTypeCreate(jsonDescription) {
         .replace(/\?/g, '.')
         .replace(/\[([^\]]*)\]/g, '[$1]');
       const regex = new RegExp('^' + regexPattern + '$');
-      types = types.filter(typeName => regex.test(typeName));
+      names = names.filter(name => regex.test(name));
     }
-    return types;
+    return names.sort();
+  }
+
+  DpTypes(pattern = null) {
+    let types = Array.from(this.#dpTypeIdentificationTable.keys());
+
+    if (pattern) {
+      let regexPattern = pattern
+        .replace(/([.+^${}()|\\])/g, '\\$1')
+        .replace(/\*/g, '.*')
+        .replace(/\?/g, '.')
+        .replace(/\[([^\]]*)\]/g, '[$1]');
+      const regex = new RegExp('^' + regexPattern + '$');
+      types = types.filter(type => regex.test(type));
+    }
+    return types.sort();
+  }
+
+  DpTypeDelete(typeName) {
+    const typeEntry = this.#dpTypeIdentificationTable.get(typeName);
+    if (!typeEntry) return;
+
+    const transaction = this.#db.transaction(() => {
+      // Prüfen, ob der Typ in Verwendung ist
+      const used = this.#db.prepare('SELECT 1 FROM DataPoints WHERE type_id = ?').get(typeEntry.id);
+      if (used) {
+        throw new Error(`Cannot delete type '${typeName}' as it is in use`);
+      }
+
+      // Rekursiv alle Kinder löschen
+      const children = this.#db.prepare('SELECT id, name FROM DataPointTypes WHERE parent_id = ?').all(typeEntry.id);
+      for (const child of children) {
+        // Rekursiver Aufruf für Kind-Typen
+        this.DpTypeDelete(child.name);
+      }
+
+      // Den Typ selbst löschen
+      this.#db.prepare('DELETE FROM DataPointTypes WHERE id = ?').run(typeEntry.id);
+      this.#dpTypeIdentificationTable.delete(typeName);
+    });
+    transaction();
   }
 }
 
