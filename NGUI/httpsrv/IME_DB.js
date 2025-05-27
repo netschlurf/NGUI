@@ -90,7 +90,7 @@ class IME_Sqlite3DB extends IME_DB {
     const createTypesTable = `
       CREATE TABLE IF NOT EXISTS DataPointTypes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
+        name TEXT NOT NULL UNIQUE,
         parent_id INTEGER,
         type INTEGER NOT NULL,
         FOREIGN KEY (parent_id) REFERENCES DataPointTypes(id)
