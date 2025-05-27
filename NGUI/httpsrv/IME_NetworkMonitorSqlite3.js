@@ -20,6 +20,7 @@ class IME_NetworkMonitor {
     PortScan(ip) { throw new Error('PortScan method must be implemented by subclass'); }
     OSFingerprinting(ip) { throw new Error('OSFingerprinting method must be implemented by subclass'); }
     EnumerateServices(ip) { throw new Error('EnumerateServices method must be implemented by subclass'); }
+    Ping(ipOrHost) { throw new Error('Ping method must be implemented by subclass'); }
 }
 
 /**
@@ -402,6 +403,31 @@ class IME_NetworkMonitorSqlite3 extends IME_NetworkMonitor {
 
         return { ip, openPorts };
     }
+    
+	async Ping(ipOrHost) {
+        try {
+            const res = await ping.promise.probe(ipOrHost, {
+                timeout: 1, // Timeout in Sekunden
+                extra: ['-c', '4'] // 4 Pings senden
+            });
+            return {
+                host: ipOrHost,
+                alive: res.alive,
+                avgLatency: res.avg ? parseFloat(res.avg) : null, // Durchschnittliche Latenz in ms
+                packetLoss: res.packetLoss ? parseFloat(res.packetLoss) : null, // Paketverlust in %
+                error: res.alive ? null : res.output || 'No response'
+            };
+        } catch (err) {
+            console.error(`Error pinging ${ipOrHost}:`, err);
+            return {
+                host: ipOrHost,
+                alive: false,
+                avgLatency: null,
+                packetLoss: null,
+                error: err.message
+            };
+        }
+    }    
 
     async OSFingerprinting(ip) {
         try {

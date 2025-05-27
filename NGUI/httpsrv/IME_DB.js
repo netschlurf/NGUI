@@ -11,6 +11,39 @@ class IME_DB {
   DpDisconnect(name, callback) { throw new Error('DpDisconnect method must be implemented by subclass'); }
   DpTypeCreate(jsonDescription) { throw new Error('DpTypeCreate method must be implemented by subclass'); }
   DpTypeDelete(typeName) { throw new Error('DpTypeDelete method must be implemented by subclass'); }
+
+/**
+   * Prüft, ob ein Datenpunktname oder Typname gültig ist.
+   * Erlaubt: Buchstaben (a-z, A-Z), Zahlen (0-9), Bindestrich (-), Unterstrich (_).
+   * Verboten: Sonderzeichen (z.B. Punkt, Stern), Leerzeichen, leerer Name.
+   * 
+   * @param {string} name - Zu prüfender Name
+   * @returns {boolean} - true, wenn der Name gültig ist, sonst false
+   */
+  isValidDpName(name) {
+    if (!name || typeof name !== 'string') return false;
+    // Nur Buchstaben, Zahlen, - und _ erlaubt
+    return /^[a-zA-Z0-9_-]+$/.test(name);
+  }
+
+  /**
+   * Wandelt einen beliebigen String in einen gültigen Datenpunktnamen um.
+   * - Ersetzt ungültige Zeichen durch '_'.
+   * - Entfernt führende/trailing ungültige Zeichen.
+   * - Gibt 'default_dp' zurück, wenn das Ergebnis leer ist.
+   * 
+   * @param {string} name - Eingabename
+   * @returns {string} - Gültiger Datenpunktname
+   */
+  sanitizeDpName(name) {
+    if (!name || typeof name !== 'string') return 'default_dp';
+    // Ersetze ungültige Zeichen durch _, entferne führende/trailing _
+    let sanitized = name
+      .replace(/[^a-zA-Z0-9_-]/g, '_') // Alles außer erlaubten Zeichen wird _
+      .replace(/^_+|_+$/g, ''); // Entferne führende/trailing _
+    // Wenn leer oder nur ungültige Zeichen, gib Standardname zurück
+    return sanitized.length > 0 ? sanitized : 'default_dp';
+  }  
 }
 
 class IME_Sqlite3DB extends IME_DB {
@@ -51,6 +84,8 @@ class IME_Sqlite3DB extends IME_DB {
         name TEXT PRIMARY KEY,
         typeName TEXT NOT NULL,
         value TEXT,
+        tstamp INTEGER DEFAULT (strftime('%s', 'now')),
+        config TEXT,
         FOREIGN KEY (typeName) REFERENCES DataPointTypes(typeName)
       )`;
 
@@ -58,34 +93,53 @@ class IME_Sqlite3DB extends IME_DB {
     this.#db.exec(createDataPointsTable);
   }
 
-  DpTypeCreate(jsonDescription) {
-    const parsed = JSON.parse(jsonDescription);
+  /**
+   * Prüft, ob ein Datenpunkt mit dem gegebenen Namen existiert.
+   * 
+   * @param {string} name - Name des Datenpunkts
+   * @returns {boolean} - true, wenn der Datenpunkt existiert, sonst false
+   */
+  DpExists(name) {
+    const row = this.#db.prepare('SELECT 1 FROM DataPoints WHERE name = ?').get(name);
+    return !!row;
+  }
   
+  DpTypeExists(typeName) {
+    const row = this.#db.prepare('SELECT 1 FROM DataPointTypes WHERE typeName = ?').get(typeName);
+    return !!row; // true, wenn gefunden, sonst false
+  }
+
+DpTypeCreate(jsonDescription) {
+    let parsed = null
+    try
+    {
+      parsed = JSON.parse(jsonDescription);
+    }
+    catch (err) 
+    {
+      parsed = jsonDescription;
+    }
+
     if (!parsed.dpTypeName || !parsed.dpType) {
       throw new Error('Missing required fields: dpTypeName or dpType');
     }
-  
+
+    // Name validieren
+    if (!this.isValidDpName(parsed.dpTypeName)) {
+      throw new Error(`Invalid dpTypeName '${parsed.dpTypeName}': Only letters, numbers, '-', and '_' are allowed`);
+    }
+
     // Existenz prüfen
     const exists = this.#db.prepare('SELECT 1 FROM DataPointTypes WHERE typeName = ?').get(parsed.dpTypeName);
     if (exists) {
       throw new Error(`Type '${parsed.dpTypeName}' already exists`);
     }
-  
+
     const stmt = this.#db.prepare(`
       INSERT INTO DataPointTypes (typeName, typeDefinition)
       VALUES (?, ?)
     `);
-    stmt.run(parsed.dpTypeName, jsonDescription);
-  }
-
-  DpTypeDelete(typeName) {
-    const exists = this.#db.prepare('SELECT 1 FROM DataPointTypes WHERE typeName = ?').get(typeName);
-    if (!exists) throw new Error(`Type ${typeName} does not exist`);
-
-    const inUse = this.#db.prepare('SELECT 1 FROM DataPoints WHERE typeName = ?').get(typeName);
-    if (inUse) throw new Error(`Type ${typeName} is still in use by some DataPoints`);
-
-    this.#db.prepare('DELETE FROM DataPointTypes WHERE typeName = ?').run(typeName);
+    stmt.run(parsed.dpTypeName, JSON.stringify(parsed));
   }
 
   #generateDefaultValue(typeDef) {
@@ -171,7 +225,7 @@ class IME_Sqlite3DB extends IME_DB {
       throw new Error(`Type mismatch for ${name}: expected ${typeDef.dpType}, got ${typeof value}`);
     }
 
-    const update = this.#db.prepare('UPDATE DataPoints SET value = ? WHERE name = ?');
+    let update = this.#db.prepare(`UPDATE DataPoints SET value = ?, tstamp = strftime('%s', 'now') WHERE name = ?`);
     var success = update.run(JSON.stringify(value), name);
     if(success.changes == 1) {
       const callback = this.#callbacks.get(name, value);
@@ -188,16 +242,16 @@ class IME_Sqlite3DB extends IME_DB {
   }
 
   #validateComplexType(value, typeDef) {
-    for (const child of typeDef.children || []) {
-      const val = value[child.dpTypeName];
-      if (child.dpType === 'complex') {
-        this.#validateComplexType(val, child);
-      } else {
-        if (typeof val !== child.dpType) {
-          throw new Error(`Invalid type for ${child.dpTypeName}, expected ${child.dpType}, got ${typeof val}`);
-        }
-      }
-    }
+    // for (const child of typeDef.children || []) {
+    //   const val = value[child.dpTypeName];
+    //   if (child.dpType === 'complex') {
+    //     this.#validateComplexType(val, child);
+    //   } else {
+    //     if (typeof val !== child.dpType) {
+    //       throw new Error(`Invalid type for ${child.dpTypeName}, expected ${child.dpType}, got ${typeof val}`);
+    //     }
+    //   }
+    // }
   }
 
   DpConnect(name, callback) {

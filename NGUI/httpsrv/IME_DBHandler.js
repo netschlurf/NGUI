@@ -11,7 +11,9 @@ class IME_DBHandler extends NGUIHandlerBase {
             'DpDisconnect': this.DpDisconnect.bind(this),
             'DpCreate': this.DpCreate.bind(this),
             'DpNames': this.DpNames.bind(this),
-            'DpTypes': this.DpTypes.bind(this), // <-- hinzugefügt
+            'DpTypes': this.DpTypes.bind(this),
+            'DpExists': this.DpExists.bind(this),
+            'DpTypeExists': this.DpTypeExists.bind(this), 
         };  
         this.DpConnectionMap = new Map();    
     }
@@ -62,6 +64,56 @@ class IME_DBHandler extends NGUIHandlerBase {
             console.error('Error in OnWebsocketClosed:', err);
         }
     }
+
+    /**
+     * Checks if a dpType exists in the database.
+     * @param {Object} msg - The incoming message with `type` in args.
+     * @param {WebSocket} ws - The WebSocket instance.
+     */
+    DpTypeExists(msg, ws) {
+        if (!msg.args || !msg.args.type) {
+            const rsp = {cmd: msg.cmd, type: msg.args?.type ?? null, rc: 300};
+            this.sendResponse(ws, msg, null, rsp);
+            return;
+        }
+
+        try {
+            const exists = this.db.DpTypeExists(msg.args.type);
+            const rsp = {cmd: msg.cmd, type: msg.args.type, exists: exists, rc: 200};
+            this.sendResponse(ws, msg, rsp);
+        } catch (err) {
+            console.error('Error in DpTypeExists:', err);
+            const rsp = {cmd: msg.cmd, type: msg.args.type, rc: 400};
+            this.sendResponse(ws, msg, null, rsp);
+        }
+    }    
+
+    /**
+     * Prüft, ob ein Datenpunkt im System existiert.
+     * @param {Object} msg - Nachricht mit args.dpName.
+     * @param {WebSocket} ws - WebSocket Instanz.
+     * @example
+     * // Anfrage: {cmd: "DpExists", args: {dpName: "myCounter"}, tok: "abc"}
+     * // Antwort: {data: {cmd: "DpExists", dpName: "myCounter", exists: true, rc: 200}, ...}
+     */
+    DpExists(msg, ws) {
+        if (!msg.args || !msg.args.dpName) {
+            const rsp = {cmd: msg.cmd, dpName: msg.args?.dpName, rc: 300};
+            this.sendResponse(ws, msg, null, rsp);
+            return;
+        }
+
+        try {
+            const dpName = msg.args.dpName.trim();
+            const exists = this.db.DpExists(dpName); // Erwartet: boolescher Rückgabewert
+            const rsp = {cmd: msg.cmd, dpName: dpName, exists: exists, rc: 200};
+            this.sendResponse(ws, msg, rsp);
+        } catch (err) {
+            console.error('Error in DpExists:', err);
+            const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, rc: 400};
+            this.sendResponse(ws, msg, null, rsp);
+        }
+    }    
 
     /**
      * Retrieves the value of a data point from the database.

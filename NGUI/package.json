@@ -7,6 +7,7 @@
     "start": "npm install && node NGUISampleApp.js"
   },
   "dependencies": {
+    "better-sql": "^1.0.5",
     "better-sqlite3": "^11.10.0",
     "node-nmap": "^4.0.0",
     "ping": "^0.4.4",

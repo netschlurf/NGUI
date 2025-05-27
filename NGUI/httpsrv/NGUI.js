@@ -313,16 +313,16 @@ class NGUI {
                 paths.push(path.join(customPath, filePath));
             }
         }
-
+        let foundPath = "";
         for (const fullPath of paths) {
             try {
                 await fs.access(fullPath);
-                return fullPath;
+                foundPath = fullPath;
             } catch (err) {
                 continue;
             }
         }
-        return null;
+        return foundPath;
     }
 
     /**
