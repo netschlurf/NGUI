@@ -1,0 +1,82 @@
+<div class="w-full max-w-6xl p-2" style="width:100%; height: 180px;">
+  <!-- System Diagnostic Dashboard Container -->
+  <div class="bg-gray-900 shadow-lg rounded-lg overflow-hidden h-full border border-gray-700">
+    <!-- Header -->
+    <div class="flex items-center justify-between bg-gray-800 px-4 py-2">
+      <h2 class="text-lg font-semibold text-cyan-400">System Diagnostic Dashboard</h2>
+      <div class="flex space-x-2">
+        <button class="text-xs text-gray-300 hover:text-cyan-400 focus:outline-none" title="Refresh Metrics">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+        <button class="text-xs text-gray-300 hover:text-cyan-400 focus:outline-none" title="Export Diagnostics">
+          <i class="fas fa-download"></i>
+        </button>
+      </div>
+    </div>
+    <!-- Scrollbar für breite Ansicht, linksbündig -->
+    <div class="overflow-x-auto h-[150px]">
+      <div class="flex space-x-3 p-2 min-w-max justify-start">
+        <!-- Diagnostic Card: Quantum Core Latency -->
+        <div class="flex-none w-72 border border-gray-700 rounded-lg p-2.5 bg-gray-800 hover:bg-gray-700 hover:scale-105 transition-all duration-150">
+          <div class="flex justify-between items-center">
+            <h3 class="text-sm font-medium text-cyan-400 truncate">Quantum Core Latency</h3>
+            <span class="text-xs text-gray-400">2025-05-27, 00:21</span>
+          </div>
+          <p class="text-xs text-gray-300 truncate mt-1" data-diagnostic-id="qcl-001">Median: 12.4 μs</p>
+          <div class="mt-1.5 flex items-center space-x-2">
+            <div class="w-full bg-gray-600 rounded-full h-1.5">
+              <div class="bg-cyan-500 h-1.5 rounded-full" style="width: 90%"></div>
+            </div>
+            <span class="text-xs text-cyan-400">85%</span>
+          </div>
+          <div class="mt-1 text-[10px] text-gray-500 truncate" id="diagDetails-qcl-001" title="Error Rate: 0.03%, Jitter: ±1.2μs">CoreSync v3.7.1</div>
+        </div>
+        <!-- Diagnostic Card: Neural Net Throughput -->
+        <div class="flex-none w-72 border border-gray-700 rounded-lg p-2.5 bg-gray-800 hover:bg-gray-700 hover:scale-105 transition-all duration-150">
+          <div class="flex justify-between items-center">
+            <h3 class="text-sm font-medium text-cyan-400 truncate">Neural Net Throughput</h3>
+            <span class="text-xs text-gray-400">2025-05-27, 00:20</span>
+          </div>
+          <p class="text-xs text-gray-300 truncate mt-1" data-diagnostic-id="nnt-002">Peak: 45.8 Gbps</p>
+          <div class="mt-1.5 flex items-center space-x-2">
+            <div class="w-full bg-gray-600 rounded-full h-1.5">
+              <div class="bg-green-500 h-1.5 rounded-full animate-pulse" style="width: 92%"></div>
+            </div>
+            <span class="text-xs text-green-400">92%</span>
+          </div>
+          <div class="mt-1 text-[10px] text-gray-500 truncate" id="diagDetails-nnt-002" title="Nodes: 128, Uptime: 99.98%">AI-Grid v9.2.3</div>
+        </div>
+        <!-- Diagnostic Card: Memory Flux Stability -->
+        <div class="flex-none w-72 border border-gray-700 rounded-lg p-2.5 bg-gray-800 hover:bg-gray-700 hover:scale-105 transition-all duration-150">
+          <div class="flex justify-between items-center">
+            <h3 class="text-sm font-medium text-cyan-400 truncate">Memory Flux Stability</h3>
+            <span class="text-xs text-gray-400">2025-05-27, 00:19</span>
+          </div>
+          <p class="text-xs text-gray-300 truncate mt-1" data-diagnostic-id="mfs-003">Variance: 0.07%</p>
+          <div class="mt-1.5 flex items-center space-x-2">
+            <div class="w-full bg-gray-600 rounded-full h-1.5">
+              <div class="bg-purple-500 h-1.5 rounded-full" style="width: 78%"></div>
+            </div>
+            <span class="text-xs text-purple-400">78%</span>
+          </div>
+          <div class="mt-1 text-[10px] text-gray-500 truncate" id="diagDetails-mfs-003" title="GC Cycles: 542, Alloc: 1.2TB">MemOptix v4.1.0</div>
+        </div>
+        <!-- Diagnostic Card: Crypto Hash Rate -->
+        <div class="flex-none w-72 border border-gray-700 rounded-lg p-2.5 bg-gray-800 hover:bg-gray-700 hover:scale-105 transition-all duration-150">
+          <div class="flex justify-between items-center">
+            <h3 class="text-sm font-medium text-cyan-400 truncate">Crypto Hash Rate</h3>
+            <span class="text-xs text-gray-400">2025-05-27, 00:18</span>
+          </div>
+          <p class="text-xs text-gray-300 truncate mt-1" data-diagnostic-id="chr-004">Current: 1.9 TH/s</p>
+          <div class="mt-1.5 flex items-center space-x-2">
+            <div class="w-full bg-gray-600 rounded-full h-1.5">
+              <div class="bg-orange-500 h-1.5 rounded-full animate-pulse" style="width: 65%"></div>
+            </div>
+            <span class="text-xs text-orange-400">65%</span>
+          </div>
+          <div class="mt-1 text-[10px] text-gray-500 truncate" id="diagDetails-chr-004" title="Power: 3.2kW, Temp: 62°C">HashCore v6.5.2</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

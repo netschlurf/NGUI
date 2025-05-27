@@ -200,9 +200,11 @@
         // Funktionen zum Öffnen der Fenster
         function openWindow1() {
             const window = NGUIWindow.Create('window1', 'Vollständiges Fenster', WB_MINIMIZE | WB_MAXIMIZE | WB_CLOSE);
+            g_NGUI.LoadPage("NGUI_DemoComples.html", "window1_CONTENT", null);
             window.ShowAsync().then(result => {
                 console.log('Window 1 Result:', result);
             });
+
         }
 
         function openWindow2() {
