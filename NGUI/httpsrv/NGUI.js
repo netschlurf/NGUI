@@ -20,6 +20,7 @@ class NGUI {
         this.commandMap = {
             'LoadPage': this.serveResource.bind(this),
             'LoadResource': this.serveResource.bind(this),
+            'PutResource': this.PutResource.bind(this),    
             'Reconnect': this.handleReconnect.bind(this),
             'RegisterCommands': this.registerRemoteHandler.bind(this), // New: Register remote handler
         };
@@ -296,6 +297,96 @@ class NGUI {
             this.sendResponse(ws, msg, '', '404');
         }
     }
+
+    /**
+     * Saves a resource to the filesystem for WebSocket requests.
+     * @param {Object} msg - Incoming message with fileName and content.
+     * @param {WebSocket} ws - WebSocket instance.
+     */
+    async PutResource(msg, ws) {
+        if (!msg.args || !msg.args.fileName || !msg.args.content) {
+            this.sendResponse(ws, msg, '', '400: Missing fileName or content');
+            return;
+        }
+
+        // Basic security check to prevent path traversal
+        const fileName = path.basename(msg.args.fileName);
+        if (fileName !== msg.args.fileName || fileName.includes('..')) {
+            this.sendResponse(ws, msg, '', '400: Invalid fileName');
+            return;
+        }
+
+        const fullPath = await this.resolveAppRoot();
+        const newPath = path.join(fullPath, fileName);
+        let exists = false;
+        try {
+            await fs.access(newPath);
+            exists = true;
+        } catch (err) {
+            exists = false;
+        }
+        
+        if (!exists) {
+            // If file doesn't exist, create it in the default htdocs directory
+            
+            
+            try {
+                await fs.writeFile(newPath, msg.args.content, 'utf8');
+                this.sendResponse(ws, msg, { status: 'File saved', rc: 200 });
+                console.log(`Saved file: ${newPath}`);
+            } catch (err) {
+                console.error(`Error saving file ${newPath}:`, err);
+                this.sendResponse(ws, msg, '', `500: ${err.message}`);
+            }
+        } else {
+            await this.copyFile(newPath, newPath + "_BACKUP");
+            // File exists, overwrite it
+            try {
+                await fs.writeFile(newPath, msg.args.content, 'utf8');
+                this.sendResponse(ws, msg, { status: 'File updated', rc: 200 });
+                console.log(`Updated file: ${newPath}`);
+            } catch (err) {
+                console.error(`Error updating file ${newPath}:`, err);
+                this.sendResponse(ws, msg, '', `500: ${err.message}`);
+            }
+        }
+    }    
+
+    async copyFile(source, destination) {
+    try {
+        await fs.copyFile(source, destination);
+        console.log('Datei wurde erfolgreich kopiert!');
+    } catch (err) {
+        console.error('Fehler beim Kopieren:', err);
+    }
+    }    
+
+    /**
+     * Resolves the full file path.
+     * @param {string} filePath - Relative file path.
+     * @returns {string|null} - Full path or null if not found.
+     */
+    async resolveAppRoot() {
+        const paths = [];
+        var myRoot = __dirname.replace("httpsrv", "htdocs");
+        paths.push(myRoot);
+
+        for (const handler of this.handlers) {
+            const customPath = await handler.GetHtdocsRoot();
+            if (customPath) {
+                paths.push(customPath);
+            }
+        }
+        let foundPath = "";
+        for (const fullPath of paths) {
+            try {
+                foundPath = fullPath;
+            } catch (err) {
+                continue;
+            }
+        }
+        return foundPath;
+    }    
 
     /**
      * Resolves the full file path.

@@ -54,6 +54,19 @@ class NGUIConnection {
         this.Connection.send(JSON.stringify(msg));
     }
 
+    PutResource(fileName, content, callback) {
+        var msg = new NGUIMsg();
+        msg.cmd = "PutResource";
+        msg.args.fileName = fileName;
+        msg.args.content = content;
+        var cb = new NGUICB();
+        cb.tok = msg.tok;
+        cb.callback = callback;
+        this.callBacks.push(cb);
+        this.Connection.send(JSON.stringify(msg));
+    }
+    
+
     SendData(obj, target, callback) {
         var msg = new NGUIMsg();
         msg.cmd = "SendData";
@@ -151,6 +164,11 @@ class NGUIClient {
     LoadResource(fileName, params, callback) {
         this.Connection.LoadResource(fileName, params, callback);
     }
+
+     PutResource(fileName, content, callback) {
+        this.Connection.PutResource(fileName, content, callback);
+    }
+   
 
     LoadPageAJAX(fileName, target) {
         var xhttp = new XMLHttpRequest();

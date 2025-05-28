@@ -30,13 +30,13 @@ class IME_DB {
     return /^[a-zA-Z0-9_.-]+$/.test(name);
   }
 
-  sanitizeDpName(name) {
-    if (!name || typeof name !== 'string') return 'default_dp';
-    let sanitized = name
-      .replace(/[^a-zA-Z0-9_.-]/g, '_')
-      .replace(/^_+|_+$/g, '');
-    return sanitized.length > 0 ? sanitized : 'default_dp';
-  }
+sanitizeDpName(name) {
+  if (!name || typeof name !== 'string') return 'default_dp';
+  let sanitized = name
+    .replace(/[^a-zA-Z0-9_]/g, '_')  // ersetzt alle Nicht-alphanumerischen Zeichen (außer _)
+    .replace(/^_+|_+$/g, '');        // entfernt führende oder abschließende _
+  return sanitized.length > 0 ? sanitized : 'default_dp';
+}
 
   get _dpIdentificationTable() {
     return this._dpIdentificationTableInternal;
