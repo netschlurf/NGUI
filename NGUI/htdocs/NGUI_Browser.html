@@ -34,6 +34,7 @@
       height: 100%;
       margin: 0;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      overflow-y: hidden;
     }
 
   #logOutput tr:nth-child(odd) {
@@ -51,6 +52,23 @@
   #logOutput tr:hover {
     background-color: #e0f2fe !important; /* zartes hellblau, überschreibt Tailwind */
   }  
+
+table thead {
+  position: sticky;
+  top: 0; /* oder top: 56px; wenn Toolbar 56px hoch */
+  z-index: 15;
+  background: #e5e7eb;
+}
+table thead th {
+  border-top: none !important;
+}
+
+#logOutput, #logOutput tr, #logOutput td {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
   </style>
 </head>
 
@@ -59,49 +77,59 @@
   <div id="bereich2">
 
     <div class="flex border-b text-xs text-gray-500 bg-gray-50">
-      <button class="px-3 py-2 border-b-2 border-blue-500 text-blue-600">Logs</button>
-      <button class="px-3 py-2 hover:text-blue-600">Errors</button>
-      <button class="px-3 py-2 hover:text-blue-600">Stats</button>
+      <button class="px-3 py-2 border-b-2 border-blue-500 text-blue-600">Datapoints</button>
+      <button class="px-3 py-2 hover:text-blue-600">Datapoint Types</button>
     </div>
 
     <!-- Controls -->
 <!-- Controls -->
 <div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs flex-wrap gap-2">
+  <div id="dpCreateBar" class="flex ... bg-gray-100 ..." style="position: sticky; top: 0; z-index: 20;">
 
-
-
-  <!-- Datenpunkt anlegen -->
-  <form id="dpCreateForm" class="flex gap-2 items-center flex-wrap bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
-    <span class="font-semibold text-gray-700">Neuer Datenpunkt:</span>
-    <input type="text" id="dpName" placeholder="Name" required
-      class="px-2 py-1 border rounded text-xs w-28" autocomplete="off">
-    <select id="dpType" class="px-2 py-1 border rounded text-xs bg-white" required>
-      <option value="STRING">STRING</option>
-      <option value="NUMBER">NUMBER</option>
-      <option value="BOOLEAN">BOOLEAN</option>
-    </select>
-    <button class="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Anlegen</button>
-    <span class="mx-2 text-gray-400">|</span>
-    <span class="font-semibold text-gray-700">Massenanlage:</span>
-    <input type="number" id="dpBulkCount" min="2" max="1000" value="10"
-      class="px-2 py-1 border rounded text-xs w-16" title="Wie viele?">
-    <input type="text" id="dpBulkPattern" placeholder="z.B. myDp_[NUM]_postfix"
-      class="px-2 py-1 border rounded text-xs w-40" autocomplete="off">
-    <select id="dpBulkType" class="px-2 py-1 border rounded text-xs bg-white" required>
-      <option value="STRING">STRING</option>
-      <option value="NUMBER">NUMBER</option>
-      <option value="BOOLEAN">BOOLEAN</option>
-    </select>
-    <button type="button" id="dpBulkBtn" class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600">Massenanlage</button>
-  </form>
-
-
+    <!-- ...dein bisheriger Inhalt... -->
+    <!-- Datenpunkt anlegen -->
+    <form id="dpCreateForm" class="flex gap-2 items-center flex-wrap bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
+      <span class="font-semibold text-gray-700">Neuer Datenpunkt:</span>
+      <input type="text" id="dpName" placeholder="Name" required
+        class="px-2 py-1 border rounded text-xs w-28" autocomplete="off">
+      <select id="dpType" class="px-2 py-1 border rounded text-xs bg-white" required>
+        <option value="STRING">STRING</option>
+        <option value="NUMBER">NUMBER</option>
+        <option value="BOOLEAN">BOOLEAN</option>
+      </select>
+      <button class="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Anlegen</button>
+      <span class="mx-2 text-gray-400">|</span>
+      <span class="font-semibold text-gray-700">Massenanlage:</span>
+      <input type="number" id="dpBulkCount" min="2" max="1000" value="10"
+        class="px-2 py-1 border rounded text-xs w-16" title="Wie viele?">
+      <input type="text" id="dpBulkPattern" placeholder="z.B. myDp_[NUM]_postfix"
+        class="px-2 py-1 border rounded text-xs w-40" autocomplete="off">
+      <select id="dpBulkType" class="px-2 py-1 border rounded text-xs bg-white" required>
+        <option value="STRING">STRING</option>
+        <option value="NUMBER">NUMBER</option>
+        <option value="BOOLEAN">BOOLEAN</option>
+      </select>
+      <button type="button" id="dpBulkBtn" class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600">Massenanlage</button>
+    </form>
+    <!-- Mülltonnen-Icon rechts oben -->
+    <button id="deleteBtn"
+      class="p-1 rounded hover:bg-red-100 ml-2"
+      style="display:none; z-index:30;"
+      title="Ausgewählte Datenpunkte löschen">
+      <!-- Heroicons Trash SVG -->
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
+      </svg>
+    </button>
+  </div>
 </div>
 
     <!-- Log Table -->
-    <div class="overflow-y-auto">
-      <table class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse">
-        <thead class="bg-gray-200 text-gray-600 uppercase">
+<div style="height: calc(100vh - 96px); overflow-y: auto;">
+  <table class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse">
+    <thead class="bg-gray-200 text-gray-600 uppercase" style="position: sticky; top: 0; z-index: 15;">
+
           <tr>
             <th class="px-4 py-2 border border-gray-300">
               DpName<br>
@@ -124,6 +152,7 @@
           </tr>
         </thead>
         <tbody id="logOutput" class="bg-white odd:bg-gray-50 even:bg-white">
+
         </tbody>
       </table>
     </div>
@@ -131,15 +160,148 @@
 
 
   <script>
-    // guckst du:
-    // https://www.william-troup.com/jsontree-js/examples/themes.html
+// Selektions-Logik für Tabellenzeilen
 
-// Ergänze im <script> Bereich nach DOMContentLoaded:
+let selectedRows = new Set();
+let lastSelectedIndex = null;
+let isMouseDown = false;
+let mouseSelectStart = null;
+
+function updateSelection() {
+  // Finde alle markierten Zeilen und extrahiere die DpNames
+  const dpNames = Array.from(selectedRows).map(tr => tr.getAttribute('data-dpname'));
+  // Callback
+  if (typeof OnSelectionChanged === "function") {
+    OnSelectionChanged(dpNames);
+  }
+}
+
+// Markierungsfarbe per CSS
+const style = document.createElement('style');
+style.innerHTML = `
+  tr.selected-row {
+    background-color: #dbeafe !important; /* noch zarteres blau */
+  }
+`;
+document.head.appendChild(style);
+
+// Selektions-Events nach dem Rendern der Tabelle:
+function enableRowSelection() {
+  const rows = Array.from(document.querySelectorAll('#logOutput tr'));
+  rows.forEach((tr, idx) => {
+    tr.setAttribute('data-row-index', idx); // für Shift-Range
+    // DpName als Attribut (anpassen falls anders)
+    if (!tr.hasAttribute('data-dpname')) {
+      const dpName = tr.querySelector('td')?.innerText?.trim();
+      tr.setAttribute('data-dpname', dpName);
+    }
+
+    // Mouse Down: Start Selektion
+    tr.addEventListener('mousedown', function (e) {
+      isMouseDown = true;
+      mouseSelectStart = idx;
+      if (e.ctrlKey || e.metaKey) {
+        // Toggle Einzelzeile
+        if (selectedRows.has(tr)) {
+          selectedRows.delete(tr);
+          tr.classList.remove('selected-row');
+        } else {
+          selectedRows.add(tr);
+          tr.classList.add('selected-row');
+        }
+        lastSelectedIndex = idx;
+        updateSelection();
+      } else if (e.shiftKey && lastSelectedIndex !== null) {
+        // Range-Select
+        const [start, end] = [lastSelectedIndex, idx].sort((a, b) => a - b);
+        rows.forEach((row, i) => {
+          if (i >= start && i <= end) {
+            selectedRows.add(row);
+            row.classList.add('selected-row');
+          }
+        });
+        updateSelection();
+      } else {
+        // Nur diese Zeile selektieren
+        selectedRows.forEach(row => row.classList.remove('selected-row'));
+        selectedRows.clear();
+        selectedRows.add(tr);
+        tr.classList.add('selected-row');
+        lastSelectedIndex = idx;
+        updateSelection();
+      }
+    });
+
+    // Mouse Over: Drag-Select
+    tr.addEventListener('mouseenter', function (e) {
+      if (isMouseDown && mouseSelectStart !== null && e.buttons === 1) {
+        const [start, end] = [mouseSelectStart, idx].sort((a, b) => a - b);
+        selectedRows.forEach(row => row.classList.remove('selected-row'));
+        selectedRows.clear();
+        for (let i = start; i <= end; i++) {
+          selectedRows.add(rows[i]);
+          rows[i].classList.add('selected-row');
+        }
+        updateSelection();
+      }
+    });
+
+    // Mouse Up: Ende Drag
+    tr.addEventListener('mouseup', function () {
+      isMouseDown = false;
+      mouseSelectStart = null;
+    });
+  });
+
+  // Mouse Up überall: Drag-Ende
+  document.addEventListener('mouseup', function () {
+    isMouseDown = false;
+    mouseSelectStart = null;
+  });
+}
+
+// Rufe enableRowSelection() nach jedem Rendern der Tabelle auf!
+
+// Beispiel-Callback
+function OnSelectionChanged(dpNames) {
+
+  document.getElementById("deleteBtn").style.display = dpNames.length > 0 ? "block" : "none";
+}
+
+// Optional: Klick-Handler für das Löschen
+// Im deleteBtn-Listener das NGUIModal verwenden:
+document.getElementById("deleteBtn").addEventListener("click", async function() {
+  const dpNames = Array.from(selectedRows).map(tr => tr.getAttribute('data-dpname'));
+  if (!dpNames.length) return;
+
+  // Modal-Confirm mit NGUIModal
+  const modal = new NGUIModal(
+    "Löschen bestätigen",
+    `Möchtest du die ausgewählten ${dpNames.length} Datenpunkte wirklich löschen?`,
+    MBYESNO,
+    'bg-red-600'
+  );
+  const result = await modal.ShowAsync();
+  if (result === "yes") {
+    // TODO: Backend-Call zum Löschen
+    console.log("Lösche:", dpNames);
+    for (const dpName of dpNames) {
+      await new Promise(resolve => {
+        g_DB.DpDelete(dpName, (rcv) => {
+          // Optional: Fehlerbehandlung pro Datenpunkt
+          resolve();
+        });
+      });
+    }
+    g_DB.DpNames(null, "*", OnDpNames); // Tabelle neu laden
+
+  }
+});
 
 document.getElementById("dpCreateForm").addEventListener("submit", function(e) {
   e.preventDefault();
   const name = document.getElementById("dpName").value.trim();
-  const type = document.getElementById("dpType").value.toLowerCase();
+  const type = document.getElementById("dpType").value.trim();
   if (!name) return;
   // Hier Backend-Call zum Anlegen eines Datenpunkts
   g_DB.DpCreate(name, type, (rcv) => {
@@ -147,7 +309,12 @@ document.getElementById("dpCreateForm").addEventListener("submit", function(e) {
       document.getElementById("dpName").value = "";
       g_DB.DpNames(null, "*", OnDpNames); // Tabelle neu laden
     } else {
-      alert("Fehler beim Anlegen: " + (rcv.err || "Unbekannter Fehler"));
+      new NGUIModal(
+        "Error",
+        "" + (rcv.err || "Unbekannter Fehler"),
+        MBOK,
+        'bg-red-600'
+      ).ShowAsync();
     }
   });
 });
@@ -155,7 +322,7 @@ document.getElementById("dpCreateForm").addEventListener("submit", function(e) {
 document.getElementById("dpBulkBtn").addEventListener("click", function() {
   const count = parseInt(document.getElementById("dpBulkCount").value, 10);
   const pattern = document.getElementById("dpBulkPattern").value.trim();
-  const type = document.getElementById("dpBulkType").value.toLowerCase();;
+  const type = document.getElementById("dpBulkType").value;
   if (!pattern || isNaN(count) || count < 2) return;
   let created = 0;
   function createNext(i) {
@@ -365,7 +532,20 @@ function applyTableFilters() {
     <td class="border border-gray-300 px-4 py-1 text-green-500">${dpTypeText}</td>
     <td class="border border-gray-300 px-4 py-1" id="VALUE_${fullPath}"></td>
     <td class="border border-gray-300 px-4 py-1 text-gray-500" id="TS_${fullPath}"></td>
-    <td class="border border-gray-300 px-4 py-1 text-gray-600">...</td>
+    <td class="border border-gray-300 px-4 py-1 text-gray-600 text-center">
+      <!-- Lucide simple "sliders-horizontal" icon SVG -->
+      <svg xmlns="http://www.w3.org/2000/svg"
+         class="lucide lucide-sliders-horizontal inline w-5 h-5 cursor-pointer hover:text-blue-500"
+         fill="none" viewBox="0 0 24 24" stroke="currentColor"
+         onclick="OnDpSettings('${fullPath}')">
+        <line x1="21" y1="6" x2="3" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <line x1="21" y1="18" x2="7" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="6" cy="6" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
+        <circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
+        <circle cx="6" cy="18" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
+      </svg>
+    </td>
   </tr>`;
 
         if (!fullPath.includes('.')) {
@@ -507,6 +687,7 @@ function finishEdit(apply, tabPressed = false) {
           }
         });
       }
+      enableRowSelection()
     }
 
 
@@ -557,12 +738,41 @@ function finishEdit(apply, tabPressed = false) {
       });
     }    
 
+    function OnDpSettings(dpName)
+    {
+      console.log(dpName)
+    }
+
+function OnDpTypes(rcv) {
+  // Erwartet: rcv.data = Array von Typen, z.B. ["STRING", "NUMBER", "BOOLEAN"]
+  const select = document.getElementById("dpType");
+  if (!select || !rcv.data) return;
+  select.innerHTML = ""; // Vorherige Optionen entfernen
+  rcv.data.types.forEach(type => {
+    const opt = document.createElement("option");
+    opt.value = type;
+    opt.textContent = type;
+    select.appendChild(opt);
+  });
+  // Optional: Auch für Massenanlage das gleiche Select aktualisieren
+  const bulkSelect = document.getElementById("dpBulkType");
+  if (bulkSelect) {
+    bulkSelect.innerHTML = "";
+    rcv.data.types.forEach(type => {
+      const opt = document.createElement("option");
+      opt.value = type;
+      opt.textContent = type;
+      bulkSelect.appendChild(opt);
+    });
+  }
+}
     function OnAppOpen() {
       console.log("App opened");
       //g_NGUI.LoadPage("NGUI_DemoTop.html", "right-top", null);
 
 
       g_NGUI.GetDbClient().DpNames(null, "*", OnDpNames);
+      g_NGUI.GetDbClient().DpTypes("*", OnDpTypes);
     }
 
 

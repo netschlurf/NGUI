@@ -492,7 +492,15 @@ DpNames2(typeName = null, pattern = null) {
 }
 
   DpTypes(pattern = null) {
-    let types = Array.from(this.#dpTypeIdentificationTable.keys());
+    // Nur Root-Typen (parent_id == null) liefern
+    let rootTypes = [];
+    for (const [typeName, entry] of this.#dpTypeIdentificationTable.entries()) {
+      // Hole parent_id aus der Datenbank, da es nicht im Cache ist
+      const row = this.#db.prepare('SELECT parent_id FROM DataPointTypes WHERE id = ?').get(entry.id);
+      if (!row || row.parent_id === null) {
+        rootTypes.push(typeName);
+      }
+    }
 
     if (pattern) {
       let regexPattern = pattern
@@ -501,9 +509,9 @@ DpNames2(typeName = null, pattern = null) {
         .replace(/\?/g, '.')
         .replace(/\[([^\]]*)\]/g, '[$1]');
       const regex = new RegExp('^' + regexPattern + '$');
-      types = types.filter(type => regex.test(type));
+      rootTypes = rootTypes.filter(type => regex.test(type));
     }
-    return types.sort();
+    return rootTypes.sort();
   }
 
   /**
