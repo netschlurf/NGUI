@@ -450,10 +450,14 @@ class IME_DBClient {
         else if(rcv.data.data && rcv.data.data.dpName)
             obj = rcv.data.data;
 
-        if (obj && this.DpConnectionTable.has(obj.dpName)) {
-            var callbacks = this.DpConnectionTable.get(obj.dpName);
-            for (var i = 0; i < callbacks.length; i++) {
-                callbacks[i](rcv.data);
+        if (obj) {
+            // Alle Keys durchgehen und prüfen, ob sie in obj.dpName enthalten sind (Substring-Match)
+            for (let [key, callbacks] of this.DpConnectionTable.entries()) {
+                if (obj.dpName && obj.dpName.includes(key)) {
+                    for (let i = 0; i < callbacks.length; i++) {
+                        callbacks[i](rcv.data);
+                    }
+                }
             }
         }
     }
@@ -507,6 +511,11 @@ class IME_DBClient {
         const request = { dpName: dpName, type: type };
         this.Connection.SendCustomCommand("DpCreate", request, callback);
     }
+
+    DpDelete(dpName, callback) {
+        const request = { dpName: dpName };
+        this.Connection.SendCustomCommand("DpDelete", request, callback);
+    }    
 
     DpNames(typeName, pattern, callback) {
         const request = { typeName: typeName, pattern: pattern };

@@ -42,6 +42,16 @@
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}/IME_DBDiag.js"
-        }        
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "NGUI_BusyBox.js",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/NGUI_BusyBox.js"
+        }         
+            
     ]
 }

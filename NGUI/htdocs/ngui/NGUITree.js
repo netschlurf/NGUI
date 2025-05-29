@@ -88,7 +88,7 @@ class NGUITree {
           let value;
           if (col.dataSource === 'data') {
             value = node.data[col.field];
-            console.log(`Rendering column ${col.field} for node ${node.title}:`, value);
+            //console.log(`Rendering column ${col.field} for node ${node.title}:`, value);
           } else {
             value = node[col.field];
           }
@@ -147,7 +147,7 @@ class NGUITree {
         data: node.data || {},
         children: node.children ? node.children.map(convertNode) : [],
       };
-      console.log(`Converted node ${node.label}:`, converted.data);
+      //console.log(`Converted node ${node.label}:`, converted.data);
       return converted;
     };
     const treeData = Array.isArray(jsonData) ? jsonData.map(convertNode) : [convertNode(jsonData)];

@@ -10,6 +10,7 @@ class IME_DBHandler extends NGUIHandlerBase {
             'DpConnect': this.DpConnect.bind(this),
             'DpDisconnect': this.DpDisconnect.bind(this),
             'DpCreate': this.DpCreate.bind(this),
+            'DpDelete': this.DpDelete.bind(this),
             'DpNames': this.DpNames.bind(this),
             'DpTypes': this.DpTypes.bind(this),
             'DpExists': this.DpExists.bind(this),
@@ -189,7 +190,7 @@ class IME_DBHandler extends NGUIHandlerBase {
      */
     DpConnect(msg, ws) {
         if (!msg.args || !msg.args.dpName) {
-            const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, rc: 300};
+            const rsp = { cmd: msg.cmd, dpName: msg.args.dpName, rc: 300 };
             this.sendResponse(ws, msg, null, rsp);
             return;
         }
@@ -200,7 +201,11 @@ class IME_DBHandler extends NGUIHandlerBase {
                 this.DpConnectionMap.set(dpName, []);
                 // Establish database connection only for new dpName
                 this.db.DpConnect(dpName, (dpName, value) => {
-                    this.OnDpConnect(dpName, value, this.DpConnectionMap.get(dpName));
+                    for (const [key, callback] of this.DpConnectionMap.entries()) {
+                        if (dpName.includes(key)) {
+                            this.OnDpConnect(dpName, value, callback);
+                        }
+                    }
                 });
             }
             // Add the connection
@@ -290,6 +295,27 @@ class IME_DBHandler extends NGUIHandlerBase {
         }
         return true;
     }
+
+    /**
+     * Deletes a data point from the database.
+     * @param {Object} msg - The incoming message with name and type in args.
+     * @param {WebSocket} ws - The WebSocket instance.
+     */
+    DpDelete(msg, ws) {
+        if (!msg.args || !msg.args.dpName || !msg.args.type) {
+            const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, rc: 300};
+            this.sendResponse(ws, msg, null, rsp);
+        }
+
+        try {
+            const dataPoint = this.db.DpDelete(msg.args.dpName);
+            this.sendResponse(ws, msg, {name: dataPoint.name});
+        } catch (err) {
+            console.error('Error creating data point:', err);
+            this.sendResponse(ws, msg, null, 'Error creating data point');
+        }
+        return true;
+    }    
 
     /**
      * Gibt alle Datenpunktnamen zurück, optional gefiltert nach Typ und/oder Pattern.

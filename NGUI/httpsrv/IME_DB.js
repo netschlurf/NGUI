@@ -273,7 +273,7 @@ Connect() {
 
     const dpStmt = this.#db.prepare(`
       INSERT INTO DataPoints (name, parent_id, type_id, value, value_type, tstamp)
-      VALUES (?, ?, ?, ?, ?, strftime('%s', 'now'))
+      VALUES (?, ?, ?, ?, ?, CAST(ROUND((julianday('now') - 2440587.5) * 86400000) AS INTEGER))
     `);
     const dpInfo = dpStmt.run(dpName, parentId, typeId, value, value_type);
     const dpId = dpInfo.lastInsertRowid;
@@ -328,14 +328,20 @@ DpSet(name, value) {
 
     const value_type = entry.value_type || this.#jsTypeToValueType(typeof value);
     const dbValue = value_type === ValueType.BOOLEAN ? (value ? 1 : 0) : value;
-    const tstamp = Math.floor(Date.now() / 1000);
+    const tstamp = Date.now();
     const success = this.#updateStmt.run(dbValue, value_type, tstamp, entry.id);
 
     if (success.changes === 1) {
       this.#dpIdentificationTable.set(name, { ...entry, value_type });
-      const callback = this.#callbacks.get(name);
-      if (callback) {
-        callback(name, value);
+
+      if (success.changes === 1) {
+        this.#dpIdentificationTable.set(name, { ...entry, value_type });
+        for (const [key, callback] of this.#callbacks.entries()) {
+          if (name.includes(key)) {
+            var res = {value, tstamp};
+            callback(name, res);
+          }
+        }
       }
     }
   }
@@ -356,8 +362,11 @@ DpSet(name, value) {
       return result;
     }
 
-    const row = this.#db.prepare('SELECT value, value_type FROM DataPoints WHERE id = ?').get(entry.id);
-    return this.#convertValue(row.value, row.value_type);
+    const row = this.#db.prepare('SELECT value, value_type, tstamp FROM DataPoints WHERE id = ?').get(entry.id);
+    var res = {};
+    res.value = this.#convertValue(row.value, row.value_type);
+    res.tstamp = row.tstamp;
+    return res;
   }
 
   #resolvePath(path) {
@@ -451,25 +460,36 @@ DpSet(name, value) {
     return true;
   }
 
-  DpNames(typeName = null, pattern = null) {
-    let names = [];
-    for (const [path, entry] of this.#dpIdentificationTable) {
-      if (!typeName || this.#dpTypeIdentificationTable.get(typeName)?.id === entry.type_id) {
-        names.push(path);
+DpNames2(typeName = null, pattern = null) {
+  let results = []; // Wir ändern 'names' zu 'results', da wir Objekte speichern
+
+  for (const [path, entry] of this.#dpIdentificationTable) {
+    // Stellen Sie sicher, dass #dpTypeIdentificationTable korrekt zugänglich ist
+    const currentTypeName = [...this.#dpTypeIdentificationTable.entries()]
+                                .find(([, typeEntry]) => typeEntry.id === entry.type_id)?.[0];
+
+    // Überprüfen, ob der Typ passt oder kein Typ angegeben wurde
+    if (!typeName || typeName === currentTypeName) {
+      // Filtern Sie Namen, die einen Punkt enthalten, direkt hier
+      if (!path.includes('.')) {
+        results.push({ DpName: path, DpType: currentTypeName }); // Füge Objekt mit Pfad und Typ hinzu
       }
     }
-
-    if (pattern) {
-      let regexPattern = pattern
-        .replace(/([.+^${}()|\\])/g, '\\$1')
-        .replace(/\*/g, '.*')
-        .replace(/\?/g, '.')
-        .replace(/\[([^\]]*)\]/g, '[$1]');
-      const regex = new RegExp('^' + regexPattern + '$');
-      names = names.filter(name => regex.test(name));
-    }
-    return names.sort();
   }
+
+  if (pattern) {
+    let regexPattern = pattern
+      .replace(/([.+^${}()|\\])/g, '\\$1')
+      .replace(/\*/g, '.*')
+      .replace(/\?/g, '.')
+      .replace(/\[([^\]]*)\]/g, '[$1]');
+    const regex = new RegExp('^' + regexPattern + '$');
+    results = results.filter(item => regex.test(item.DpName)); // Filtern Sie basierend auf dem 'path'-Eigenschaft
+  }
+
+  // Sortiere die Ergebnisse alphabetisch nach dem Pfad
+  return results.sort((a, b) => a.DpName.localeCompare(b.DpName));
+}
 
   DpTypes(pattern = null) {
     let types = Array.from(this.#dpTypeIdentificationTable.keys());
@@ -485,6 +505,88 @@ DpSet(name, value) {
     }
     return types.sort();
   }
+
+  /**
+   * Gibt alle DataPoints als Baumstruktur zurück.
+   * @param {string|null} typeName - Optional: Nur DataPoints dieses Typs.
+   * @param {string|null} pattern - Optional: Filter für Namen (mit *, ? erlaubt).
+   * @returns {Array|Object} Baumstruktur der DataPoints.
+   */
+DpNames(typeName = null, pattern = null) {
+  // Pattern-Matching Hilfsfunktion
+  function matchesPattern(name, pattern) {
+    if (!pattern) return true;
+    let regexPattern = pattern
+      .replace(/([.+^${}()|\\])/g, '\\$1')
+      .replace(/\*/g, '.*')
+      .replace(/\?/g, '.')
+      .replace(/\[([^\]]*)\]/g, '[$1]');
+    const regex = new RegExp('^' + regexPattern + '$');
+    return regex.test(name);
+  }
+
+  // Typ-ID zu Name Mapping
+  const typeIdToName = {};
+  for (const [name, entry] of this._dpTypeIdentificationTable) {
+    typeIdToName[entry.id] = name;
+  }
+
+  // Alle DataPoints laden
+  const allDPs = [];
+  for (const [path, entry] of this._dpIdentificationTable) {
+    allDPs.push({
+      path,
+      ...entry,
+      typeName: typeIdToName[entry.type_id] || null,
+      children: []
+    });
+  }
+
+  // Map: path -> node
+  const pathMap = new Map();
+  for (const dp of allDPs) {
+    pathMap.set(dp.path, dp);
+  }
+
+  // Baum aufbauen anhand des Pfads
+  let roots = [];
+  for (const dp of allDPs) {
+    // Filter nach Typ falls gewünscht
+    if (typeName && dp.typeName !== typeName) continue;
+    // Parent-Pfad bestimmen
+    const lastDot = dp.path.lastIndexOf('.');
+    if (lastDot !== -1) {
+      const parentPath = dp.path.substring(0, lastDot);
+      const parent = pathMap.get(parentPath);
+      if (parent) {
+        parent.children.push(dp);
+        continue;
+      }
+    }
+    // Wenn kein Parent gefunden, ist es ein Root
+    roots.push(dp);
+  }
+
+  // Optional: Pattern-Filter auf allen Ebenen anwenden
+  function filterTree(node) {
+    const keepSelf = matchesPattern(node.path, pattern);
+    node.children = node.children.map(filterTree).filter(Boolean);
+    return keepSelf || node.children.length > 0 ? node : null;
+  }
+  roots = roots.map(filterTree).filter(Boolean);
+
+  // Nur relevante Felder zurückgeben
+  function clean(node) {
+    return {
+      DpName: node.path.split('.').pop(),
+      DpType: node.typeName,
+      dpTypeId: node.type_id,
+      valueType: node.value_type,
+      children: node.children.map(clean)
+    };
+  }
+  return roots.map(clean);
+}
 
   DpTypeDelete(typeName) {
     const typeEntry = this.#dpTypeIdentificationTable.get(typeName);

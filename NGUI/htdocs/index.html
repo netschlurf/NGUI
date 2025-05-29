@@ -18,11 +18,13 @@
   <link href="ngui/3p/fancytree/ui.fancytree.min.css" rel="stylesheet" />
   <script src="ngui/3p/fancytree/jquery.fancytree-all-deps.min.js"></script>
 
+  <link href="ngui/NGUI.css" rel="stylesheet" /
   <!-- NGUI Scripts -->
   <script src="ngui/NGUIConnection.js"></script>
   <script src="ngui/NGUIModalTailwind.js"></script>
   <script src="ngui/NGUIWindowTailwind.js"></script>
   <script src="ngui/NGUITree.js"></script>
+  <script src="ngui/NGUISplitter.js"></script>
 
   <style>
     /* Grundlegendes Layout und Schriftfamilie für die gesamte Seite */
@@ -33,155 +35,7 @@
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    .colorFull {
-      color: #cc1168 !important; /* Tailwind blue-600 */
-    }
 
-
-    #right-bottom {
-      overflow: auto;
-    }
-    /* Grid-Layout: linker Bereich (Tree), splitter vertikal, rechter Bereich oben und unten mit horizontalem Splitter */
-    #container {
-      display: grid;
-      grid-template-columns: 280px 5px 1fr;
-      grid-template-rows: 170px 5px 1fr;
-      height: 100vh;
-      gap: 0;
-    }
-
-    /* Baum-Tabelle links, volle Höhe, flex column für bessere Steuerung */
-    #tree-container {
-      grid-column: 1 / 2;
-      grid-row: 1 / 4;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Vertikaler Splitter zwischen Tree und rechter Seite */
-    #splitter-vertical {
-      grid-column: 2 / 3;
-      grid-row: 1 / 4;
-      background: #ddd;
-      cursor: col-resize;
-    }
-
-    /* Rechter Bereich oben mit Rahmen unten und Padding */
-    #right-top {
-      grid-column: 3 / 4;
-      grid-row: 1 / 2;
-      border-bottom: 1px solid #ccc;
-      overflow: auto;
-      padding: 8px;
-    }
-
-    /* Horizontaler Splitter zwischen rechtem oberen und unteren Bereich */
-    #splitter-horizontal {
-      grid-column: 3 / 4;
-      grid-row: 2 / 3;
-      background: #ddd;
-      cursor: row-resize;
-    }
-
-    /* Rechter Bereich unten mit Padding und Scroll */
-    #right-bottom {
-      grid-column: 3 / 4;
-      grid-row: 3 / 4;
-      overflow: auto;
-      padding: 8px;
-    }
-
-    /* Tabelle für TreeGrid - Tabellenlayout und Formatierung */
-    #treegrid {
-      border-collapse: collapse;
-      width: 100%;
-      table-layout: fixed;
-    }
-
-    /* Tabellenkopf mit Hintergrund, Padding, Schriftgröße und Linien */
-    #treegrid thead th {
-      background: #f3f4f6; /* Tailwind slate-100 */
-      padding: 4px 8px;
-      font-weight: 600;
-      text-align: left;
-      font-size: 0.875rem;
-      border-bottom: 0px solid #ccc;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      box-sizing: border-box;
-      width: 150px; /* Default width, overridden by resizing */
-      position: relative; /* Required for resizable handles */
-    }
-
-    /* Tabellenzellen mit Padding und Textüberlauf */
-    #treegrid tbody td {
-      padding: 2px 6px;
-      vertical-align: middle;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      width: 150px; /* Default width, overridden by resizing */
-      box-sizing: border-box;
-    }
-
-    /* Style for resizable handle */
-    .ui-resizable-e {
-      width: 5px;
-      background: #ccc;
-      cursor: ew-resize;
-    }
-
-    /* Fancytree Expander (Pfeil) kompakter und mit kleinerem Abstand */
-    .fancytree-expander {
-      width: 14px !important;
-      height: 14px !important;
-      margin-right: 2px !important;
-    }
-
-    /* Knoten-Titel kompakter, kein Padding, kleinere Zeilenhöhe und Schriftgröße */
-    .fancytree-title {
-      padding: 0 !important;
-      line-height: 1.25rem !important;
-      font-size: 0.875rem !important;
-      border: 0 !important; /* Kein Rahmen */
-    }
-
-    /* Fancytree-Icons kompakter mit kleinerer Größe und Abstand */
-    .fancytree-icon {
-      width: 16px !important;
-      height: 16px !important;
-      margin-right: 4px !important;
-    }
-
-    /* Pfeil nur bei Elternknoten anzeigen */
-    .fancytree-expander:empty {
-      width: 14px !important;
-    }
-
-    /* Zeilen im tbody mit Pointer-Cursor und Schriftgröße */
-    #treegrid tbody tr {
-      cursor: pointer;
-      font-size: 0.875rem;
-    }
-
-    /* Kein Highlight bei ausgewähltem Eintrag */
-    #treegrid tbody tr.fancytree-selected {
-      background-color: transparent !important;
-    }
-
-    /* Sanfter Hover-Effekt für Zeilen */
-    #treegrid tbody tr:hover {
-      background-color: #f9fafb; /* Tailwind gray-50 */
-      transition: background-color 0.3s ease;
-    }
-
-    /* Remove duplicate #tree styles */
-    span.fancytree-title {
-      border: 0px !important;
-      border-style: none !important;
-    }
   </style>
 </head>
 
@@ -226,52 +80,21 @@
     // https://www.william-troup.com/jsontree-js/examples/themes.html
 
 
-    // Splitter-Logik für vertikal
-    const container = document.getElementById("container");
-    const splitterV = document.getElementById("splitter-vertical");
-    let isResizingV = false;
-    splitterV.addEventListener("mousedown", e => {
-      isResizingV = true;
-      document.body.style.cursor = "col-resize";
-    });
-    window.addEventListener("mouseup", e => {
-      isResizingV = false;
-      document.body.style.cursor = "default";
-    });
-    window.addEventListener("mousemove", e => {
-      if (!isResizingV) return;
-      let newWidth = e.clientX;
-      if (newWidth < 150) newWidth = 150;
-      if (newWidth > window.innerWidth - 150) newWidth = window.innerWidth - 150;
-      container.style.gridTemplateColumns = `${newWidth}px 5px 1fr`;
-    });
-
-    // Splitter-Logik für horizontal
-    const splitterH = document.getElementById("splitter-horizontal");
-    let isResizingH = false;
-    splitterH.addEventListener("mousedown", e => {
-      isResizingH = true;
-      document.body.style.cursor = "row-resize";
-    });
-    window.addEventListener("mouseup", e => {
-      isResizingH = false;
-      document.body.style.cursor = "default";
-    });
-    window.addEventListener("mousemove", e => {
-      if (!isResizingH) return;
-      let newHeight = e.clientY;
-      const containerRect = container.getBoundingClientRect();
-      let maxHeight = containerRect.height - 150;
-      if (newHeight < containerRect.top + 100) newHeight = containerRect.top + 100;
-      if (newHeight > containerRect.top + maxHeight) newHeight = containerRect.top + maxHeight;
-      const topRowHeight = newHeight - containerRect.top;
-      const bottomRowHeight = containerRect.height - topRowHeight - 5;
-      container.style.gridTemplateRows = `${topRowHeight}px 5px ${bottomRowHeight}px`;
-    });
 
     var g_NGUI = new NGUIClient();
     g_NGUI.Connect("ws://localhost:2808", OnAppOpen);
     var g_DB = g_NGUI.GetDbClient();
+
+    const splitter = new NGUI_Splitter("#container");
+    splitter.enableVerticalSplitter("#splitter-vertical", {
+      minWidth: 200,
+      maxWidth: 600,
+    });
+    splitter.enableHorizontalSplitter("#splitter-horizontal", {
+      minHeight: 20,
+      maxHeightOffset: 200,
+    });
+
 
     function OnAppOpen() {
       console.log("App opened");
