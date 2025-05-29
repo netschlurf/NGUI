@@ -35,6 +35,22 @@
       margin: 0;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     }
+
+  #logOutput tr:nth-child(odd) {
+    background-color: #f8fafc; /* sehr helles grau */
+  }
+  #logOutput tr:nth-child(even) {
+    background-color: #fff;
+  }    
+  #logOutput tr:nth-child(odd) {
+    background-color: #f8fafc;
+  }
+  #logOutput tr:nth-child(even) {
+    background-color: #fff;
+  }
+  #logOutput tr:hover {
+    background-color: #e0f2fe !important; /* zartes hellblau, überschreibt Tailwind */
+  }  
   </style>
 </head>
 
@@ -49,43 +65,65 @@
     </div>
 
     <!-- Controls -->
-    <div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs">
-      <div class="flex gap-2">
-        <input type="text" id="searchInput" placeholder="Search logs..."
-          class="px-3 py-1 rounded border border-gray-300 focus:outline-none focus:ring focus:ring-blue-200">
-        <select id="levelFilter" class="px-2 py-1 border rounded bg-white">
-          <option value="all">All Levels</option>
-          <option value="INFO">Info</option>
-          <option value="WARN">Warning</option>
-          <option value="ERROR">Error</option>
-        </select>
-      </div>
-      <div class="flex items-center gap-2">
-        <label class="flex items-center gap-1 text-gray-700">
-          <input type="checkbox" id="autoScroll" class="accent-blue-600"> Auto-Scroll
-        </label>
-        <button onclick="pauseLogs()"
-          class="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600">Pause</button>
-        <button onclick="clearLogs()" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">Clear</button>
-        <button onclick="exportLogs()"
-          class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-800">Export</button>
-      </div>
-    </div>
+<!-- Controls -->
+<div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs flex-wrap gap-2">
+
+
+
+  <!-- Datenpunkt anlegen -->
+  <form id="dpCreateForm" class="flex gap-2 items-center flex-wrap bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
+    <span class="font-semibold text-gray-700">Neuer Datenpunkt:</span>
+    <input type="text" id="dpName" placeholder="Name" required
+      class="px-2 py-1 border rounded text-xs w-28" autocomplete="off">
+    <select id="dpType" class="px-2 py-1 border rounded text-xs bg-white" required>
+      <option value="STRING">STRING</option>
+      <option value="NUMBER">NUMBER</option>
+      <option value="BOOLEAN">BOOLEAN</option>
+    </select>
+    <button class="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Anlegen</button>
+    <span class="mx-2 text-gray-400">|</span>
+    <span class="font-semibold text-gray-700">Massenanlage:</span>
+    <input type="number" id="dpBulkCount" min="2" max="1000" value="10"
+      class="px-2 py-1 border rounded text-xs w-16" title="Wie viele?">
+    <input type="text" id="dpBulkPattern" placeholder="z.B. myDp_[NUM]_postfix"
+      class="px-2 py-1 border rounded text-xs w-40" autocomplete="off">
+    <select id="dpBulkType" class="px-2 py-1 border rounded text-xs bg-white" required>
+      <option value="STRING">STRING</option>
+      <option value="NUMBER">NUMBER</option>
+      <option value="BOOLEAN">BOOLEAN</option>
+    </select>
+    <button type="button" id="dpBulkBtn" class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600">Massenanlage</button>
+  </form>
+
+
+</div>
 
     <!-- Log Table -->
     <div class="overflow-y-auto">
       <table class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse">
         <thead class="bg-gray-200 text-gray-600 uppercase">
           <tr>
-            <th class="px-4 py-2 border border-gray-300">DpName</th>
-            <th class="px-4 py-2 border border-gray-300">DpType</th>
-            <th class="px-4 py-2 border border-gray-300">Value</th>
-            <th class="px-4 py-2 border border-gray-300">timestamp</th>
+            <th class="px-4 py-2 border border-gray-300">
+              DpName<br>
+              <input type="text" id="filterDpName" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
+            </th>
+            <th class="px-4 py-2 border border-gray-300">
+              DpType<br>
+              <input type="text" id="filterDpType" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
+            </th>
+            <th class="px-4 py-2 border border-gray-300">
+              Value<br>
+              <input type="text" id="filterValue" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
+            </th>
+            <th class="px-4 py-2 border border-gray-300">
+              timestamp<br>
+              <input type="text" id="filterTsFrom" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="von">
+              <input type="text" id="filterTsTo" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="bis">
+            </th>
             <th class="px-4 py-2 border border-gray-300">Config</th>
           </tr>
         </thead>
-        <tbody id="logOutput" class="bg-white">
-
+        <tbody id="logOutput" class="bg-white odd:bg-gray-50 even:bg-white">
         </tbody>
       </table>
     </div>
@@ -95,6 +133,84 @@
   <script>
     // guckst du:
     // https://www.william-troup.com/jsontree-js/examples/themes.html
+
+// Ergänze im <script> Bereich nach DOMContentLoaded:
+
+document.getElementById("dpCreateForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const name = document.getElementById("dpName").value.trim();
+  const type = document.getElementById("dpType").value.toLowerCase();
+  if (!name) return;
+  // Hier Backend-Call zum Anlegen eines Datenpunkts
+  g_DB.DpCreate(name, type, (rcv) => {
+    if (!rcv.err) {
+      document.getElementById("dpName").value = "";
+      g_DB.DpNames(null, "*", OnDpNames); // Tabelle neu laden
+    } else {
+      alert("Fehler beim Anlegen: " + (rcv.err || "Unbekannter Fehler"));
+    }
+  });
+});
+
+document.getElementById("dpBulkBtn").addEventListener("click", function() {
+  const count = parseInt(document.getElementById("dpBulkCount").value, 10);
+  const pattern = document.getElementById("dpBulkPattern").value.trim();
+  const type = document.getElementById("dpBulkType").value.toLowerCase();;
+  if (!pattern || isNaN(count) || count < 2) return;
+  let created = 0;
+  function createNext(i) {
+    if (i > count) {
+      g_DB.DpNames(null, "*", OnDpNames); // Tabelle neu laden
+      return;
+    }
+    const name = pattern.replace(/\[NUM\]/gi, i);
+    g_DB.DpCreate(name, type, (rcv) => {
+      created++;
+      createNext(i + 1);
+    });
+  }
+  createNext(1);
+});
+
+function applyTableFilters() {
+  const dpNameFilter = document.getElementById('filterDpName').value.toLowerCase();
+  const dpTypeFilter = document.getElementById('filterDpType').value.toLowerCase();
+  const valueFilter = document.getElementById('filterValue').value.toLowerCase();
+  const tsFrom = document.getElementById('filterTsFrom').value;
+  const tsTo = document.getElementById('filterTsTo').value;
+
+  document.querySelectorAll('#logOutput tr').forEach(row => {
+    const dpName = row.children[0]?.innerText?.toLowerCase() || "";
+    const dpType = row.children[1]?.innerText?.toLowerCase() || "";
+    const value = row.children[2]?.innerText?.toLowerCase() || "";
+    const ts = row.children[3]?.innerText?.trim() || "";
+
+    let show = true;
+    if (dpNameFilter && !dpName.includes(dpNameFilter)) show = false;
+    if (dpTypeFilter && !dpType.includes(dpTypeFilter)) show = false;
+    if (valueFilter && !value.includes(valueFilter)) show = false;
+
+    // Zeitfilter: Format YYYY-MM-DD HH:mm:ss.SSS
+    if ((tsFrom || tsTo) && ts) {
+      const tsDate = new Date(ts.replace(" ", "T"));
+      if (tsFrom) {
+        const fromDate = new Date(tsFrom.replace(" ", "T"));
+        if (tsDate < fromDate) show = false;
+      }
+      if (tsTo) {
+        const toDate = new Date(tsTo.replace(" ", "T"));
+        if (tsDate > toDate) show = false;
+      }
+    }
+
+    row.style.display = show ? "" : "none";
+  });
+}
+
+// Filter-Events binden (einmalig nach DOMContentLoaded oder nach Rendern)
+['filterDpName', 'filterDpType', 'filterValue', 'filterTsFrom', 'filterTsTo'].forEach(id => {
+  document.getElementById(id).addEventListener('input', applyTableFilters);
+});
 
     // filepath: d:\Data\git\NGUI\htdocs\NGUI_Browser.html
     // Resizable table columns
@@ -206,6 +322,13 @@
       4: 'STRUCT'
     };
 
+    const DpTypeForward = {
+      STRING: 1,
+      NUMBER: 2,
+      BOOLEAN: 3,
+      STRUCT: 4
+    };
+
     function OnDpNames(rcv) {
       var html = "";
 
@@ -240,8 +363,8 @@
       ${toggle} ${dp.DpName}
     </td>
     <td class="border border-gray-300 px-4 py-1 text-green-500">${dpTypeText}</td>
-    <td class="border border-gray-300 px-4 py-1" id="VALUE_${fullPath}">...</td>
-    <td class="border border-gray-300 px-4 py-1 text-gray-500" id="TS_${fullPath}">...</td>
+    <td class="border border-gray-300 px-4 py-1" id="VALUE_${fullPath}"></td>
+    <td class="border border-gray-300 px-4 py-1 text-gray-500" id="TS_${fullPath}"></td>
     <td class="border border-gray-300 px-4 py-1 text-gray-600">...</td>
   </tr>`;
 
@@ -273,6 +396,86 @@
       }
 
       document.getElementById("logOutput").innerHTML = html;
+
+
+document.querySelectorAll('td[id^="VALUE_"]').forEach(td => {
+  td.addEventListener('dblclick', function (e) {
+    const oldValue = td.innerText;
+    const dpName = td.id.substring("VALUE_".length);
+    // Hole den dpType aus der Nachbarzelle (zweite Spalte im gleichen <tr>)
+    const tr = td.parentElement;
+    const dpType = tr.children[1]?.innerText?.trim();
+
+    // Erstelle ein Eingabefeld
+    const input = document.createElement('input');
+    input.type = "text";
+    input.value = oldValue;
+    input.className = "w-full py-0.5 border rounded text-xs";
+    input.style.boxSizing = "border-box";
+    input.style.width = "100%";
+    input.style.height = "100%";
+    input.style.minWidth = "0";
+    input.style.fontSize = "inherit";
+    input.style.background = "inherit";
+    input.style.margin = "0";
+    input.style.padding = "0 2px";
+    input.style.border = "none";
+    input.style.outline = "none";
+    input.style.boxShadow = "none";
+    input.style.display = "block";
+    td.innerHTML = "";
+    td.appendChild(input);
+    input.focus();
+    input.select();
+
+    // Callback-Handler
+let finished = false;
+
+function finishEdit(apply, tabPressed = false) {
+  if (finished) return;
+  finished = true;
+  const newValue = input.value;
+  // Wert NICHT direkt ins td schreiben, Backend liefert neuen Wert!
+  if (apply && newValue !== oldValue) {
+    if (typeof OnValueEdited === "function") {
+      OnValueEdited(dpName, oldValue, newValue, dpType, td);
+    }
+  } else if (!apply) {
+    td.innerHTML = oldValue; // Bei Abbruch alten Wert wiederherstellen
+  }
+  // Tab-Logik wie gehabt ...
+  if (tabPressed) {
+    let nextTr = tr.nextElementSibling;
+    while (nextTr && !nextTr.querySelector('td[id^="VALUE_"]')) {
+      nextTr = nextTr.nextElementSibling;
+    }
+    if (nextTr) {
+      const nextTd = nextTr.querySelector('td[id^="VALUE_"]');
+      if (nextTd) {
+        setTimeout(() => nextTd.dispatchEvent(new Event('dblclick')), 0);
+      }
+    }
+  }
+}
+
+    // Enter = übernehmen, Escape = abbrechen, Tab = übernehmen & nächstes Feld
+    input.addEventListener('keydown', function (evt) {
+      if (evt.key === "Enter") {
+        finishEdit(true);
+      } else if (evt.key === "Escape") {
+        finishEdit(false);
+      } else if (evt.key === "Tab") {
+        evt.preventDefault();
+        finishEdit(true, true);
+      }
+    });
+
+    // Bei Fokusverlust übernehmen
+    input.addEventListener('blur', function () {
+      finishEdit(true);
+    });
+  });
+});
 
       // Toggle-Logik
       document.querySelectorAll('.toggle-btn').forEach(btn => {
@@ -307,10 +510,56 @@
     }
 
 
+    function OnValueEdited(dpName, oldValue, newValue, dpType, td) {
+      let type = DpTypeForward[dpType];
+      let setVal = null;
+      let prevVal = null;
+      switch(type) {
+        case DpType.STRING:
+          setVal = newValue;
+          break;
+        case DpType.NUMBER:
+          setVal = Number(newValue);
+          break;
+        case DpType.BOOLEAN:
+          setVal = (newValue === "true" || newValue === "1" || newValue === 1 || newValue === true);
+          break;
+        default:
+          setVal = newValue;
+      }
+
+      switch(type) {
+        case DpType.STRING:
+          prevVal = oldValue;
+          break;
+        case DpType.NUMBER:
+          prevVal = Number(oldValue);
+          break;
+        case DpType.BOOLEAN:
+          prevVal = (oldValue === "true" || oldValue === "1" || oldValue === 1 || oldValue === true);
+          break;
+        default:
+          prevVal = oldValue;
+      }      
+
+      g_NGUI.GetDbClient().DpSet(dpName, setVal, (rcv) => 
+      {
+        if(!rcv.err)
+        {
+          td.innerHTML = setVal;
+          console.log(rcv);
+        }
+        else
+        {
+          td.innerHTML = prevVal;
+          console.log(rcv);
+        }
+      });
+    }    
+
     function OnAppOpen() {
       console.log("App opened");
-      //g_NGUI.LoadPage("NGUI_kitchensink.html", "right-bottom", null);
-      g_NGUI.LoadPage("NGUI_DemoTop.html", "right-top", null);
+      //g_NGUI.LoadPage("NGUI_DemoTop.html", "right-top", null);
 
 
       g_NGUI.GetDbClient().DpNames(null, "*", OnDpNames);
