@@ -147,7 +147,7 @@ class IME_DBHandler extends NGUIHandlerBase {
      */
     DpSet(msg, ws) {
         if (!msg.args || !msg.args.dpName || msg.args.value === undefined) {
-            const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, rc: 300};
+            const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, msg: "missing args", rc: 300};
             this.sendResponse(ws, msg, null, rsp);
             return;
         }
@@ -158,7 +158,7 @@ class IME_DBHandler extends NGUIHandlerBase {
             this.sendResponse(ws, msg, rsp);
             return true;
         } catch (err) {
-            const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, rc: 400};
+            const rsp = {cmd: msg.cmd, dpName: msg.args.dpName, msg: "internal error", rc: 400};
             this.sendResponse(ws, msg, null, rsp);
         }
     }

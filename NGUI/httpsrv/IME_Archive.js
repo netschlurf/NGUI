@@ -64,7 +64,7 @@ class IME_Archive extends IME_ServiceBase {
 
         // Establish DpConnect for each data point
         for (const dpName of dpNames.names) {
-            ws.send(JSON.stringify({
+            await ws.send(JSON.stringify({
                 cmd: 'DpConnect',
                 args: { dpName },
                 tok: `connect-${dpName}`

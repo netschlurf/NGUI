@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -18,13 +19,13 @@
   <link href="ngui/3p/fancytree/ui.fancytree.min.css" rel="stylesheet" />
   <script src="ngui/3p/fancytree/jquery.fancytree-all-deps.min.js"></script>
 
-  <link href="ngui/NGUI.css" rel="stylesheet"> /
+  <link href="ngui/NGUI.css" rel="stylesheet"> 
   <!-- NGUI Scripts -->
   <script src="ngui/NGUIConnection.js"></script>
   <script src="ngui/NGUIModalTailwind.js"></script>
   <script src="ngui/NGUIWindowTailwind.js"></script>
   <script src="ngui/NGUITree.js"></script>
-  <script src="ngui/NGUISplitter.js"></script>
+
 
   <style>
     /* Grundlegendes Layout und Schriftfamilie für die gesamte Seite */
@@ -34,192 +35,162 @@
       margin: 0;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     }
-
-
   </style>
 </head>
 
 <body>
-  <div id="container">
-    <div id="tree-container">
-      <div>
-        <div class="p-4 pb-2">
-          <h1 class="text-xl font-bold text-gray-800 mb-1 flex items-center gap-2">
-            <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            Explorer Dashboard
-          </h1>
-          <div class="flex items-center gap-2">
-            <img src="https://ui-avatars.com/api/?name=Max+Mustermann&background=0D8ABC&color=fff" alt="Avatar"
-              class="w-8 h-8 rounded-full shadow">
-            <span class="text-sm text-gray-600 font-medium">Max Mustermann</span>
-          </div>
-        </div>
+
+  <div id="bereich2">
+
+    <div class="flex border-b text-xs text-gray-500 bg-gray-50">
+      <button class="px-3 py-2 border-b-2 border-blue-500 text-blue-600">Logs</button>
+      <button class="px-3 py-2 hover:text-blue-600">Errors</button>
+      <button class="px-3 py-2 hover:text-blue-600">Stats</button>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs">
+      <div class="flex gap-2">
+        <input type="text" id="searchInput" placeholder="Search logs..."
+          class="px-3 py-1 rounded border border-gray-300 focus:outline-none focus:ring focus:ring-blue-200">
+        <select id="levelFilter" class="px-2 py-1 border rounded bg-white">
+          <option value="all">All Levels</option>
+          <option value="INFO">Info</option>
+          <option value="WARN">Warning</option>
+          <option value="ERROR">Error</option>
+        </select>
       </div>
-<div class="flex gap-2 mb-2 btn-group text-xs">
-<button style="width: 130px;" class="px-2 py-1 bg-gray-700 text-white rounded hover:bg-gray-800" onclick="window.tree.HighLightNode('6')">Highlight</button>
-<hr><button style="width: 130px;" class="px-2 py-1 bg-gray-700 text-white rounded hover:bg-gray-800" onclick="window.tree.ExpandNode('8')">Expand</button>
-<hr><button style="width: 130px;" class="px-2 py-1 bg-gray-700 text-white rounded hover:bg-gray-800" onclick="window.tree.CollapsNode('8')">Collapse</button>
-</div>      
-      <table id="treegrid" class="fancytree-ext-table"></table>
-
-    </div>
-    <div id="splitter-vertical"></div>
-    <div id="right-top">
-      <div id="bereich1"></div>
-    </div>
-    <div id="splitter-horizontal"></div>
-    <div id="right-bottom">
-      <div id="bereich2">
-
-
-
-<div class="flex border-b text-xs text-gray-500 bg-gray-50">
-    <button class="px-3 py-2 border-b-2 border-blue-500 text-blue-600">Logs</button>
-    <button class="px-3 py-2 hover:text-blue-600">Errors</button>
-    <button class="px-3 py-2 hover:text-blue-600">Stats</button>
-  </div>
-  
-  <!-- Controls -->
-  <div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs">
-    <div class="flex gap-2">
-      <input type="text" id="searchInput" placeholder="Search logs..." class="px-3 py-1 rounded border border-gray-300 focus:outline-none focus:ring focus:ring-blue-200">
-      <select id="levelFilter" class="px-2 py-1 border rounded bg-white">
-        <option value="all">All Levels</option>
-        <option value="INFO">Info</option>
-        <option value="WARN">Warning</option>
-        <option value="ERROR">Error</option>
-      </select>
-    </div>
-    <div class="flex items-center gap-2">
-      <label class="flex items-center gap-1 text-gray-700">
-        <input type="checkbox" id="autoScroll" class="accent-blue-600"> Auto-Scroll
-      </label>
-      <button onclick="pauseLogs()" class="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600">Pause</button>
-      <button onclick="clearLogs()" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">Clear</button>
-      <button onclick="exportLogs()" class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-800">Export</button>
-    </div>
-  </div>
-  
-  <!-- Log Table -->
-  <div class="overflow-y-auto">
-    <table class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse">
-      <thead class="bg-gray-200 text-gray-600 uppercase">
-        <tr>
-          <th class="px-4 py-2 border border-gray-300">DpName</th>
-          <th class="px-4 py-2 border border-gray-300">DpType</th>
-          <th class="px-4 py-2 border border-gray-300">Value</th>
-          <th class="px-4 py-2 border border-gray-300">timestamp</th>
-          <th class="px-4 py-2 border border-gray-300">Config</th>
-          
-        </tr>
-      </thead>
-      <tbody id="logOutput" class="bg-white">
-            
-      </tbody>
-    </table>
-  </div>
-
-
-
-
-
+      <div class="flex items-center gap-2">
+        <label class="flex items-center gap-1 text-gray-700">
+          <input type="checkbox" id="autoScroll" class="accent-blue-600"> Auto-Scroll
+        </label>
+        <button onclick="pauseLogs()"
+          class="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600">Pause</button>
+        <button onclick="clearLogs()" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">Clear</button>
+        <button onclick="exportLogs()"
+          class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-800">Export</button>
       </div>
     </div>
+
+    <!-- Log Table -->
+    <div class="overflow-y-auto">
+      <table class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse">
+        <thead class="bg-gray-200 text-gray-600 uppercase">
+          <tr>
+            <th class="px-4 py-2 border border-gray-300">DpName</th>
+            <th class="px-4 py-2 border border-gray-300">DpType</th>
+            <th class="px-4 py-2 border border-gray-300">Value</th>
+            <th class="px-4 py-2 border border-gray-300">timestamp</th>
+            <th class="px-4 py-2 border border-gray-300">Config</th>
+          </tr>
+        </thead>
+        <tbody id="logOutput" class="bg-white">
+
+        </tbody>
+      </table>
+    </div>
   </div>
+
 
   <script>
     // guckst du:
     // https://www.william-troup.com/jsontree-js/examples/themes.html
 
-// filepath: d:\Data\git\NGUI\htdocs\NGUI_Browser.html
-// Resizable table columns
-document.addEventListener("DOMContentLoaded", function () {
-  // Select the log table specifically to avoid errors if other tables exist without <th>
-  const table = document.querySelector("table.min-w-full");
-  if (!table) return; // Exit if the table is not found
-  const ths = table.querySelectorAll("th");
-  ths.forEach(function (th) {
-    th.style.position = "relative";
-    const resizer = document.createElement("div");
-    resizer.style.width = "5px";
-    resizer.style.height = "100%";
-    resizer.style.position = "absolute";
-    resizer.style.right = "0";
-    resizer.style.top = "0";
-    resizer.style.cursor = "col-resize";
-    resizer.style.userSelect = "none";
-    resizer.style.zIndex = "10";
-    th.appendChild(resizer);
+    // filepath: d:\Data\git\NGUI\htdocs\NGUI_Browser.html
+    // Resizable table columns
+    document.addEventListener("DOMContentLoaded", function () {
+      // Select the log table specifically to avoid errors if other tables exist without <th>
+      const table = document.querySelector("table.min-w-full");
+      if (!table) return; // Exit if the table is not found
+      const ths = table.querySelectorAll("th");
+      ths.forEach(function (th) {
+        th.style.position = "relative";
+        const resizer = document.createElement("div");
+        resizer.style.width = "5px";
+        resizer.style.height = "100%";
+        resizer.style.position = "absolute";
+        resizer.style.right = "0";
+        resizer.style.top = "0";
+        resizer.style.cursor = "col-resize";
+        resizer.style.userSelect = "none";
+        resizer.style.zIndex = "10";
+        th.appendChild(resizer);
 
-    let startX, startWidth;
-    resizer.addEventListener("mousedown", function (e) {
-      startX = e.pageX;
-      startWidth = th.offsetWidth;
-      document.documentElement.style.cursor = "col-resize";
-      document.addEventListener("mousemove", mousemove);
-      document.addEventListener("mouseup", mouseup);
-      e.preventDefault();
+        let startX, startWidth;
+        resizer.addEventListener("mousedown", function (e) {
+          startX = e.pageX;
+          startWidth = th.offsetWidth;
+          document.documentElement.style.cursor = "col-resize";
+          document.addEventListener("mousemove", mousemove);
+          document.addEventListener("mouseup", mouseup);
+          e.preventDefault();
+        });
+
+        function mousemove(e) {
+          const newWidth = startWidth + (e.pageX - startX);
+          th.style.width = newWidth + "px";
+        }
+
+        function mouseup() {
+          document.documentElement.style.cursor = "";
+          document.removeEventListener("mousemove", mousemove);
+          document.removeEventListener("mouseup", mouseup);
+        }
+      });
     });
-
-    function mousemove(e) {
-      const newWidth = startWidth + (e.pageX - startX);
-      th.style.width = newWidth + "px";
-    }
-
-    function mouseup() {
-      document.documentElement.style.cursor = "";
-      document.removeEventListener("mousemove", mousemove);
-      document.removeEventListener("mouseup", mouseup);
-    }
-  });
-});
 
 
     var g_NGUI = new NGUIClient();
     g_NGUI.Connect("ws://localhost:2808", OnAppOpen);
     var g_DB = g_NGUI.GetDbClient();
 
-function OnDpConnect(rcv) {
-  if (!rcv.cmd && rcv.data) {
-    function updateValues(dpName, valueObj) {
-      // valueObj kann ein Wert oder ein Objekt mit weiteren Feldern sein
-      if (valueObj && typeof valueObj === "object" && !Array.isArray(valueObj)) {
-        // Prüfe, ob das Objekt ein echtes Value-Objekt ist (mit value und tstamp)
-        if ("value" in valueObj && "tstamp" in valueObj) {
-          const valElem = document.getElementById("VALUE_" + dpName);
-          const tsElem = document.getElementById("TS_" + dpName);
-          if (valElem) valElem.innerHTML = valueObj.value;
-          if (tsElem) {
-            // tstamp als Date interpretieren und lokal formatieren (bis Millisekunde)
-            const date = new Date(valueObj.tstamp);
-            // z.B. "de-DE" für deutsches Format, mit Sekunden und Millisekunden
-            const dateStr = date.toLocaleDateString(undefined, {
-              year: 'numeric',
-              month: '2-digit',
-              day: '2-digit'
-            }) + ' ' + date.toLocaleTimeString(undefined, {
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit'
-            }) + '.' + String(date.getMilliseconds()).padStart(3, '0');
-            tsElem.innerHTML = dateStr;
-          }
-        }
-        } else {
-          // Sonst: Rekursiv für alle Keys
-          for (const key in valueObj) {
-            if (valueObj.hasOwnProperty(key)) {
-              updateValues(dpName + "." + key, valueObj[key]);
+    function OnDpConnect(rcv) {
+      if (!rcv.cmd && rcv.data) {
+        function updateValues(dpName, valueObj) {
+          // valueObj kann ein Wert oder ein Objekt mit weiteren Feldern sein
+          if (valueObj && typeof valueObj === "object" && !Array.isArray(valueObj)) {
+            // Prüfe, ob das Objekt ein echtes Value-Objekt ist (mit value und tstamp)
+            if ("value" in valueObj && "tstamp" in valueObj) {
+              const valElem = document.getElementById("VALUE_" + dpName);
+              const tsElem = document.getElementById("TS_" + dpName);
+              if (valElem) valElem.innerHTML = valueObj.value;
+              if (tsElem) {
+              // valueObj.tstamp kann Zahl oder ISO-String sein
+              let date;
+              if (typeof valueObj.tstamp === "number") {
+                // UNIX-Zeitstempel in Sekunden oder Millisekunden?
+                date = valueObj.tstamp > 1e12
+                ? new Date(valueObj.tstamp)
+                : new Date(valueObj.tstamp * 1000);
+              } else {
+                date = new Date(valueObj.tstamp);
+              }
+              // Format: YYYY-MM-DD HH:mm:ss.SSS (lokale Zeit)
+              const pad = n => n.toString().padStart(2, "0");
+              const padMs = n => n.toString().padStart(3, "0");
+              const formatted = 
+                date.getFullYear() + "-" +
+                pad(date.getMonth() + 1) + "-" +
+                pad(date.getDate()) + " " +
+                pad(date.getHours()) + ":" +
+                pad(date.getMinutes()) + ":" +
+                pad(date.getSeconds()) + "." +
+                padMs(date.getMilliseconds());
+              tsElem.innerHTML = formatted;
+              }
+            } else {
+              // Sonst: Rekursiv für alle Keys
+              for (const key in valueObj) {
+                if (valueObj.hasOwnProperty(key)) {
+                  updateValues(dpName + "." + key, valueObj[key]);
+                }
+              }
             }
           }
         }
+        updateValues(rcv.data.dpName, rcv.data.value);
       }
     }
-    updateValues(rcv.data.dpName, rcv.data.value);
-  }
-
 
     const DpType = {
       STRING: 1,
@@ -235,37 +206,36 @@ function OnDpConnect(rcv) {
       4: 'STRUCT'
     };
 
-function OnDpNames(rcv)
-{
-  var html = "";
+    function OnDpNames(rcv) {
+      var html = "";
 
-  // Rekursive Hilfsfunktion für den Baum
-function renderDp(dp, level, parentPath, parentId) {
-  const fullPath = parentPath ? parentPath + "." + dp.DpName : dp.DpName;
-  const rowId = "ROW_" + fullPath;
-  const hasChildren = dp.children && dp.children.length > 0;
-  const padding = 20 * level;
-  let dpTypeText = `STRUCT (${dp.DpType})`;
-  if (dp.valueType)
-    dpTypeText = DpTypeReverse[dp.valueType];
+      // Rekursive Hilfsfunktion für den Baum
+      function renderDp(dp, level, parentPath, parentId) {
+        const fullPath = parentPath ? parentPath + "." + dp.DpName : dp.DpName;
+        const rowId = "ROW_" + fullPath;
+        const hasChildren = dp.children && dp.children.length > 0;
+        const padding = 20 * level;
+        let dpTypeText = `STRUCT (${dp.DpType})`;
+        if (dp.valueType)
+          dpTypeText = DpTypeReverse[dp.valueType];
 
-  // Lucide chevron-right SVG
-  const chevronRight = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
-  // Lucide chevron-down SVG
-  const chevronDown = `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
+        // Lucide chevron-right SVG
+        const chevronRight = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
+        // Lucide chevron-down SVG
+        const chevronDown = `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
 
-  const chevronCircle = `<svg class="lucide lucide-dot inline w-3 h-3 align-middle" fill="currentColor" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /></svg>`;
+        const chevronCircle = `<svg class="lucide lucide-dot inline w-3 h-3 align-middle" fill="currentColor" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /></svg>`;
 
-  // Toggle-Button für Knoten mit Kindern
-  let toggle = "";
-  if (hasChildren) {
-    toggle = `<span class="toggle-btn cursor-pointer select-none" data-target="${rowId}" data-state="closed">${chevronRight}</span>`;
-  }
-  else{
-    toggle = `<span class="select-none"  data-state="closed">${chevronCircle}</span>`;
-  }
+        // Toggle-Button für Knoten mit Kindern
+        let toggle = "";
+        if (hasChildren) {
+          toggle = `<span class="toggle-btn cursor-pointer select-none" data-target="${rowId}" data-state="closed">${chevronRight}</span>`;
+        }
+        else {
+          toggle = `<span class="select-none"  data-state="closed">${chevronCircle}</span>`;
+        }
 
-  html += `<tr id="${rowId}" class="log-entry" data-level="DpName" data-parent="${parentId || ''}" style="${level > 0 ? 'display:none;' : ''}">
+        html += `<tr id="${rowId}" class="log-entry" data-level="DpName" data-parent="${parentId || ''}" style="${level > 0 ? 'display:none;' : ''}">
     <td class="border border-gray-300 px-4 py-1 text-black-500" style="padding-left:${padding}px;">
       ${toggle} ${dp.DpName}
     </td>
@@ -275,111 +245,79 @@ function renderDp(dp, level, parentPath, parentId) {
     <td class="border border-gray-300 px-4 py-1 text-gray-600">...</td>
   </tr>`;
 
-    if (!fullPath.includes('.')) {
-      g_DB.DpConnect(fullPath, OnDpConnect);
-    }
+        if (!fullPath.includes('.')) {
+          g_DB.DpConnect(fullPath, OnDpConnect);
+        }
 
-  if (hasChildren) {
-    for (let i = 0; i < dp.children.length; i++) {
-      renderDp(dp.children[i], level + 1, fullPath, rowId);
-    }
-  }
-}
-
-// ...nach dem Rendern...
-document.querySelectorAll('.toggle-btn').forEach(btn => {
-  btn.addEventListener('click', function(e) {
-    const targetRowId = btn.getAttribute('data-target');
-    const isCollapsed = btn.getAttribute('data-state') === "closed";
-    btn.innerHTML = isCollapsed ? `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>` : `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
-    btn.setAttribute('data-state', isCollapsed ? "open" : "closed");
-    toggleChildren(targetRowId, isCollapsed);
-  });
-});
-
-  // Starte für jeden Root-Knoten
-  for (let i = 0; i < rcv.data.names.length; i++) {
-    renderDp(rcv.data.names[i], 0, "", "");
-  }
-
-  document.getElementById("logOutput").innerHTML = html;
-
-  // Toggle-Logik
-document.querySelectorAll('.toggle-btn').forEach(btn => {
-  btn.addEventListener('click', function(e) {
-    const targetRowId = btn.getAttribute('data-target');
-    const isCollapsed = btn.getAttribute('data-state') === "closed";
-    // Lucide SVGs:
-    const chevronRight = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
-    const chevronDown = `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
-    btn.innerHTML = isCollapsed ? chevronDown : chevronRight;
-    btn.setAttribute('data-state', isCollapsed ? "open" : "closed");
-    toggleChildren(targetRowId, isCollapsed);
-  });
-});
-
-function toggleChildren(parentId, show) {
-  const rows = document.querySelectorAll(`tr[data-parent="${parentId}"]`);
-  rows.forEach(row => {
-    row.style.display = show ? "" : "none";
-    // Wenn wir einklappen, klappen wir auch alle Kindknoten zu
-    if (!show) {
-      const toggle = row.querySelector('.toggle-btn');
-      if (toggle) {
-        // Lucide chevron-right SVG
-        toggle.innerHTML = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
-        toggle.setAttribute('data-state', 'closed');
+        if (hasChildren) {
+          for (let i = 0; i < dp.children.length; i++) {
+            renderDp(dp.children[i], level + 1, fullPath, rowId);
+          }
+        }
       }
-      toggleChildren(row.id, false);
-    }
-  });
-}
-}
 
-    const splitter = new NGUI_Splitter("#container");
-    splitter.enableVerticalSplitter("#splitter-vertical", {
-      minWidth: 200,
-      maxWidth: 600,
-    });
-    splitter.enableHorizontalSplitter("#splitter-horizontal", {
-      minHeight: 20,
-      maxHeightOffset: 200,
-    });
+      // ...nach dem Rendern...
+      document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+          const targetRowId = btn.getAttribute('data-target');
+          const isCollapsed = btn.getAttribute('data-state') === "closed";
+          btn.innerHTML = isCollapsed ? `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>` : `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
+          btn.setAttribute('data-state', isCollapsed ? "open" : "closed");
+          toggleChildren(targetRowId, isCollapsed);
+        });
+      });
+
+      // Starte für jeden Root-Knoten
+      for (let i = 0; i < rcv.data.names.length; i++) {
+        renderDp(rcv.data.names[i], 0, "", "");
+      }
+
+      document.getElementById("logOutput").innerHTML = html;
+
+      // Toggle-Logik
+      document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+          const targetRowId = btn.getAttribute('data-target');
+          const isCollapsed = btn.getAttribute('data-state') === "closed";
+          // Lucide SVGs:
+          const chevronRight = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
+          const chevronDown = `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
+          btn.innerHTML = isCollapsed ? chevronDown : chevronRight;
+          btn.setAttribute('data-state', isCollapsed ? "open" : "closed");
+          toggleChildren(targetRowId, isCollapsed);
+        });
+      });
+
+      function toggleChildren(parentId, show) {
+        const rows = document.querySelectorAll(`tr[data-parent="${parentId}"]`);
+        rows.forEach(row => {
+          row.style.display = show ? "" : "none";
+          // Wenn wir einklappen, klappen wir auch alle Kindknoten zu
+          if (!show) {
+            const toggle = row.querySelector('.toggle-btn');
+            if (toggle) {
+              // Lucide chevron-right SVG
+              toggle.innerHTML = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
+              toggle.setAttribute('data-state', 'closed');
+            }
+            toggleChildren(row.id, false);
+          }
+        });
+      }
+    }
 
 
     function OnAppOpen() {
       console.log("App opened");
       //g_NGUI.LoadPage("NGUI_kitchensink.html", "right-bottom", null);
       g_NGUI.LoadPage("NGUI_DemoTop.html", "right-top", null);
-      g_NGUI.LoadResource("NGUI_DemoTree.json", null, OnJSON);
+
 
       g_NGUI.GetDbClient().DpNames(null, "*", OnDpNames);
     }
-    
-    function SelectTreeCfg()
-    {
-          window.tree.setConfig(treeConfigs.material);
-          window.tree.setData(window.parsedData);      
-    }
 
-    function OnJSON(data) {
-      try {
-        window.parsedData = JSON.parse(data.data);
 
-        window.tree = new NGUITree('#treegrid', {
-          columns: [
-            { title: 'mass', field: 'mass', dataSource: 'data', formatter: (value) => value !== undefined ? value : '' },
-          ],
-          onNodeClick: (data) => {
-            console.log('Node clicked:', data.node.title, data.node.data);
-          },
-        });
-
-        window.tree.setData(parsedData);
-      } catch (error) {
-        console.error('Error parsing JSON:', error);
-      }
-    }
   </script>
 </body>
+
 </html>

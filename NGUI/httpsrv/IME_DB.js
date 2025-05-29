@@ -574,18 +574,20 @@ DpNames(typeName = null, pattern = null) {
     return keepSelf || node.children.length > 0 ? node : null;
   }
   roots = roots.map(filterTree).filter(Boolean);
-
   // Nur relevante Felder zurückgeben
   function clean(node) {
+    // Kinder zuerst rekursiv bereinigen und sortieren
+    const cleanedChildren = node.children.map(clean).sort((a, b) => a.DpName.localeCompare(b.DpName));
     return {
       DpName: node.path.split('.').pop(),
       DpType: node.typeName,
       dpTypeId: node.type_id,
       valueType: node.value_type,
-      children: node.children.map(clean)
+      children: cleanedChildren
     };
   }
-  return roots.map(clean);
+  // Auch die Wurzelknoten sortieren
+  return roots.map(clean).sort((a, b) => a.DpName.localeCompare(b.DpName));
 }
 
   DpTypeDelete(typeName) {

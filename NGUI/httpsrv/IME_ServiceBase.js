@@ -175,7 +175,7 @@ class IME_ServiceBase {
                     if (response.tok === msg.tok) {
                         ws.off('message', handler);
                         if (response.err) {
-                            reject(new Error(response.err));
+                            reject(response.err);
                         } else {
                             resolve(response.data);
                         }

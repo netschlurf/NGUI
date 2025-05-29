@@ -54,5 +54,19 @@ function CreateSampleDatabase()
   }  
 }
 
+function Simulate()
+{
+  setInterval(() => {
+    console.log('Callback every 1s');
+    for(var i=0;i<50;i++)
+    {
+      var dp = "num" + i;
+      imeDB.DpSet(dp, Math.random());
+    }
+   
+  }, 1000);
+}
 
-CreateSampleDatabase();
+//CreateSampleDatabase();
+
+Simulate();
