@@ -170,6 +170,23 @@ Connect() {
     }
   }
 
+  DpRename(dpName, newName) {
+      // Benennt einen Datenpunkt um
+      const stmt = this.#db.prepare('UPDATE DataPoints SET name = ? WHERE name = ?');
+      const result = stmt.run(newName, dpName);
+
+      // Cache aktualisieren:
+      if (result.changes > 0) {
+          // Finde alten Eintrag im Cache
+          const entry = this.#dpIdentificationTable.get(dpName);
+          if (entry) {
+              this.#dpIdentificationTable.delete(dpName);
+              this.#dpIdentificationTable.set(newName, { ...entry });
+          }
+      }
+      return { oldName: dpName, newName: newName, changes: result.changes };
+  }
+
   DpTypeCreate(name, description) {
     if (!this.isValidDpName(name)) {
       throw new Error(`Invalid typeName '${name}': Only letters, numbers, '-', and '_' are allowed`);
@@ -460,59 +477,69 @@ DpSet(name, value) {
     return true;
   }
 
-DpNames2(typeName = null, pattern = null) {
-  let results = []; // Wir ändern 'names' zu 'results', da wir Objekte speichern
+DpTypes(pattern = null) {
+    // Alle Typen laden
+    const allTypes = this.#db.prepare('SELECT id, name, parent_id, type FROM DataPointTypes').all();
 
-  for (const [path, entry] of this.#dpIdentificationTable) {
-    // Stellen Sie sicher, dass #dpTypeIdentificationTable korrekt zugänglich ist
-    const currentTypeName = [...this.#dpTypeIdentificationTable.entries()]
-                                .find(([, typeEntry]) => typeEntry.id === entry.type_id)?.[0];
+    // Map: id -> typeObj
+    const idMap = new Map();
+    allTypes.forEach(row => {
+        idMap.set(row.id, {
+            name: row.name,
+            type: this.#dpTypeToString(row.type),
+            parent: null, // wird gleich gesetzt
+            children: []
+        });
+    });
 
-    // Überprüfen, ob der Typ passt oder kein Typ angegeben wurde
-    if (!typeName || typeName === currentTypeName) {
-      // Filtern Sie Namen, die einen Punkt enthalten, direkt hier
-      if (!path.includes('.')) {
-        results.push({ DpName: path, DpType: currentTypeName }); // Füge Objekt mit Pfad und Typ hinzu
-      }
+    // Parent-Relationen aufbauen
+    allTypes.forEach(row => {
+        const typeObj = idMap.get(row.id);
+        if (row.parent_id && idMap.has(row.parent_id)) {
+            typeObj.parent = idMap.get(row.parent_id).name;
+            idMap.get(row.parent_id).children.push(typeObj);
+        }
+    });
+
+    // Nur Wurzeltypen (parent_id == null)
+    let roots = [];
+    allTypes.forEach(row => {
+        if (!row.parent_id) {
+            roots.push(idMap.get(row.id));
+        }
+    });
+
+    // Optional: Pattern-Filter auf Name anwenden (wie bei DpNames)
+    function matchesPattern(name, pattern) {
+        if (!pattern) return true;
+        let regexPattern = pattern
+            .replace(/([.+^${}()|\\])/g, '\\$1')
+            .replace(/\*/g, '.*')
+            .replace(/\?/g, '.')
+            .replace(/\[([^\]]*)\]/g, '[$1]');
+        const regex = new RegExp('^' + regexPattern + '$');
+        return regex.test(name);
     }
-  }
+    function filterTree(node) {
+        const keepSelf = matchesPattern(node.name, pattern);
+        node.children = node.children.map(filterTree).filter(Boolean);
+        return keepSelf || node.children.length > 0 ? node : null;
+    }
+    roots = roots.map(filterTree).filter(Boolean);
 
-  if (pattern) {
-    let regexPattern = pattern
-      .replace(/([.+^${}()|\\])/g, '\\$1')
-      .replace(/\*/g, '.*')
-      .replace(/\?/g, '.')
-      .replace(/\[([^\]]*)\]/g, '[$1]');
-    const regex = new RegExp('^' + regexPattern + '$');
-    results = results.filter(item => regex.test(item.DpName)); // Filtern Sie basierend auf dem 'path'-Eigenschaft
-  }
-
-  // Sortiere die Ergebnisse alphabetisch nach dem Pfad
-  return results.sort((a, b) => a.DpName.localeCompare(b.DpName));
+    return roots;
 }
 
-  DpTypes(pattern = null) {
-    // Nur Root-Typen (parent_id == null) liefern
-    let rootTypes = [];
-    for (const [typeName, entry] of this.#dpTypeIdentificationTable.entries()) {
-      // Hole parent_id aus der Datenbank, da es nicht im Cache ist
-      const row = this.#db.prepare('SELECT parent_id FROM DataPointTypes WHERE id = ?').get(entry.id);
-      if (!row || row.parent_id === null) {
-        rootTypes.push(typeName);
-      }
+// Hilfsfunktion für Typ-String
+#dpTypeToString(typeInt) {
+    switch (typeInt) {
+        case 1: return "string";
+        case 2: return "number";
+        case 3: return "boolean";
+        case 4: return "struct";
+        default: return "unknown";
     }
-
-    if (pattern) {
-      let regexPattern = pattern
-        .replace(/([.+^${}()|\\])/g, '\\$1')
-        .replace(/\*/g, '.*')
-        .replace(/\?/g, '.')
-        .replace(/\[([^\]]*)\]/g, '[$1]');
-      const regex = new RegExp('^' + regexPattern + '$');
-      rootTypes = rootTypes.filter(type => regex.test(type));
-    }
-    return rootTypes.sort();
-  }
+}
 
   /**
    * Gibt alle DataPoints als Baumstruktur zurück.

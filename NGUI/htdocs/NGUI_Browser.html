@@ -48,31 +48,51 @@
   <script src="ngui/NGUIConnection.js"></script>
   <script src="ngui/NGUIModalTailwind.js"></script>
   <script src="ngui/NGUIWindowTailwind.js"></script>
+  <script src="ngui/NGUITreeGrid.js"></script>
+
 
 
   <style>
-    html, body {
+    html,
+    body {
       height: 100%;
       margin: 0;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       overflow-y: hidden;
     }
-    #logOutput tr:nth-child(odd) { background-color: #f8fafc; }
-    #logOutput tr:nth-child(even) { background-color: #fff; }
-    #logOutput tr:hover { background-color: #e0f2fe !important; }
+
+    #logOutput tr:nth-child(odd) {
+      background-color: #f8fafc;
+    }
+
+    #logOutput tr:nth-child(even) {
+      background-color: #fff;
+    }
+
+    #logOutput tr:hover {
+      background-color: #e0f2fe !important;
+    }
+
     table thead {
       position: sticky;
       top: 0;
       z-index: 15;
       background: #e5e7eb;
     }
-    table thead th { border-top: none !important; }
-    #logOutput, #logOutput tr, #logOutput td {
+
+    table thead th {
+      border-top: none !important;
+    }
+
+    #logOutput,
+    #logOutput tr,
+    #logOutput td {
       user-select: none;
       -webkit-user-select: none;
       -moz-user-select: none;
       -ms-user-select: none;
     }
+
     tr.selected-row {
       background-color: #dbeafe !important;
     }
@@ -80,54 +100,62 @@
 </head>
 
 <body>
-  <div id="bereich2">
+  <div id="MainNav">
     <!-- Tabs -->
-    <div class="flex border-b text-xs text-gray-500 bg-gray-50">
-      <button class="px-3 py-2 border-b-2 border-blue-500 text-blue-600">Datapoints</button>
-      <button class="px-3 py-2 hover:text-blue-600">Datapoint Types</button>
-    </div>
+<div class="flex border-b text-xs text-gray-500 bg-gray-50">
+  <button id="tabDatapoints" class="px-3 py-2 border-b-2 border-blue-500 text-blue-600">Datapoints</button>
+  <button id="tabDatapointTypes" class="px-3 py-2 hover:text-blue-600">Datapoint Types</button>
+</div>
 
+    
+    <div style="height: calc(100vh - 96px); overflow-y: auto; display:block;" id="DatapointEditor">
     <!-- Controls & Create Bar -->
-    <div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs flex-wrap gap-2" style="position: sticky; top: 0; z-index: 20;">
-      <form id="dpCreateForm" class="flex gap-2 items-center flex-wrap bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
+    <div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs flex-wrap gap-2"
+      style="position: sticky; top: 0; z-index: 20;">
+      <form id="dpCreateForm"
+        class="flex gap-2 items-center flex-wrap bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
         <span class="font-semibold text-gray-700">Neuer Datenpunkt:</span>
-        <input type="text" id="dpName" placeholder="Name" required class="px-2 py-1 border rounded text-xs w-28" autocomplete="off">
+        <input type="text" id="dpName" placeholder="Name" required class="px-2 py-1 border rounded text-xs w-28"
+          autocomplete="off">
         <select id="dpType" class="px-2 py-1 border rounded text-xs bg-white" required></select>
         <button class="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Anlegen</button>
         <span class="mx-2 text-gray-400">|</span>
         <span class="font-semibold text-gray-700">Massenanlage:</span>
-        <input type="number" id="dpBulkCount" min="2" max="1000" value="10" class="px-2 py-1 border rounded text-xs w-16" title="Wie viele?">
-        <input type="text" id="dpBulkPattern" placeholder="z.B. myDp_[NUM]_postfix" class="px-2 py-1 border rounded text-xs w-40" autocomplete="off">
+        <input type="number" id="dpBulkCount" min="2" max="1000" value="10"
+          class="px-2 py-1 border rounded text-xs w-16" title="Wie viele?">
+        <input type="text" id="dpBulkPattern" placeholder="z.B. myDp_[NUM]_postfix"
+          class="px-2 py-1 border rounded text-xs w-40" autocomplete="off">
         <select id="dpBulkType" class="px-2 py-1 border rounded text-xs bg-white" required></select>
-        <button type="button" id="dpBulkBtn" class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600">Massenanlage</button>
+        <button type="button" id="dpBulkBtn"
+          class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600">Massenanlage</button>
       </form>
-      <button id="deleteBtn"
-        class="p-1 rounded hover:bg-red-100 ml-2"
-        style="display:none; z-index:30;"
+      <button id="deleteBtn" class="p-1 rounded hover:bg-red-100 ml-2" style="display:none; z-index:30;"
         title="Ausgewählte Datenpunkte löschen">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
         </svg>
       </button>
-    </div>
-
+    </div>      
     <!-- Log Table -->
-    <div style="height: calc(100vh - 96px); overflow-y: auto;">
       <table class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse">
         <thead class="bg-gray-200 text-gray-600 uppercase" style="position: sticky; top: 0; z-index: 15;">
           <tr>
             <th class="px-4 py-2 border border-gray-300">
               DpName<br>
-              <input type="text" id="filterDpName" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
+              <input type="text" id="filterDpName" class="w-full px-1 py-0.5 border rounded text-xs"
+                placeholder="Filter...">
             </th>
             <th class="px-4 py-2 border border-gray-300">
               DpType<br>
-              <input type="text" id="filterDpType" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
+              <input type="text" id="filterDpType" class="w-full px-1 py-0.5 border rounded text-xs"
+                placeholder="Filter...">
             </th>
             <th class="px-4 py-2 border border-gray-300">
               Value<br>
-              <input type="text" id="filterValue" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
+              <input type="text" id="filterValue" class="w-full px-1 py-0.5 border rounded text-xs"
+                placeholder="Filter...">
             </th>
             <th class="px-4 py-2 border border-gray-300">
               timestamp<br>
@@ -140,18 +168,70 @@
         <tbody id="logOutput" class="bg-white odd:bg-gray-50 even:bg-white"></tbody>
       </table>
     </div>
+
+
+<div id="DatapointTypeEditor" style="display:none;">
+  <!-- Controls & Create Bar for Datapoint Types -->
+  <div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs flex-wrap gap-2" style="position: sticky; top: 0; z-index: 20;">
+    <form id="dpTypeCreateForm" class="flex gap-2 items-center flex-wrap bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
+      <span class="font-semibold text-gray-700">New Type:</span>
+      <input type="text" id="dpTypeName" placeholder="Type Name" required class="px-2 py-1 border rounded text-xs w-32" autocomplete="off">
+      <button class="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Create</button>
+      <span class="mx-2 text-gray-400">|</span>
+      <span class="font-semibold text-gray-700">Selected:</span>
+      <span id="selectedTypeName" class="text-blue-700"></span>
+      <button type="button" id="dpTypeDeleteBtn" class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 ml-2" style="display:none;">Delete</button>
+      <button type="button" id="dpTypeAddChildBtn" class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 ml-2" style="display:none;">Add Child</button>
+      <button type="button" id="dpTypeRenameBtn" class="px-2 py-1 bg-yellow-500 text-white rounded text-xs hover:bg-yellow-600 ml-2" style="display:none;">Rename</button>
+    </form>
   </div>
+  <!-- Tree Table for Datapoint Types -->
+  <table class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse mt-2">
+    <thead class="bg-gray-200 text-gray-600 uppercase" style="position: sticky; top: 0; z-index: 15;">
+      <tr>
+        <th class="px-4 py-2 border border-gray-300">
+          DPTYPENAME<br>
+          <input type="text" id="filterTypeName" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
+        </th>
+        <th class="px-4 py-2 border border-gray-300">
+          Type<br>
+          <input type="text" id="filterTypeType" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
+        </th>
+        <th class="px-4 py-2 border border-gray-300">
+          Children<br>
+          <input type="text" id="filterTypeChildren" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
+        </th>
+        <th class="px-4 py-2 border border-gray-300">Config</th>
+      </tr>
+    </thead>
+    <tbody id="typeTreeOutput" class="bg-white odd:bg-gray-50 even:bg-white"></tbody>
+  </table>
+</div>
+
+
+<script>
 
 
 
-  <script>
-    class NGUIBrowser {
+    /**
+     * NGUIDpBrowser
+     * -------------
+     * Specialized tree grid for NGUI datapoints.
+     * Handles all datapoint-specific logic: backend connection, rendering, filtering, editing, and settings.
+     * 
+     * Features:
+     * - Connects to NGUI backend and fetches datapoint names/types
+     * - Renders hierarchical datapoint table
+     * - Inline editing of values with type handling
+     * - Filtering by name, type, value, timestamp
+     * - Row selection and bulk actions (delete, bulk create)
+     * - Opens settings dialog for datapoints
+     * 
+     * Inherits all generic grid/tree/selection logic from NGUITreeGrid.
+     */
+    class NGUIDpBrowser extends NGUITreeGrid {
       constructor() {
-        this.selectedRows = new Set();
-        this.lastSelectedIndex = null;
-        this.isMouseDown = false;
-        this.mouseSelectStart = null;
-
+        super();
         this.DpType = { STRING: 1, NUMBER: 2, BOOLEAN: 3, STRUCT: 4 };
         this.DpTypeReverse = { 1: 'STRING', 2: 'NUMBER', 3: 'BOOLEAN', 4: 'STRUCT' };
         this.DpTypeForward = { STRING: 1, NUMBER: 2, BOOLEAN: 3, STRUCT: 4 };
@@ -160,31 +240,43 @@
         this.g_NGUI.Connect("ws://localhost:2808", this.onAppOpen.bind(this));
         this.g_DB = this.g_NGUI.GetDbClient();
 
-        this.initEventHandlers();
+        this.initDpEventHandlers();
       }
 
-      initEventHandlers() {
+      /**
+       * Initialize datapoint-specific event handlers (create, bulk, delete, filters).
+       */
+      initDpEventHandlers() {
         document.getElementById("dpCreateForm").addEventListener("submit", this.onCreateSubmit.bind(this));
         document.getElementById("dpBulkBtn").addEventListener("click", this.onBulkCreate.bind(this));
         document.getElementById("deleteBtn").addEventListener("click", this.onDelete.bind(this));
         ['filterDpName', 'filterDpType', 'filterValue', 'filterTsFrom', 'filterTsTo'].forEach(id => {
           document.getElementById(id).addEventListener('input', this.applyTableFilters.bind(this));
         });
-        document.addEventListener("DOMContentLoaded", this.enableColumnResize.bind(this));
       }
 
+      /**
+       * Called when the backend connection is established.
+       */
       onAppOpen() {
         this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
         this.g_DB.DpTypes("*", this.onDpTypes.bind(this));
       }
 
+      /**
+       * Render the datapoint table after fetching names.
+       */
       onDpNames(rcv) {
         document.getElementById("logOutput").innerHTML = this.renderDpRows(rcv.data.names);
         this.enableRowSelection();
         this.enableValueEdit();
-        this.enableTreeToggle();
+        this.enableNameEdit();
+        this.enableTreeToggle("#logOutput");
       }
 
+      /**
+       * Render all datapoint rows recursively (tree structure).
+       */
       renderDpRows(names) {
         let html = "";
         const render = (dp, level = 0, parentPath = "", parentId = "") => {
@@ -201,26 +293,26 @@
             ? `<span class="toggle-btn cursor-pointer select-none" data-target="${rowId}" data-state="closed">${chevronRight}</span>`
             : `<span class="select-none" data-state="closed">${chevronCircle}</span>`;
           html += `<tr id="${rowId}" class="log-entry" data-level="DpName" data-parent="${parentId || ''}" style="${level > 0 ? 'display:none;' : ''}">
-            <td class="border border-gray-300 px-4 py-1 text-black-500" style="padding-left:${padding}px;">
-              ${toggle} ${dp.DpName}
-            </td>
-            <td class="border border-gray-300 px-4 py-1 text-green-500">${dpTypeText}</td>
-            <td class="border border-gray-300 px-4 py-1" id="VALUE_${fullPath}"></td>
-            <td class="border border-gray-300 px-4 py-1 text-gray-500" id="TS_${fullPath}"></td>
-            <td class="border border-gray-300 px-4 py-1 text-gray-600 text-center">
-              <svg xmlns="http://www.w3.org/2000/svg"
-                class="lucide lucide-sliders-horizontal inline w-5 h-5 cursor-pointer hover:text-blue-500"
-                fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                onclick="browser.onDpSettings('${fullPath}')">
-                <line x1="21" y1="6" x2="3" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <line x1="21" y1="18" x2="7" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <circle cx="6" cy="6" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
-                <circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
-                <circle cx="6" cy="18" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
-              </svg>
-            </td>
-          </tr>`;
+        <td class="border border-gray-300 px-4 py-1 text-black-500" id="NAME_${fullPath}" style="padding-left:${padding}px;">
+          ${toggle} ${dp.DpName}
+        </td>
+        <td class="border border-gray-300 px-4 py-1 text-green-500">${dpTypeText}</td>
+        <td class="border border-gray-300 px-4 py-1" id="VALUE_${fullPath}"></td>
+        <td class="border border-gray-300 px-4 py-1 text-gray-500" id="TS_${fullPath}"></td>
+        <td class="border border-gray-300 px-4 py-1 text-gray-600 text-center">
+          <svg xmlns="http://www.w3.org/2000/svg"
+            class="lucide lucide-sliders-horizontal inline w-5 h-5 cursor-pointer hover:text-blue-500"
+            fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            onclick="browser.onDpSettings('${fullPath}')">
+            <line x1="21" y1="6" x2="3" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <line x1="21" y1="18" x2="7" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="6" cy="6" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
+            <circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
+            <circle cx="6" cy="18" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
+          </svg>
+        </td>
+      </tr>`;
           if (!fullPath.includes('.')) this.g_DB.DpConnect(fullPath, this.onDpConnect.bind(this));
           if (hasChildren) dp.children.forEach(child => render(child, level + 1, fullPath, rowId));
         };
@@ -228,12 +320,18 @@
         return html;
       }
 
+      /**
+       * Called when a datapoint value update is received from backend.
+       */
       onDpConnect(rcv) {
         if (!rcv.cmd && rcv.data) {
           this.updateValues(rcv.data.dpName, rcv.data.value);
         }
       }
 
+      /**
+       * Recursively update values for all datapoints in the tree.
+       */
       updateValues(dpName, valueObj) {
         if (valueObj && typeof valueObj === "object" && !Array.isArray(valueObj)) {
           if ("value" in valueObj && "tstamp" in valueObj) {
@@ -246,6 +344,9 @@
         }
       }
 
+      /**
+       * Set value and timestamp in the table for a datapoint.
+       */
       setValueAndTimestamp(dpName, value, tstamp) {
         const valElem = document.getElementById("VALUE_" + dpName);
         const tsElem = document.getElementById("TS_" + dpName);
@@ -253,6 +354,9 @@
         if (tsElem) tsElem.innerHTML = this.formatTimestamp(tstamp);
       }
 
+      /**
+       * Format a timestamp for display.
+       */
       formatTimestamp(tstamp) {
         let date = typeof tstamp === "number"
           ? (tstamp > 1e12 ? new Date(tstamp) : new Date(tstamp * 1000))
@@ -262,24 +366,37 @@
         return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.${padMs(date.getMilliseconds())}`;
       }
 
+      /**
+       * Called when datapoint types are received from backend.
+       */
       onDpTypes(rcv) {
         const types = rcv.data.types || rcv.data;
         this.fillSelect("dpType", types);
         this.fillSelect("dpBulkType", types);
+
+        if (window.dpTypeEditor && typeof window.dpTypeEditor.setTypeTreeFromFlatList === "function") {
+          window.dpTypeEditor.setTypeTreeFromFlatList(types);
+        }        
       }
 
+      /**
+       * Fill a <select> element with options.
+       */
       fillSelect(id, types) {
         const select = document.getElementById(id);
         if (!select) return;
         select.innerHTML = "";
         types.forEach(type => {
           const opt = document.createElement("option");
-          opt.value = type;
-          opt.textContent = type;
+          opt.value = type.name;
+          opt.textContent = type.name;
           select.appendChild(opt);
         });
       }
 
+      /**
+       * Handle creation of a new datapoint.
+       */
       onCreateSubmit(e) {
         e.preventDefault();
         const name = document.getElementById("dpName").value.trim();
@@ -290,11 +407,14 @@
             document.getElementById("dpName").value = "";
             this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
           } else {
-            new NGUIModal("Error", "" + (rcv.err || "Unbekannter Fehler"), MBOK, 'bg-red-600').ShowAsync();
+            new NGUIModal("Error", "" + (rcv.err || "Unknown error"), MBOK, 'bg-red-600').ShowAsync();
           }
         });
       }
 
+      /**
+       * Handle bulk creation of datapoints.
+       */
       onBulkCreate() {
         const count = parseInt(document.getElementById("dpBulkCount").value, 10);
         const pattern = document.getElementById("dpBulkPattern").value.trim();
@@ -315,12 +435,15 @@
         createNext(1);
       }
 
-      onDelete = async () => {
+      /**
+       * Handle deletion of selected datapoints (with confirmation).
+       */
+      async onDelete() {
         const dpNames = Array.from(this.selectedRows).map(tr => tr.getAttribute('data-dpname'));
         if (!dpNames.length) return;
         const modal = new NGUIModal(
-          "Löschen bestätigen",
-          `Möchtest du die ausgewählten ${dpNames.length} Datenpunkte wirklich löschen?`,
+          "Confirm deletion",
+          `Do you really want to delete the selected ${dpNames.length} datapoints?`,
           MBYESNO,
           'bg-red-600'
         );
@@ -333,88 +456,91 @@
           }
           this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
         }
-      };
-
-      enableRowSelection() {
-        const rows = Array.from(document.querySelectorAll('#logOutput tr'));
-        rows.forEach((tr, idx) => {
-          tr.setAttribute('data-row-index', idx);
-          if (!tr.hasAttribute('data-dpname')) {
-            const dpName = tr.querySelector('td')?.innerText?.trim();
-            tr.setAttribute('data-dpname', dpName);
-          }
-          tr.addEventListener('mousedown', e => this.handleRowMouseDown(e, tr, idx, rows));
-          tr.addEventListener('mouseenter', e => this.handleRowMouseEnter(e, tr, idx, rows));
-          tr.addEventListener('mouseup', () => this.handleRowMouseUp());
-        });
-        document.addEventListener('mouseup', () => this.handleRowMouseUp());
       }
 
-      handleRowMouseDown(e, tr, idx, rows) {
-        this.isMouseDown = true;
-        this.mouseSelectStart = idx;
-        if (e.ctrlKey || e.metaKey) {
-          if (this.selectedRows.has(tr)) {
-            this.selectedRows.delete(tr);
-            tr.classList.remove('selected-row');
-          } else {
-            this.selectedRows.add(tr);
-            tr.classList.add('selected-row');
-          }
-          this.lastSelectedIndex = idx;
-          this.updateSelection();
-        } else if (e.shiftKey && this.lastSelectedIndex !== null) {
-          const [start, end] = [this.lastSelectedIndex, idx].sort((a, b) => a - b);
-          rows.forEach((row, i) => {
-            if (i >= start && i <= end) {
-              this.selectedRows.add(row);
-              row.classList.add('selected-row');
-            }
-          });
-          this.updateSelection();
-        } else {
-          this.selectedRows.forEach(row => row.classList.remove('selected-row'));
-          this.selectedRows.clear();
-          this.selectedRows.add(tr);
-          tr.classList.add('selected-row');
-          this.lastSelectedIndex = idx;
-          this.updateSelection();
-        }
-      }
-
-      handleRowMouseEnter(e, tr, idx, rows) {
-        if (this.isMouseDown && this.mouseSelectStart !== null && e.buttons === 1) {
-          const [start, end] = [this.mouseSelectStart, idx].sort((a, b) => a - b);
-          this.selectedRows.forEach(row => row.classList.remove('selected-row'));
-          this.selectedRows.clear();
-          for (let i = start; i <= end; i++) {
-            this.selectedRows.add(rows[i]);
-            rows[i].classList.add('selected-row');
-          }
-          this.updateSelection();
-        }
-      }
-
-      handleRowMouseUp() {
-        this.isMouseDown = false;
-        this.mouseSelectStart = null;
-      }
-
+      /**
+       * Called when the row selection changes.
+       */
       updateSelection() {
         const dpNames = Array.from(this.selectedRows).map(tr => tr.getAttribute('data-dpname'));
         this.onSelectionChanged(dpNames);
       }
 
+      /**
+       * Show/hide the delete button depending on selection.
+       */
       onSelectionChanged(dpNames) {
         document.getElementById("deleteBtn").style.display = dpNames.length > 0 ? "block" : "none";
       }
 
+      /**
+       * Enable inline editing for value cells.
+       */
       enableValueEdit() {
         document.querySelectorAll('td[id^="VALUE_"]').forEach(td => {
           td.addEventListener('dblclick', e => this.handleValueDblClick(e, td));
         });
       }
 
+      enableNameEdit() {
+        document.querySelectorAll('td[id^="NAME_"]').forEach(td => {
+          td.addEventListener('dblclick', e => this.handleNameDblClick(e, td));
+        });
+      }      
+
+handleNameDblClick(e, td) {
+  const oldName = td.innerText.trim();
+  const tr = td.parentElement;
+  const dpName = oldName;
+  const input = document.createElement('input');
+  input.type = "text";
+  input.value = oldName;
+  input.className = "w-full py-0.5 border rounded text-xs";
+  input.style.boxSizing = "border-box";
+  input.style.width = "100%";
+  input.style.height = "100%";
+  input.style.fontSize = "inherit";
+  input.style.background = "inherit";
+  input.style.margin = "0";
+  input.style.padding = "0 2px";
+  input.style.border = "none";
+  input.style.outline = "none";
+  input.style.boxShadow = "none";
+  input.style.display = "block";
+  td.innerHTML = "";
+  td.appendChild(input);
+  input.focus();
+  input.select();
+  let finished = false;
+  const finishEdit = (apply) => {
+    if (finished) return;
+    finished = true;
+    const newName = input.value.trim();
+    if (apply && newName && newName !== oldName) {
+      this.g_DB.DpRename(oldName, newName, rcv => {
+        if (!rcv.err) {
+          td.innerHTML = newName;
+          // Tabelle neu laden, damit alles konsistent ist
+          this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
+        } else {
+          td.innerHTML = oldName;
+          alert("Rename failed: " + (rcv.err || "Unknown error"));
+        }
+      });
+    } else {
+      td.innerHTML = oldName;
+    }
+  };
+  input.addEventListener('keydown', evt => {
+    if (evt.key === "Enter") finishEdit(true);
+    else if (evt.key === "Escape") finishEdit(false);
+  });
+  input.addEventListener('blur', () => finishEdit(true));
+}      
+
+      /**
+       * Handle double-click on value cell for editing.
+       */
       handleValueDblClick(e, td) {
         const oldValue = td.innerText;
         const dpName = td.id.substring("VALUE_".length);
@@ -474,6 +600,9 @@
         input.addEventListener('blur', () => finishEdit(true));
       }
 
+      /**
+       * Called when a value was edited inline.
+       */
       onValueEdited(dpName, oldValue, newValue, dpType, td) {
         let type = this.DpTypeForward[dpType];
         let setVal = null;
@@ -489,37 +618,9 @@
         });
       }
 
-      enableTreeToggle() {
-        document.querySelectorAll('.toggle-btn').forEach(btn => {
-          btn.addEventListener('click', e => this.handleTreeToggle(e, btn));
-        });
-      }
-
-      handleTreeToggle(e, btn) {
-        const targetRowId = btn.getAttribute('data-target');
-        const isCollapsed = btn.getAttribute('data-state') === "closed";
-        const chevronRight = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
-        const chevronDown = `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
-        btn.innerHTML = isCollapsed ? chevronDown : chevronRight;
-        btn.setAttribute('data-state', isCollapsed ? "open" : "closed");
-        this.toggleChildren(targetRowId, isCollapsed);
-      }
-
-      toggleChildren(parentId, show) {
-        const rows = document.querySelectorAll(`tr[data-parent="${parentId}"]`);
-        rows.forEach(row => {
-          row.style.display = show ? "" : "none";
-          if (!show) {
-            const toggle = row.querySelector('.toggle-btn');
-            if (toggle) {
-              toggle.innerHTML = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
-              toggle.setAttribute('data-state', 'closed');
-            }
-            this.toggleChildren(row.id, false);
-          }
-        });
-      }
-
+      /**
+       * Filtering logic for the datapoint table.
+       */
       applyTableFilters() {
         const dpNameFilter = document.getElementById('filterDpName').value.toLowerCase();
         const dpTypeFilter = document.getElementById('filterDpType').value.toLowerCase();
@@ -550,45 +651,11 @@
         });
       }
 
-      enableColumnResize() {
-        const table = document.querySelector("table.min-w-full");
-        if (!table) return;
-        const ths = table.querySelectorAll("th");
-        ths.forEach(th => {
-          th.style.position = "relative";
-          const resizer = document.createElement("div");
-          resizer.style.width = "5px";
-          resizer.style.height = "100%";
-          resizer.style.position = "absolute";
-          resizer.style.right = "0";
-          resizer.style.top = "0";
-          resizer.style.cursor = "col-resize";
-          resizer.style.userSelect = "none";
-          resizer.style.zIndex = "10";
-          th.appendChild(resizer);
-          let startX, startWidth;
-          resizer.addEventListener("mousedown", function (e) {
-            startX = e.pageX;
-            startWidth = th.offsetWidth;
-            document.documentElement.style.cursor = "col-resize";
-            document.addEventListener("mousemove", mousemove);
-            document.addEventListener("mouseup", mouseup);
-            e.preventDefault();
-          });
-          function mousemove(e) {
-            const newWidth = startWidth + (e.pageX - startX);
-            th.style.width = newWidth + "px";
-          }
-          function mouseup() {
-            document.documentElement.style.cursor = "";
-            document.removeEventListener("mousemove", mousemove);
-            document.removeEventListener("mouseup", mouseup);
-          }
-        });
-      }
-
+      /**
+       * Open the settings dialog for a datapoint.
+       */
       onDpSettings(dpName) {
-        console.log("Settings für", dpName);
+        console.log("Settings for", dpName);
         const tpl = document.getElementById("SettingsTemplate").innerHTML;
         const window = NGUIWindow.Create('window1_' + dpName, dpName, WB_MINIMIZE | WB_MAXIMIZE | WB_CLOSE, tpl);
         window.windowElement.style.width = "500px";
@@ -597,104 +664,240 @@
       }
     }
 
-    // Instanz global für onclick im SVG
-    window.browser = new NGUIBrowser();
+/**
+ * NGUIDpTypeEditor
+ * ----------------
+ * Specialized tree grid for editing datapoint types (tree structures).
+ * Allows creating, renaming, deleting, and managing child types.
+ * Uses NGUITreeGrid for selection, tree, and UI logic.
+ */
+class NGUIDpTypeEditor extends NGUITreeGrid {
+  constructor() {
+    super();
+    this.typeTree = [];
+    this.selectedType = null;
+    this.initTypeEventHandlers();
+    this.loadTypeTree();
+  }
+
+  initTypeEventHandlers() {
+    document.getElementById("dpTypeCreateForm").addEventListener("submit", this.onCreateType.bind(this));
+    document.getElementById("dpTypeDeleteBtn").addEventListener("click", this.onDeleteType.bind(this));
+    document.getElementById("dpTypeAddChildBtn").addEventListener("click", this.onAddChildType.bind(this));
+    document.getElementById("dpTypeRenameBtn").addEventListener("click", this.onRenameType.bind(this));
+    ['filterTypeName', 'filterTypeType', 'filterTypeChildren'].forEach(id => {
+      document.getElementById(id).addEventListener('input', this.applyTableFilters.bind(this));
+    });
+  }
+
+  loadTypeTree() {
+    // Demo data: Replace with backend fetch if needed
+    this.typeTree = [
+      { name: "RootType", type: "struct", parent: null, children: [
+        { name: "ChildType1", type: "number", parent: "RootType", children: [] },
+        { name: "ChildType2", type: "string", parent: "RootType", children: [
+          { name: "SubChildType", type: "boolean", parent: "ChildType2", children: [] }
+        ]}
+      ]}
+    ];
+    this.renderTypeTree();
+  }
+
+    /**
+     * Baut aus einer flachen Typenliste eine Baumstruktur und rendert das Grid.
+     * Erwartet: [{name, type, parent, ...}, ...]
+     */
+    setTypeTreeFromFlatList(types) {
+      this.typeTree = types;
+      this.renderTypeTree();
+    }  
+
+  renderTypeTree() {
+    const tbody = document.getElementById("typeTreeOutput");
+    tbody.innerHTML = "";
+    const render = (type, level = 0, parentId = "") => {
+      const rowId = "TYPE_" + type.name;
+      const hasChildren = type.children && type.children.length > 0;
+      const padding = 20 * level;
+      let toggle = hasChildren
+        ? `<span class="toggle-btn cursor-pointer select-none" data-target="${rowId}" data-state="closed">&#9654;</span>`
+        : `<span class="select-none" data-state="closed">&#9679;</span>`;
+      let childrenNames = type.children.map(child => child.name).join(", ");
+      tbody.innerHTML += `
+        <tr id="${rowId}" data-type-name="${type.name}" data-type-type="${type.type || ''}" data-type-children="${childrenNames}" data-parent="${parentId}" style="${level > 0 ? 'display:none;' : ''}">
+          <td class="border border-gray-300 px-4 py-1" style="padding-left:${padding}px;">
+            ${toggle} ${type.name}
+          </td>
+          <td class="border border-gray-300 px-4 py-1">${type.type || ""}</td>
+          <td class="border border-gray-300 px-4 py-1">${childrenNames}</td>
+          <td class="border border-gray-300 px-4 py-1">
+            <button class="px-2 py-0.5 bg-green-500 text-white rounded text-xs hover:bg-green-600" onclick="window.dpTypeEditor.selectType('${type.name}')">Select</button>
+          </td>
+        </tr>
+      `;
+      if (hasChildren) type.children.forEach(child => render(child, level + 1, rowId));
+    };
+    this.typeTree.forEach(type => render(type));
+    this.enableRowSelection();
+    //this.enableTreeToggle("#typeTreeOutput");
+    this.applyTableFilters();
+  }
+
+  onCreateType(e) {
+    e.preventDefault();
+    const name = document.getElementById("dpTypeName").value.trim();
+    if (!name) return;
+    // Prompt for type
+    const type = prompt("Type for new datapoint type:", "struct") || "struct";
+    this.typeTree.push({ name, type, parent: null, children: [] });
+    document.getElementById("dpTypeName").value = "";
+    this.renderTypeTree();
+  }
+
+  selectType(typeName) {
+    this.selectedType = this.findTypeByName(typeName, this.typeTree);
+    document.getElementById("selectedTypeName").textContent = typeName;
+    document.getElementById("dpTypeDeleteBtn").style.display = "inline-block";
+    document.getElementById("dpTypeAddChildBtn").style.display = "inline-block";
+    document.getElementById("dpTypeRenameBtn").style.display = "inline-block";
+    document.querySelectorAll("#typeTreeOutput tr").forEach(tr => {
+      tr.classList.toggle("selected-row", tr.getAttribute("data-type-name") === typeName);
+    });
+  }
+
+  onDeleteType() {
+    if (!this.selectedType) return;
+    this.deleteTypeByName(this.selectedType.name, this.typeTree);
+    this.selectedType = null;
+    document.getElementById("selectedTypeName").textContent = "";
+    document.getElementById("dpTypeDeleteBtn").style.display = "none";
+    document.getElementById("dpTypeAddChildBtn").style.display = "none";
+    document.getElementById("dpTypeRenameBtn").style.display = "none";
+    this.renderTypeTree();
+  }
+
+  onAddChildType() {
+    if (!this.selectedType) return;
+    const childName = prompt("Child type name:");
+    if (!childName) return;
+    const childType = prompt("Type for child:", "struct") || "struct";
+    if (!this.selectedType.children) this.selectedType.children = [];
+    this.selectedType.children.push({ name: childName, type: childType, parent: this.selectedType.name, children: [] });
+    this.renderTypeTree();
+  }
+
+  onRenameType() {
+    if (!this.selectedType) return;
+    const newName = prompt("New type name:", this.selectedType.name);
+    if (!newName || newName === this.selectedType.name) return;
+    this.renameType(this.selectedType.name, newName, this.typeTree);
+    this.selectedType = this.findTypeByName(newName, this.typeTree);
+    document.getElementById("selectedTypeName").textContent = newName;
+    this.renderTypeTree();
+  }
+
+  findTypeByName(name, tree) {
+    for (const type of tree) {
+      if (type.name === name) return type;
+      if (type.children) {
+        const found = this.findTypeByName(name, type.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  deleteTypeByName(name, tree) {
+    for (let i = 0; i < tree.length; i++) {
+      if (tree[i].name === name) {
+        tree.splice(i, 1);
+        return true;
+      }
+      if (tree[i].children && this.deleteTypeByName(name, tree[i].children)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  renameType(oldName, newName, tree) {
+    for (const type of tree) {
+      if (type.name === oldName) {
+        type.name = newName;
+        if (type.children) {
+          type.children.forEach(child => {
+            if (child.parent === oldName) child.parent = newName;
+          });
+        }
+      }
+      if (type.children) {
+        this.renameType(oldName, newName, type.children);
+      }
+    }
+  }
+
+  // Filter logic for the type table
+  applyTableFilters() {
+    const nameFilter = document.getElementById('filterTypeName').value.toLowerCase();
+    const typeFilter = document.getElementById('filterTypeType').value.toLowerCase();
+    const childrenFilter = document.getElementById('filterTypeChildren').value.toLowerCase();
+    document.querySelectorAll('#typeTreeOutput tr').forEach(row => {
+      const typeName = row.getAttribute('data-type-name')?.toLowerCase() || "";
+      const typeType = row.getAttribute('data-type-type')?.toLowerCase() || "";
+      const typeChildren = row.getAttribute('data-type-children')?.toLowerCase() || "";
+      let show = true;
+      if (nameFilter && !typeName.includes(nameFilter)) show = false;
+      if (typeFilter && !typeType.includes(typeFilter)) show = false;
+      if (childrenFilter && !typeChildren.includes(childrenFilter)) show = false;
+      row.style.display = show ? "" : "none";
+    });
+  }
+
+  updateSelection() {
+    // Optional: implement selection logic if needed
+  }
+}
+
+// Make instance globally available for button onclicks
+//window.dpTypeEditor = new NGUIDpTypeEditor();    
+
+    // Make instance globally available for SVG onclick
+    window.browser = new NGUIDpBrowser();
+
+  // Tab switching logic
+  
+  document.addEventListener("DOMContentLoaded", function () {
+    const tabDatapoints = document.getElementById("tabDatapoints");
+    const tabDatapointTypes = document.getElementById("tabDatapointTypes");
+    const editor = document.getElementById("DatapointEditor");
+    const typeEditor = document.getElementById("DatapointTypeEditor");
+
+    function showDatapoints() {
+      tabDatapoints.classList.add("border-b-2", "border-blue-500", "text-blue-600");
+      tabDatapoints.classList.remove("hover:text-blue-600");
+      tabDatapointTypes.classList.remove("border-b-2", "border-blue-500", "text-blue-600");
+      tabDatapointTypes.classList.add("hover:text-blue-600");
+      editor.style.display = "block";
+      typeEditor.style.display = "none";
+    }
+
+    function showDatapointTypes() {
+      tabDatapointTypes.classList.add("border-b-2", "border-blue-500", "text-blue-600");
+      tabDatapointTypes.classList.remove("hover:text-blue-600");
+      tabDatapoints.classList.remove("border-b-2", "border-blue-500", "text-blue-600");
+      tabDatapoints.classList.add("hover:text-blue-600");
+      editor.style.display = "none";
+      typeEditor.style.display = "block";
+    }
+
+    tabDatapoints.addEventListener("click", showDatapoints);
+    tabDatapointTypes.addEventListener("click", showDatapointTypes);
+
+    // Initial state
+    showDatapoints();
+  });    
+
   </script>
-
-<span id="SettingsTemplate" style="display: block;">
-  <form class="w-full h-full p-4 flex flex-col gap-3 text-xs bg-gray-50">
-    <div class="font-semibold text-blue-700 flex items-center gap-2 mb-1">
-      <svg class="inline w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
-      Datenpunkt-Konfiguration
-    </div>
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2">
-      <!-- Archiv -->
-      <label class="flex items-center gap-2 col-span-1">
-        <input type="checkbox" class="accent-blue-600 w-4 h-4" id="cfg-archiv">
-        <span>Archivierung</span>
-      </label>
-      <!-- Deadband -->
-      <div class="flex items-center gap-2 col-span-1">
-        <input type="checkbox" class="accent-blue-600 w-4 h-4" id="cfg-deadband-enable">
-        <span>Deadband</span>
-        <input type="number" id="cfg-deadband-value" class="border rounded px-1 py-0.5 w-14 text-xs" min="0" step="any" placeholder="Δ">
-      </div>
-      <!-- Historisierung -->
-      <label class="flex items-center gap-2 col-span-1">
-        <input type="checkbox" class="accent-blue-600 w-4 h-4" id="cfg-historic">
-        <span>Historisierung</span>
-      </label>
-      <!-- Grenzwerte -->
-      <div class="flex flex-col gap-1 col-span-2 md:col-span-3">
-        <div class="flex flex-wrap gap-2">
-          <div class="flex flex-col">
-            <span class="text-gray-500">Min</span>
-            <input type="number" id="cfg-min" class="border rounded px-1 py-0.5 w-16 text-xs" placeholder="Min">
-          </div>
-          <div class="flex flex-col">
-            <span class="text-gray-500">Max</span>
-            <input type="number" id="cfg-max" class="border rounded px-1 py-0.5 w-16 text-xs" placeholder="Max">
-          </div>
-          <div class="flex flex-col">
-            <span class="text-yellow-600">Warn-</span>
-            <input type="number" id="cfg-warn-low" class="border rounded px-1 py-0.5 w-16 text-xs" placeholder="Warn-">
-          </div>
-          <div class="flex flex-col">
-            <span class="text-yellow-600">Warn+</span>
-            <input type="number" id="cfg-warn-high" class="border rounded px-1 py-0.5 w-16 text-xs" placeholder="Warn+">
-          </div>
-          <div class="flex flex-col">
-            <span class="text-red-600">Alarm-</span>
-            <input type="number" id="cfg-alarm-low" class="border rounded px-1 py-0.5 w-16 text-xs" placeholder="Alarm-">
-          </div>
-          <div class="flex flex-col">
-            <span class="text-red-600">Alarm+</span>
-            <input type="number" id="cfg-alarm-high" class="border rounded px-1 py-0.5 w-16 text-xs" placeholder="Alarm+">
-          </div>
-        </div>
-      </div>
-      <!-- Flankenüberwachung -->
-      <div class="flex items-center gap-2 col-span-2 md:col-span-3">
-        <span class="font-medium">Flanke:</span>
-        <label class="flex items-center gap-1">
-          <input type="checkbox" id="cfg-edge-rising" class="accent-blue-600 w-4 h-4">
-          <span>↑</span>
-        </label>
-        <label class="flex items-center gap-1">
-          <input type="checkbox" id="cfg-edge-falling" class="accent-blue-600 w-4 h-4">
-          <span>↓</span>
-        </label>
-      </div>
-      <!-- Zeitstempelquelle -->
-      <div class="flex items-center gap-2 col-span-2 md:col-span-3">
-        <span class="font-medium">Zeitstempel:</span>
-        <label class="flex items-center gap-1">
-          <input type="radio" name="cfg-ts-source" value="sps" class="accent-blue-600" checked>
-          <span>SPS</span>
-        </label>
-        <label class="flex items-center gap-1">
-          <input type="radio" name="cfg-ts-source" value="scada" class="accent-blue-600">
-          <span>SCADA</span>
-        </label>
-      </div>
-      <!-- Archivierungsintervall -->
-      <div class="flex items-center gap-2 col-span-2 md:col-span-3">
-        <span class="font-medium">Intervall:</span>
-        <input type="number" id="cfg-interval" class="border rounded px-1 py-0.5 w-14 text-xs" min="1" placeholder="Sek.">
-        <span class="text-gray-500">Sek.</span>
-        <span class="mx-1 text-gray-400">oder</span>
-        <label class="flex items-center gap-1">
-          <input type="checkbox" id="cfg-onchange" class="accent-blue-600 w-4 h-4">
-          <span>bei Änderung</span>
-        </label>
-      </div>
-    </div>
-    <div class="flex justify-end gap-2 mt-2">
-      <button type="button" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs">Speichern</button>
-      <button type="button" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs">Abbrechen</button>
-    </div>
-  </form>
-</span>
-
 </body>
+
 </html>

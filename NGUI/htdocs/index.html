@@ -3,27 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'"> -->
   <title>NGUI Demo</title>
   <!-- Tailwind CSS CDN -->
   <script src="ngui/3p/tailwind/tailwind.js"></script>
 
-  <!-- jQuery -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-  <!-- jQuery UI -->
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-
-  <!-- Fancytree -->
-  <link href="ngui/3p/fancytree/ui.fancytree.min.css" rel="stylesheet" />
-  <script src="ngui/3p/fancytree/jquery.fancytree-all-deps.min.js"></script>
 
   <link href="ngui/NGUI.css" rel="stylesheet" /
   <!-- NGUI Scripts -->
   <script src="ngui/NGUIConnection.js"></script>
   <script src="ngui/NGUIModalTailwind.js"></script>
   <script src="ngui/NGUIWindowTailwind.js"></script>
-  <script src="ngui/NGUITree.js"></script>
+  <script src="ngui/NGUITreeGrid.js"></script>
   <script src="ngui/NGUISplitter.js"></script>
 
   <style>
@@ -58,18 +50,13 @@
         </div>
       </div>
 <div class="flex gap-2 mb-2 btn-group text-xs">
-<button style="width: 130px;" class="px-2 py-1 bg-gray-700 text-white rounded hover:bg-gray-800" onclick="window.tree.HighLightNode('6')">Highlight</button>
-<hr><button style="width: 130px;" class="px-2 py-1 bg-gray-700 text-white rounded hover:bg-gray-800" onclick="window.tree.ExpandNode('8')">Expand</button>
-<hr><button style="width: 130px;" class="px-2 py-1 bg-gray-700 text-white rounded hover:bg-gray-800" onclick="window.tree.CollapsNode('8')">Collapse</button>
+<button  class="px-2 py-1 bg-gray-700 text-white rounded hover:bg-gray-800" onclick="g_NGUI.LoadPage('NGUI_Browser.html', 'right-bottom', null);">Highlight</button>
+
 </div>      
       <table id="treegrid" class="fancytree-ext-table"></table>
 
     </div>
-    <div id="splitter-vertical"></div>
-    <div id="right-top">
-      <div id="bereich1"></div>
-    </div>
-    <div id="splitter-horizontal"></div>
+
     <div id="right-bottom">
       <div id="bereich2"></div>
     </div>
@@ -85,49 +72,27 @@
     g_NGUI.Connect("ws://localhost:2808", OnAppOpen);
     var g_DB = g_NGUI.GetDbClient();
 
-    const splitter = new NGUI_Splitter("#container");
-    splitter.enableVerticalSplitter("#splitter-vertical", {
-      minWidth: 200,
-      maxWidth: 600,
-    });
-    splitter.enableHorizontalSplitter("#splitter-horizontal", {
-      minHeight: 20,
-      maxHeightOffset: 200,
-    });
+    // const splitter = new NGUI_Splitter("#container");
+    // splitter.enableVerticalSplitter("#splitter-vertical", {
+    //   minWidth: 200,
+    //   maxWidth: 600,
+    // });
+    // splitter.enableHorizontalSplitter("#splitter-horizontal", {
+    //   minHeight: 20,
+    //   maxHeightOffset: 200,
+    // });
 
 
     function OnAppOpen() {
       console.log("App opened");
-      g_NGUI.LoadPage("NGUI_kitchensink.html", "right-bottom", null);
-      g_NGUI.LoadPage("NGUI_DemoTop.html", "right-top", null);
-      g_NGUI.LoadResource("NGUI_DemoTree.json", null, OnJSON);
+      g_NGUI.LoadPage("NGUI_Browser.html", "right-bottom", null);
+      //g_NGUI.LoadPage("NGUI_Browser.html", "treegrid", null);
+      //g_NGUI.LoadResource("NGUI_DemoTree.json", null, OnJSON);
     }
     
-    function SelectTreeCfg()
-    {
-          window.tree.setConfig(treeConfigs.material);
-          window.tree.setData(window.parsedData);      
-    }
 
-    function OnJSON(data) {
-      try {
-        window.parsedData = JSON.parse(data.data);
-        console.log("Parsed JSON:", parsedData);
-
-        window.tree = new NGUITree('#treegrid', {
-          columns: [
-            { title: 'mass', field: 'mass', dataSource: 'data', formatter: (value) => value !== undefined ? value : '' },
-          ],
-          onNodeClick: (data) => {
-            console.log('Node clicked:', data.node.title, data.node.data);
-          },
-        });
-
-        window.tree.setData(parsedData);
-      } catch (error) {
-        console.error('Error parsing JSON:', error);
-      }
-    }
   </script>
+
+  
 </body>
 </html>

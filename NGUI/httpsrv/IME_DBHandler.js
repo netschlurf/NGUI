@@ -14,7 +14,8 @@ class IME_DBHandler extends NGUIHandlerBase {
             'DpNames': this.DpNames.bind(this),
             'DpTypes': this.DpTypes.bind(this),
             'DpExists': this.DpExists.bind(this),
-            'DpTypeExists': this.DpTypeExists.bind(this), 
+            'DpTypeExists': this.DpTypeExists.bind(this),
+            'DpRename': this.DpRename.bind(this),
         };  
         this.DpConnectionMap = new Map();    
     }
@@ -88,6 +89,21 @@ class IME_DBHandler extends NGUIHandlerBase {
             this.sendResponse(ws, msg, null, rsp);
         }
         return true;
+    }    
+
+    DpRename(msg, ws) {
+        if (!msg.args || !msg.args.dpName || !msg.args.newName) {
+            const rsp = {cmd: msg.cmd, rc: 300};
+            this.sendResponse(ws, msg, null, rsp);
+            return;
+        }
+        try {
+            const result = this.db.DpRename(msg.args.dpName, msg.args.newName);
+            this.sendResponse(ws, msg, {cmd: msg.cmd, ...result, rc: 200});
+        } catch (err) {
+            console.error('Error in DpRename:', err);
+            this.sendResponse(ws, msg, null, 'Error renaming datapoint');
+        }
     }    
 
     /**

@@ -65,7 +65,7 @@ class NGUIConnection {
         this.callBacks.push(cb);
         this.Connection.send(JSON.stringify(msg));
     }
-    
+
 
     SendData(obj, target, callback) {
         var msg = new NGUIMsg();
@@ -165,10 +165,10 @@ class NGUIClient {
         this.Connection.LoadResource(fileName, params, callback);
     }
 
-     PutResource(fileName, content, callback) {
+    PutResource(fileName, content, callback) {
         this.Connection.PutResource(fileName, content, callback);
     }
-   
+
 
     LoadPageAJAX(fileName, target) {
         var xhttp = new XMLHttpRequest();
@@ -240,25 +240,66 @@ class NGUIClient {
             document.body.removeChild(elems[i]);
     }
 
+    RemoveClassDefinition(script, className) {
+        const classRegex = new RegExp(`class\\s+${className}\\b[^{]*{`, 'g');
+        let match = classRegex.exec(script);
+        if (!match) return script; // Not found
+
+        let startIdx = match.index;
+        let braceIdx = script.indexOf('{', match.index);
+        if (braceIdx === -1) return script;
+
+        // Find matching closing brace
+        let depth = 1;
+        let i = braceIdx + 1;
+        while (i < script.length && depth > 0) {
+            if (script[i] === '{') depth++;
+            else if (script[i] === '}') depth--;
+            i++;
+        }
+        // Remove the class definition
+        return script.slice(0, startIdx) + script.slice(i);
+    }
+
     EvalScript(txt, scriptSuffix) {
+        // ... ClearScript wie gehabt ...
+
+        // Script-Block extrahieren wie gehabt
         let start = 0;
         let slen = String("<script>").length;
         let elen = String("</script>").length;
         let cnt = 0;
-        let html = "";
-        this.ClearScript(scriptSuffix);
-
         while (start >= 0) {
             let end = start;
             start = txt.indexOf("<script>", start);
-            if (start < 0)
-                break;
+            if (start < 0) break;
             end = txt.indexOf("</script>", start + 1);
             if (end < 0) {
                 console.error("missing </script>");
                 break;
             }
             let script = txt.substr(start + slen, end - start - elen);
+
+            // --- NEW: Remove already loaded classes ---
+            // Find all class definitions
+            let classRegex = /class\s+([A-Za-z0-9_]+)\b[^{]*{/g;
+            let match;
+            let classesToRemove = [];
+            while ((match = classRegex.exec(script)) !== null) {
+                const className = match[1];
+                try {
+                    if (typeof eval(className) === "function") {
+                        classesToRemove.push(className);
+                    }
+                } catch (e) {
+                    // Class does not exist, keep as is
+                }
+            }
+            // Remove all found classes that already exist
+            for (const className of classesToRemove) {
+                script = this.RemoveClassDefinition(script, className);
+            }
+
             start = end;
             var js = document.createElement('script');
             js.classList.add(scriptSuffix);
@@ -321,13 +362,13 @@ class NGUIClient {
             const key = element.getAttribute('dpGet');
             this.GetDbClient().DpGet(key, (rcv) => {
                 if (rcv.data && rcv.data.value !== undefined) {
-                    if(typeof rcv.data.value === 'object' && rcv.data.value !== null) {
+                    if (typeof rcv.data.value === 'object' && rcv.data.value !== null) {
                         this.RenderJsonToCollapsibleHtml(rcv.data.value, element);
                     }
-                    else{
+                    else {
                         element.innerHTML = rcv.data.value;
                     }
-                    
+
                 } else {
                     console.warn(`No value found for dpGet: ${key}`);
                 }
@@ -340,10 +381,10 @@ class NGUIClient {
             const key = element.getAttribute('dpConnect');
             this.GetDbClient().DpConnect(key, (rcv) => {
                 if (rcv.data && rcv.data.value !== undefined) {
-                    if(typeof rcv.data.value === 'object' && rcv.data.value !== null) {
+                    if (typeof rcv.data.value === 'object' && rcv.data.value !== null) {
                         this.RenderJsonToCollapsibleHtml(rcv.data.value, element);
                     }
-                    else{
+                    else {
                         element.innerHTML = rcv.data.value;
                     }
                 } else {
@@ -445,9 +486,9 @@ class IME_DBClient {
             }
         }
         var obj = null;
-        if(rcv.data && rcv.data.dpName)
-            obj = rcv.data        
-        else if(rcv.data.data && rcv.data.data.dpName)
+        if (rcv.data && rcv.data.dpName)
+            obj = rcv.data
+        else if (rcv.data.data && rcv.data.data.dpName)
             obj = rcv.data.data;
 
         if (obj) {
@@ -515,20 +556,25 @@ class IME_DBClient {
     DpDelete(dpName, callback) {
         const request = { dpName: dpName };
         this.Connection.SendCustomCommand("DpDelete", request, callback);
-    }    
+    }
 
     DpNames(typeName, pattern, callback) {
         const request = { typeName: typeName, pattern: pattern };
         this.Connection.SendCustomCommand("DpNames", request, callback);
-    }    
-    
+    }
+
     DpTypes(pattern, callback) {
         const request = { pattern: pattern };
         this.Connection.SendCustomCommand("DpTypes", request, callback);
     }
 
+    DpRename(dpName, newName, callback) {
+        const request = { dpName: dpName, newName: newName };
+        this.Connection.SendCustomCommand("DpRename", request, callback);
+    }    
+
     DpGetPeriod(dpName, startTs, endTs, callback) {
-        const request = { dpName: dpName , startTs: startTs, endTs: endTs };
+        const request = { dpName: dpName, startTs: startTs, endTs: endTs };
         this.Connection.SendCustomCommand("DpGetPeriod", request, callback);
     }
 
@@ -537,22 +583,22 @@ class IME_DBClient {
         const request = { ipRange: ipRange };
         this.Connection.SendCustomCommand("DiscoverDevices", request, callback);
     }
-    
+
     GetSNMPMetrics(ip, version, endTs, callback) {
-        const request = { ip: ip , version: version };
+        const request = { ip: ip, version: version };
         this.Connection.SendCustomCommand("GetSNMPMetrics", request, callback);
     }
-    
-     ListDevices(callback) {
-        const request = {  };
+
+    ListDevices(callback) {
+        const request = {};
         this.Connection.SendCustomCommand("ListDevices", request, callback);
     }
-    
+
     ConfigureSNMPTraps(enable, callback) {
         const request = { enable: enable };
         this.Connection.SendCustomCommand("ConfigureSNMPTraps", request, callback);
-    }  
-    
+    }
+
     PortScan(ip, callback) {
         const request = { ip: ip };
         this.Connection.SendCustomCommand("PortScan", request, callback);
@@ -561,8 +607,8 @@ class IME_DBClient {
     OSFingerprint(ip, callback) {
         const request = { ip: ip };
         this.Connection.SendCustomCommand("OSFingerprint", request, callback);
-    }  
-        
+    }
+
     EnumerateServices(ip, callback) {
         const request = { ip: ip };
         this.Connection.SendCustomCommand("EnumerateServices", request, callback);
