@@ -19,14 +19,16 @@
         static minimizedWindows = new Map();
         static maxZIndex = 1050;
 
-        static Create(windowId, title, buttons, parent = null) {
+        static Create(windowId, title, buttons, innerHtml, parent = null) {
+            
             if (windowId && document.getElementById(windowId)) {
                 throw new Error(`Fenster mit ID ${windowId} existiert bereits.`);
             }
-            return new NGUIWindow(windowId, title, buttons, parent);
+            return new NGUIWindow(windowId, title, buttons, innerHtml, parent);
         }
 
-        constructor(windowId, title, buttons, parent = null) {
+        constructor(windowId, title, buttons, innerHtml, parent = null) {
+            this.innerHtml = innerHtml;
             this.windowId = windowId || `window_${generateUUID()}`;
             if (document.getElementById(this.windowId)) {
                 throw new Error(`Fenster mit ID ${this.windowId} existiert bereits.`);
@@ -65,7 +67,7 @@
             this.windowElement.style.resize = 'both';
             this.windowElement.style.overflow = 'auto';
             this.windowElement.style.minWidth = '180px';
-            this.windowElement.style.minHeight = '80px';
+            this.windowElement.style.minHeight = '0px';
 
             const titlebar = document.createElement('div');
             titlebar.className = 'flex items-center p-1 bg-gray-700 text-white rounded-t-md cursor-move select-none h-6';
@@ -112,17 +114,30 @@
             });
         }
 
-        addTitlebarButton(container, iconClass, title, onClick) {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'p-0.5 text-white hover:text-gray-200 focus:outline-none w-5 h-5 flex items-center justify-center';
-            button.title = title;
-            button.innerHTML = `<i class="${iconClass} text-[10px]"></i>`;
-            button.style.display = 'inline-flex'; // Sicherstellung, dass Buttons sichtbar sind
-            button.addEventListener('click', onClick);
-            container.appendChild(button);
-            return button;
-        }
+addTitlebarButton(container, iconClass, title, onClick) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'p-0.5 text-white hover:text-gray-200 focus:outline-none w-5 h-5 flex items-center justify-center';
+    button.title = title;
+    // SVG statt <i>
+    let svg = '';
+    if (iconClass.includes('fa-minus')) {
+        svg = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="6" x2="10" y2="6"/></svg>`;
+    } else if (iconClass.includes('fa-expand')) {
+        svg = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="8" height="8"/></svg>`;
+    } else if (iconClass.includes('fa-compress')) {
+        svg = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="6" height="6"/></svg>`;
+    } else if (iconClass.includes('fa-plus')) {
+        svg = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="2" x2="6" y2="10"/><line x1="2" y1="6" x2="10" y2="6"/></svg>`;
+    } else if (iconClass.includes('fa-times')) {
+        svg = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="3" x2="9" y2="9"/><line x1="9" y1="3" x2="3" y2="9"/></svg>`;
+    }
+    button.innerHTML = svg;
+    button.style.display = 'inline-flex';
+    button.addEventListener('click', onClick);
+    container.appendChild(button);
+    return button;
+}
 
         makeDraggable(titlebar) {
             let isDragging = false;
@@ -191,41 +206,45 @@
         }
 
         minimize() {
-            if (this.state !== 'minimized') {
-                this.previousSize = { ...this.normalSize };
-                this.previousPosition = { ...this.normalPosition };
-                this.state = 'minimized';
+    if (this.state !== 'minimized') {
+        this.previousSize = { ...this.normalSize };
+        this.previousPosition = { ...this.normalPosition };
+        this.state = 'minimized';
 
-                const minimizedList = NGUIWindow.minimizedWindows.get(this.parentId) || [];
-                const index = minimizedList.length;
-                minimizedList.push({ id: this.windowId, index });
-                NGUIWindow.minimizedWindows.set(this.parentId, minimizedList);
+        const minimizedList = NGUIWindow.minimizedWindows.get(this.parentId) || [];
+        const index = minimizedList.length;
+        minimizedList.push({ id: this.windowId, index });
+        NGUIWindow.minimizedWindows.set(this.parentId, minimizedList);
 
-                this.windowElement.style.width = `${this.minimizedSize.width}px`;
-                this.windowElement.style.height = `${this.minimizedSize.height}px`;
-                this.windowElement.style.left = '0';
-                this.windowElement.style.bottom = `${index * 30}px`;
-                this.windowElement.style.top = 'auto';
-                this.windowElement.style.resize = 'none';
-                this.windowElement.querySelector('.p-2').style.display = 'none';
+        // Nur noch die Titelbar anzeigen, Content ausblenden
+        this.windowElement.style.width = `${this.minimizedSize.width}px`;
+        this.windowElement.style.height = 'auto';
+        this.windowElement.style.left = '0';
+        this.windowElement.style.bottom = `${index * 30}px`;
+        this.windowElement.style.top = 'auto';
+        this.windowElement.style.resize = 'none';
 
-                const tools = this.windowElement.querySelector('.flex.space-x-0.5');
-                tools.innerHTML = '';
-                if (this.buttons & WB_MINIMIZE) {
-                    this.minimizeButton = this.addTitlebarButton(tools, 'fas fa-plus', 'Wiederherstellen', () => this.toggleMinimize());
-                }
-                if (this.buttons & WB_CLOSE) {
-                    this.closeButton = this.addTitlebarButton(tools, 'fas fa-times', 'Schließen', () => {
-                        this.result = 'close';
-                        this.Close();
-                        if (this.resolvePromise) this.resolvePromise(this.result);
-                    });
-                }
+        // Titelbar bleibt, Content wird komplett entfernt/ausgeblendet
+        const contentDiv = this.windowElement.querySelector('.p-2');
+        if (contentDiv) contentDiv.style.display = 'none';
 
-                const titleElement = this.windowElement.querySelector('.text-xs') || this.windowElement.querySelector('.text-sm');
-                titleElement.className = 'text-[10px] font-medium flex-grow truncate';
-            }
+        const tools = this.windowElement.querySelector('.flex.space-x-0.5');
+        tools.innerHTML = '';
+        if (this.buttons & WB_MINIMIZE) {
+            this.minimizeButton = this.addTitlebarButton(tools, 'fas fa-plus', 'Wiederherstellen', () => this.toggleMinimize());
         }
+        if (this.buttons & WB_CLOSE) {
+            this.closeButton = this.addTitlebarButton(tools, 'fas fa-times', 'Schließen', () => {
+                this.result = 'close';
+                this.Close();
+                if (this.resolvePromise) this.resolvePromise(this.result);
+            });
+        }
+
+        const titleElement = this.windowElement.querySelector('.text-xs') || this.windowElement.querySelector('.text-sm');
+        titleElement.className = 'text-[10px] font-medium flex-grow truncate';
+    }
+}
 
         toggleMaximize() {
             if (this.state === 'maximized') {
@@ -311,6 +330,7 @@
                 this.parent.appendChild(this.windowElement);
                 this.windowElement.style.zIndex = NGUIWindow.maxZIndex++;
                 this.windowElement.focus();
+                document.getElementById(this.windowId + "_CONTENT").innerHTML = this.innerHtml;
             }
         }
 

@@ -168,16 +168,30 @@ class NGUIWindow {
      * @param {Function} onClick - Click-Handler.
      * @returns {HTMLElement} Ersteller Button.
      */
-    addTitlebarButton(container, iconClass, title, onClick) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'btn btn-tool';
-        button.title = title;
-        button.innerHTML = `<i class="${iconClass}"></i>`;
-        button.addEventListener('click', onClick);
-        container.appendChild(button);
-        return button;
+addTitlebarButton(container, iconClass, title, onClick) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'p-0.5 text-white hover:text-gray-200 focus:outline-none w-5 h-5 flex items-center justify-center';
+    button.title = title;
+    // SVG statt <i>
+    let svg = '';
+    if (iconClass.includes('fa-minus')) {
+        svg = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><line x1="2" y1="6" x2="10" y2="6"/></svg>`;
+    } else if (iconClass.includes('fa-expand')) {
+        svg = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="8" height="8"/></svg>`;
+    } else if (iconClass.includes('fa-compress')) {
+        svg = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="6" height="6"/></svg>`;
+    } else if (iconClass.includes('fa-plus')) {
+        svg = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="2" x2="6" y2="10"/><line x1="2" y1="6" x2="10" y2="6"/></svg>`;
+    } else if (iconClass.includes('fa-times')) {
+        svg = `<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="3" x2="9" y2="9"/><line x1="9" y1="3" x2="3" y2="9"/></svg>`;
     }
+    button.innerHTML = svg;
+    button.style.display = 'inline-flex';
+    button.addEventListener('click', onClick);
+    container.appendChild(button);
+    return button;
+}
 
     /**
      * Macht das Fenster draggable mit Andocken an Parent-Ränder.

@@ -1,3 +1,37 @@
+<!--
+  NGUI Browser Demo
+
+  This HTML file implements a browser UI for managing and interacting with "Datenpunkte" (datapoints) using the NGUI framework.
+  It provides a modern, responsive interface using Tailwind CSS and custom JavaScript logic.
+
+  Features:
+  - Tabbed interface for switching between datapoints and datapoint types.
+  - Creation of new datapoints, including bulk creation with pattern and type selection.
+  - Filterable and resizable table displaying datapoints, types, values, and timestamps.
+  - Inline editing of datapoint values with type-aware handling.
+  - Row selection with support for multi-select (Ctrl/Shift), mouse drag, and delete action.
+  - Tree structure for hierarchical datapoints with expand/collapse toggles.
+  - Sticky headers and controls for improved usability.
+  - Integration with NGUI backend via WebSocket for live updates and operations.
+
+  Main JavaScript class: NGUIBrowser
+    - Handles UI initialization, event binding, and all user interactions.
+    - Connects to NGUI backend, fetches datapoint names/types, and updates the table.
+    - Manages selection, editing, filtering, and tree toggling logic.
+    - Provides hooks for datapoint settings dialogs.
+
+  Dependencies:
+    - Tailwind CSS (via CDN)
+    - NGUI JavaScript modules: NGUIConnection.js, NGUIClient.js, NGUIModalTailwind.js, NGUIWindowTailwind.js, NGUITree.js
+    - NGUI.css for custom styles
+
+  Usage:
+    - Open the HTML file in a browser with access to the NGUI backend (WebSocket at ws://localhost:2808).
+    - Use the UI to create, edit, filter, and manage datapoints.
+
+  Author: (Your Name/Organization)
+  License: (Specify if applicable)
+-->
 <!DOCTYPE html>
 <html lang="de">
 
@@ -6,130 +40,82 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>NGUI Demo</title>
   <!-- Tailwind CSS CDN -->
-  <script src="ngui/3p/tailwind/tailwind.js"></script>
+  <script src="ngui/3p/tailwind/tailwind.js" defer></script>
 
-  <!-- jQuery -->
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-  <!-- jQuery UI -->
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
-  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-
-  <!-- Fancytree -->
-  <link href="ngui/3p/fancytree/ui.fancytree.min.css" rel="stylesheet" />
-  <script src="ngui/3p/fancytree/jquery.fancytree-all-deps.min.js"></script>
-
-  <link href="ngui/NGUI.css" rel="stylesheet"> 
+  <link href="ngui/NGUI.css" rel="stylesheet">
   <!-- NGUI Scripts -->
   <script src="ngui/NGUIConnection.js"></script>
   <script src="ngui/NGUIModalTailwind.js"></script>
   <script src="ngui/NGUIWindowTailwind.js"></script>
-  <script src="ngui/NGUITree.js"></script>
 
 
   <style>
-    /* Grundlegendes Layout und Schriftfamilie für die gesamte Seite */
-    html,
-    body {
+    html, body {
       height: 100%;
       margin: 0;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       overflow-y: hidden;
     }
-
-  #logOutput tr:nth-child(odd) {
-    background-color: #f8fafc; /* sehr helles grau */
-  }
-  #logOutput tr:nth-child(even) {
-    background-color: #fff;
-  }    
-  #logOutput tr:nth-child(odd) {
-    background-color: #f8fafc;
-  }
-  #logOutput tr:nth-child(even) {
-    background-color: #fff;
-  }
-  #logOutput tr:hover {
-    background-color: #e0f2fe !important; /* zartes hellblau, überschreibt Tailwind */
-  }  
-
-table thead {
-  position: sticky;
-  top: 0; /* oder top: 56px; wenn Toolbar 56px hoch */
-  z-index: 15;
-  background: #e5e7eb;
-}
-table thead th {
-  border-top: none !important;
-}
-
-#logOutput, #logOutput tr, #logOutput td {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-}
+    #logOutput tr:nth-child(odd) { background-color: #f8fafc; }
+    #logOutput tr:nth-child(even) { background-color: #fff; }
+    #logOutput tr:hover { background-color: #e0f2fe !important; }
+    table thead {
+      position: sticky;
+      top: 0;
+      z-index: 15;
+      background: #e5e7eb;
+    }
+    table thead th { border-top: none !important; }
+    #logOutput, #logOutput tr, #logOutput td {
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+    tr.selected-row {
+      background-color: #dbeafe !important;
+    }
   </style>
 </head>
 
 <body>
-
   <div id="bereich2">
-
+    <!-- Tabs -->
     <div class="flex border-b text-xs text-gray-500 bg-gray-50">
       <button class="px-3 py-2 border-b-2 border-blue-500 text-blue-600">Datapoints</button>
       <button class="px-3 py-2 hover:text-blue-600">Datapoint Types</button>
     </div>
 
-    <!-- Controls -->
-<!-- Controls -->
-<div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs flex-wrap gap-2">
-  <div id="dpCreateBar" class="flex ... bg-gray-100 ..." style="position: sticky; top: 0; z-index: 20;">
-
-    <!-- ...dein bisheriger Inhalt... -->
-    <!-- Datenpunkt anlegen -->
-    <form id="dpCreateForm" class="flex gap-2 items-center flex-wrap bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
-      <span class="font-semibold text-gray-700">Neuer Datenpunkt:</span>
-      <input type="text" id="dpName" placeholder="Name" required
-        class="px-2 py-1 border rounded text-xs w-28" autocomplete="off">
-      <select id="dpType" class="px-2 py-1 border rounded text-xs bg-white" required>
-        <option value="STRING">STRING</option>
-        <option value="NUMBER">NUMBER</option>
-        <option value="BOOLEAN">BOOLEAN</option>
-      </select>
-      <button class="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Anlegen</button>
-      <span class="mx-2 text-gray-400">|</span>
-      <span class="font-semibold text-gray-700">Massenanlage:</span>
-      <input type="number" id="dpBulkCount" min="2" max="1000" value="10"
-        class="px-2 py-1 border rounded text-xs w-16" title="Wie viele?">
-      <input type="text" id="dpBulkPattern" placeholder="z.B. myDp_[NUM]_postfix"
-        class="px-2 py-1 border rounded text-xs w-40" autocomplete="off">
-      <select id="dpBulkType" class="px-2 py-1 border rounded text-xs bg-white" required>
-        <option value="STRING">STRING</option>
-        <option value="NUMBER">NUMBER</option>
-        <option value="BOOLEAN">BOOLEAN</option>
-      </select>
-      <button type="button" id="dpBulkBtn" class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600">Massenanlage</button>
-    </form>
-    <!-- Mülltonnen-Icon rechts oben -->
-    <button id="deleteBtn"
-      class="p-1 rounded hover:bg-red-100 ml-2"
-      style="display:none; z-index:30;"
-      title="Ausgewählte Datenpunkte löschen">
-      <!-- Heroicons Trash SVG -->
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
-      </svg>
-    </button>
-  </div>
-</div>
+    <!-- Controls & Create Bar -->
+    <div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs flex-wrap gap-2" style="position: sticky; top: 0; z-index: 20;">
+      <form id="dpCreateForm" class="flex gap-2 items-center flex-wrap bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
+        <span class="font-semibold text-gray-700">Neuer Datenpunkt:</span>
+        <input type="text" id="dpName" placeholder="Name" required class="px-2 py-1 border rounded text-xs w-28" autocomplete="off">
+        <select id="dpType" class="px-2 py-1 border rounded text-xs bg-white" required></select>
+        <button class="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Anlegen</button>
+        <span class="mx-2 text-gray-400">|</span>
+        <span class="font-semibold text-gray-700">Massenanlage:</span>
+        <input type="number" id="dpBulkCount" min="2" max="1000" value="10" class="px-2 py-1 border rounded text-xs w-16" title="Wie viele?">
+        <input type="text" id="dpBulkPattern" placeholder="z.B. myDp_[NUM]_postfix" class="px-2 py-1 border rounded text-xs w-40" autocomplete="off">
+        <select id="dpBulkType" class="px-2 py-1 border rounded text-xs bg-white" required></select>
+        <button type="button" id="dpBulkBtn" class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600">Massenanlage</button>
+      </form>
+      <button id="deleteBtn"
+        class="p-1 rounded hover:bg-red-100 ml-2"
+        style="display:none; z-index:30;"
+        title="Ausgewählte Datenpunkte löschen">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
+        </svg>
+      </button>
+    </div>
 
     <!-- Log Table -->
-<div style="height: calc(100vh - 96px); overflow-y: auto;">
-  <table class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse">
-    <thead class="bg-gray-200 text-gray-600 uppercase" style="position: sticky; top: 0; z-index: 15;">
-
+    <div style="height: calc(100vh - 96px); overflow-y: auto;">
+      <table class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse">
+        <thead class="bg-gray-200 text-gray-600 uppercase" style="position: sticky; top: 0; z-index: 15;">
           <tr>
             <th class="px-4 py-2 border border-gray-300">
               DpName<br>
@@ -151,632 +137,564 @@ table thead th {
             <th class="px-4 py-2 border border-gray-300">Config</th>
           </tr>
         </thead>
-        <tbody id="logOutput" class="bg-white odd:bg-gray-50 even:bg-white">
-
-        </tbody>
+        <tbody id="logOutput" class="bg-white odd:bg-gray-50 even:bg-white"></tbody>
       </table>
     </div>
   </div>
 
 
+
   <script>
-// Selektions-Logik für Tabellenzeilen
+    class NGUIBrowser {
+      constructor() {
+        this.selectedRows = new Set();
+        this.lastSelectedIndex = null;
+        this.isMouseDown = false;
+        this.mouseSelectStart = null;
 
-let selectedRows = new Set();
-let lastSelectedIndex = null;
-let isMouseDown = false;
-let mouseSelectStart = null;
+        this.DpType = { STRING: 1, NUMBER: 2, BOOLEAN: 3, STRUCT: 4 };
+        this.DpTypeReverse = { 1: 'STRING', 2: 'NUMBER', 3: 'BOOLEAN', 4: 'STRUCT' };
+        this.DpTypeForward = { STRING: 1, NUMBER: 2, BOOLEAN: 3, STRUCT: 4 };
 
-function updateSelection() {
-  // Finde alle markierten Zeilen und extrahiere die DpNames
-  const dpNames = Array.from(selectedRows).map(tr => tr.getAttribute('data-dpname'));
-  // Callback
-  if (typeof OnSelectionChanged === "function") {
-    OnSelectionChanged(dpNames);
-  }
-}
+        this.g_NGUI = new NGUIClient();
+        this.g_NGUI.Connect("ws://localhost:2808", this.onAppOpen.bind(this));
+        this.g_DB = this.g_NGUI.GetDbClient();
 
-// Markierungsfarbe per CSS
-const style = document.createElement('style');
-style.innerHTML = `
-  tr.selected-row {
-    background-color: #dbeafe !important; /* noch zarteres blau */
-  }
-`;
-document.head.appendChild(style);
+        this.initEventHandlers();
+      }
 
-// Selektions-Events nach dem Rendern der Tabelle:
-function enableRowSelection() {
-  const rows = Array.from(document.querySelectorAll('#logOutput tr'));
-  rows.forEach((tr, idx) => {
-    tr.setAttribute('data-row-index', idx); // für Shift-Range
-    // DpName als Attribut (anpassen falls anders)
-    if (!tr.hasAttribute('data-dpname')) {
-      const dpName = tr.querySelector('td')?.innerText?.trim();
-      tr.setAttribute('data-dpname', dpName);
-    }
+      initEventHandlers() {
+        document.getElementById("dpCreateForm").addEventListener("submit", this.onCreateSubmit.bind(this));
+        document.getElementById("dpBulkBtn").addEventListener("click", this.onBulkCreate.bind(this));
+        document.getElementById("deleteBtn").addEventListener("click", this.onDelete.bind(this));
+        ['filterDpName', 'filterDpType', 'filterValue', 'filterTsFrom', 'filterTsTo'].forEach(id => {
+          document.getElementById(id).addEventListener('input', this.applyTableFilters.bind(this));
+        });
+        document.addEventListener("DOMContentLoaded", this.enableColumnResize.bind(this));
+      }
 
-    // Mouse Down: Start Selektion
-    tr.addEventListener('mousedown', function (e) {
-      isMouseDown = true;
-      mouseSelectStart = idx;
-      if (e.ctrlKey || e.metaKey) {
-        // Toggle Einzelzeile
-        if (selectedRows.has(tr)) {
-          selectedRows.delete(tr);
-          tr.classList.remove('selected-row');
-        } else {
-          selectedRows.add(tr);
-          tr.classList.add('selected-row');
+      onAppOpen() {
+        this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
+        this.g_DB.DpTypes("*", this.onDpTypes.bind(this));
+      }
+
+      onDpNames(rcv) {
+        document.getElementById("logOutput").innerHTML = this.renderDpRows(rcv.data.names);
+        this.enableRowSelection();
+        this.enableValueEdit();
+        this.enableTreeToggle();
+      }
+
+      renderDpRows(names) {
+        let html = "";
+        const render = (dp, level = 0, parentPath = "", parentId = "") => {
+          const fullPath = parentPath ? parentPath + "." + dp.DpName : dp.DpName;
+          const rowId = "ROW_" + fullPath;
+          const hasChildren = dp.children && dp.children.length > 0;
+          const padding = 20 * level;
+          let dpTypeText = `STRUCT (${dp.DpType})`;
+          if (dp.valueType) dpTypeText = this.DpTypeReverse[dp.valueType];
+          const chevronRight = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
+          const chevronDown = `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
+          const chevronCircle = `<svg class="lucide lucide-dot inline w-3 h-3 align-middle" fill="currentColor" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /></svg>`;
+          let toggle = hasChildren
+            ? `<span class="toggle-btn cursor-pointer select-none" data-target="${rowId}" data-state="closed">${chevronRight}</span>`
+            : `<span class="select-none" data-state="closed">${chevronCircle}</span>`;
+          html += `<tr id="${rowId}" class="log-entry" data-level="DpName" data-parent="${parentId || ''}" style="${level > 0 ? 'display:none;' : ''}">
+            <td class="border border-gray-300 px-4 py-1 text-black-500" style="padding-left:${padding}px;">
+              ${toggle} ${dp.DpName}
+            </td>
+            <td class="border border-gray-300 px-4 py-1 text-green-500">${dpTypeText}</td>
+            <td class="border border-gray-300 px-4 py-1" id="VALUE_${fullPath}"></td>
+            <td class="border border-gray-300 px-4 py-1 text-gray-500" id="TS_${fullPath}"></td>
+            <td class="border border-gray-300 px-4 py-1 text-gray-600 text-center">
+              <svg xmlns="http://www.w3.org/2000/svg"
+                class="lucide lucide-sliders-horizontal inline w-5 h-5 cursor-pointer hover:text-blue-500"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                onclick="browser.onDpSettings('${fullPath}')">
+                <line x1="21" y1="6" x2="3" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <line x1="21" y1="18" x2="7" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="6" cy="6" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
+                <circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
+                <circle cx="6" cy="18" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
+              </svg>
+            </td>
+          </tr>`;
+          if (!fullPath.includes('.')) this.g_DB.DpConnect(fullPath, this.onDpConnect.bind(this));
+          if (hasChildren) dp.children.forEach(child => render(child, level + 1, fullPath, rowId));
+        };
+        names.forEach(dp => render(dp));
+        return html;
+      }
+
+      onDpConnect(rcv) {
+        if (!rcv.cmd && rcv.data) {
+          this.updateValues(rcv.data.dpName, rcv.data.value);
         }
-        lastSelectedIndex = idx;
-        updateSelection();
-      } else if (e.shiftKey && lastSelectedIndex !== null) {
-        // Range-Select
-        const [start, end] = [lastSelectedIndex, idx].sort((a, b) => a - b);
-        rows.forEach((row, i) => {
-          if (i >= start && i <= end) {
-            selectedRows.add(row);
-            row.classList.add('selected-row');
+      }
+
+      updateValues(dpName, valueObj) {
+        if (valueObj && typeof valueObj === "object" && !Array.isArray(valueObj)) {
+          if ("value" in valueObj && "tstamp" in valueObj) {
+            this.setValueAndTimestamp(dpName, valueObj.value, valueObj.tstamp);
+          } else {
+            Object.keys(valueObj).forEach(key => {
+              this.updateValues(dpName + "." + key, valueObj[key]);
+            });
+          }
+        }
+      }
+
+      setValueAndTimestamp(dpName, value, tstamp) {
+        const valElem = document.getElementById("VALUE_" + dpName);
+        const tsElem = document.getElementById("TS_" + dpName);
+        if (valElem) valElem.innerHTML = value;
+        if (tsElem) tsElem.innerHTML = this.formatTimestamp(tstamp);
+      }
+
+      formatTimestamp(tstamp) {
+        let date = typeof tstamp === "number"
+          ? (tstamp > 1e12 ? new Date(tstamp) : new Date(tstamp * 1000))
+          : new Date(tstamp);
+        const pad = n => n.toString().padStart(2, "0");
+        const padMs = n => n.toString().padStart(3, "0");
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.${padMs(date.getMilliseconds())}`;
+      }
+
+      onDpTypes(rcv) {
+        const types = rcv.data.types || rcv.data;
+        this.fillSelect("dpType", types);
+        this.fillSelect("dpBulkType", types);
+      }
+
+      fillSelect(id, types) {
+        const select = document.getElementById(id);
+        if (!select) return;
+        select.innerHTML = "";
+        types.forEach(type => {
+          const opt = document.createElement("option");
+          opt.value = type;
+          opt.textContent = type;
+          select.appendChild(opt);
+        });
+      }
+
+      onCreateSubmit(e) {
+        e.preventDefault();
+        const name = document.getElementById("dpName").value.trim();
+        const type = document.getElementById("dpType").value.trim();
+        if (!name) return;
+        this.g_DB.DpCreate(name, type, rcv => {
+          if (!rcv.err) {
+            document.getElementById("dpName").value = "";
+            this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
+          } else {
+            new NGUIModal("Error", "" + (rcv.err || "Unbekannter Fehler"), MBOK, 'bg-red-600').ShowAsync();
           }
         });
-        updateSelection();
-      } else {
-        // Nur diese Zeile selektieren
-        selectedRows.forEach(row => row.classList.remove('selected-row'));
-        selectedRows.clear();
-        selectedRows.add(tr);
-        tr.classList.add('selected-row');
-        lastSelectedIndex = idx;
-        updateSelection();
       }
-    });
 
-    // Mouse Over: Drag-Select
-    tr.addEventListener('mouseenter', function (e) {
-      if (isMouseDown && mouseSelectStart !== null && e.buttons === 1) {
-        const [start, end] = [mouseSelectStart, idx].sort((a, b) => a - b);
-        selectedRows.forEach(row => row.classList.remove('selected-row'));
-        selectedRows.clear();
-        for (let i = start; i <= end; i++) {
-          selectedRows.add(rows[i]);
-          rows[i].classList.add('selected-row');
+      onBulkCreate() {
+        const count = parseInt(document.getElementById("dpBulkCount").value, 10);
+        const pattern = document.getElementById("dpBulkPattern").value.trim();
+        const type = document.getElementById("dpBulkType").value;
+        if (!pattern || isNaN(count) || count < 2) return;
+        let created = 0;
+        const createNext = i => {
+          if (i > count) {
+            this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
+            return;
+          }
+          const name = pattern.replace(/\[NUM\]/gi, i);
+          this.g_DB.DpCreate(name, type, () => {
+            created++;
+            createNext(i + 1);
+          });
+        };
+        createNext(1);
+      }
+
+      onDelete = async () => {
+        const dpNames = Array.from(this.selectedRows).map(tr => tr.getAttribute('data-dpname'));
+        if (!dpNames.length) return;
+        const modal = new NGUIModal(
+          "Löschen bestätigen",
+          `Möchtest du die ausgewählten ${dpNames.length} Datenpunkte wirklich löschen?`,
+          MBYESNO,
+          'bg-red-600'
+        );
+        const result = await modal.ShowAsync();
+        if (result === "yes") {
+          for (const dpName of dpNames) {
+            await new Promise(resolve => {
+              this.g_DB.DpDelete(dpName, () => resolve());
+            });
+          }
+          this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
         }
-        updateSelection();
-      }
-    });
+      };
 
-    // Mouse Up: Ende Drag
-    tr.addEventListener('mouseup', function () {
-      isMouseDown = false;
-      mouseSelectStart = null;
-    });
-  });
-
-  // Mouse Up überall: Drag-Ende
-  document.addEventListener('mouseup', function () {
-    isMouseDown = false;
-    mouseSelectStart = null;
-  });
-}
-
-// Rufe enableRowSelection() nach jedem Rendern der Tabelle auf!
-
-// Beispiel-Callback
-function OnSelectionChanged(dpNames) {
-
-  document.getElementById("deleteBtn").style.display = dpNames.length > 0 ? "block" : "none";
-}
-
-// Optional: Klick-Handler für das Löschen
-// Im deleteBtn-Listener das NGUIModal verwenden:
-document.getElementById("deleteBtn").addEventListener("click", async function() {
-  const dpNames = Array.from(selectedRows).map(tr => tr.getAttribute('data-dpname'));
-  if (!dpNames.length) return;
-
-  // Modal-Confirm mit NGUIModal
-  const modal = new NGUIModal(
-    "Löschen bestätigen",
-    `Möchtest du die ausgewählten ${dpNames.length} Datenpunkte wirklich löschen?`,
-    MBYESNO,
-    'bg-red-600'
-  );
-  const result = await modal.ShowAsync();
-  if (result === "yes") {
-    // TODO: Backend-Call zum Löschen
-    console.log("Lösche:", dpNames);
-    for (const dpName of dpNames) {
-      await new Promise(resolve => {
-        g_DB.DpDelete(dpName, (rcv) => {
-          // Optional: Fehlerbehandlung pro Datenpunkt
-          resolve();
+      enableRowSelection() {
+        const rows = Array.from(document.querySelectorAll('#logOutput tr'));
+        rows.forEach((tr, idx) => {
+          tr.setAttribute('data-row-index', idx);
+          if (!tr.hasAttribute('data-dpname')) {
+            const dpName = tr.querySelector('td')?.innerText?.trim();
+            tr.setAttribute('data-dpname', dpName);
+          }
+          tr.addEventListener('mousedown', e => this.handleRowMouseDown(e, tr, idx, rows));
+          tr.addEventListener('mouseenter', e => this.handleRowMouseEnter(e, tr, idx, rows));
+          tr.addEventListener('mouseup', () => this.handleRowMouseUp());
         });
-      });
-    }
-    g_DB.DpNames(null, "*", OnDpNames); // Tabelle neu laden
-
-  }
-});
-
-document.getElementById("dpCreateForm").addEventListener("submit", function(e) {
-  e.preventDefault();
-  const name = document.getElementById("dpName").value.trim();
-  const type = document.getElementById("dpType").value.trim();
-  if (!name) return;
-  // Hier Backend-Call zum Anlegen eines Datenpunkts
-  g_DB.DpCreate(name, type, (rcv) => {
-    if (!rcv.err) {
-      document.getElementById("dpName").value = "";
-      g_DB.DpNames(null, "*", OnDpNames); // Tabelle neu laden
-    } else {
-      new NGUIModal(
-        "Error",
-        "" + (rcv.err || "Unbekannter Fehler"),
-        MBOK,
-        'bg-red-600'
-      ).ShowAsync();
-    }
-  });
-});
-
-document.getElementById("dpBulkBtn").addEventListener("click", function() {
-  const count = parseInt(document.getElementById("dpBulkCount").value, 10);
-  const pattern = document.getElementById("dpBulkPattern").value.trim();
-  const type = document.getElementById("dpBulkType").value;
-  if (!pattern || isNaN(count) || count < 2) return;
-  let created = 0;
-  function createNext(i) {
-    if (i > count) {
-      g_DB.DpNames(null, "*", OnDpNames); // Tabelle neu laden
-      return;
-    }
-    const name = pattern.replace(/\[NUM\]/gi, i);
-    g_DB.DpCreate(name, type, (rcv) => {
-      created++;
-      createNext(i + 1);
-    });
-  }
-  createNext(1);
-});
-
-function applyTableFilters() {
-  const dpNameFilter = document.getElementById('filterDpName').value.toLowerCase();
-  const dpTypeFilter = document.getElementById('filterDpType').value.toLowerCase();
-  const valueFilter = document.getElementById('filterValue').value.toLowerCase();
-  const tsFrom = document.getElementById('filterTsFrom').value;
-  const tsTo = document.getElementById('filterTsTo').value;
-
-  document.querySelectorAll('#logOutput tr').forEach(row => {
-    const dpName = row.children[0]?.innerText?.toLowerCase() || "";
-    const dpType = row.children[1]?.innerText?.toLowerCase() || "";
-    const value = row.children[2]?.innerText?.toLowerCase() || "";
-    const ts = row.children[3]?.innerText?.trim() || "";
-
-    let show = true;
-    if (dpNameFilter && !dpName.includes(dpNameFilter)) show = false;
-    if (dpTypeFilter && !dpType.includes(dpTypeFilter)) show = false;
-    if (valueFilter && !value.includes(valueFilter)) show = false;
-
-    // Zeitfilter: Format YYYY-MM-DD HH:mm:ss.SSS
-    if ((tsFrom || tsTo) && ts) {
-      const tsDate = new Date(ts.replace(" ", "T"));
-      if (tsFrom) {
-        const fromDate = new Date(tsFrom.replace(" ", "T"));
-        if (tsDate < fromDate) show = false;
+        document.addEventListener('mouseup', () => this.handleRowMouseUp());
       }
-      if (tsTo) {
-        const toDate = new Date(tsTo.replace(" ", "T"));
-        if (tsDate > toDate) show = false;
+
+      handleRowMouseDown(e, tr, idx, rows) {
+        this.isMouseDown = true;
+        this.mouseSelectStart = idx;
+        if (e.ctrlKey || e.metaKey) {
+          if (this.selectedRows.has(tr)) {
+            this.selectedRows.delete(tr);
+            tr.classList.remove('selected-row');
+          } else {
+            this.selectedRows.add(tr);
+            tr.classList.add('selected-row');
+          }
+          this.lastSelectedIndex = idx;
+          this.updateSelection();
+        } else if (e.shiftKey && this.lastSelectedIndex !== null) {
+          const [start, end] = [this.lastSelectedIndex, idx].sort((a, b) => a - b);
+          rows.forEach((row, i) => {
+            if (i >= start && i <= end) {
+              this.selectedRows.add(row);
+              row.classList.add('selected-row');
+            }
+          });
+          this.updateSelection();
+        } else {
+          this.selectedRows.forEach(row => row.classList.remove('selected-row'));
+          this.selectedRows.clear();
+          this.selectedRows.add(tr);
+          tr.classList.add('selected-row');
+          this.lastSelectedIndex = idx;
+          this.updateSelection();
+        }
       }
-    }
 
-    row.style.display = show ? "" : "none";
-  });
-}
+      handleRowMouseEnter(e, tr, idx, rows) {
+        if (this.isMouseDown && this.mouseSelectStart !== null && e.buttons === 1) {
+          const [start, end] = [this.mouseSelectStart, idx].sort((a, b) => a - b);
+          this.selectedRows.forEach(row => row.classList.remove('selected-row'));
+          this.selectedRows.clear();
+          for (let i = start; i <= end; i++) {
+            this.selectedRows.add(rows[i]);
+            rows[i].classList.add('selected-row');
+          }
+          this.updateSelection();
+        }
+      }
 
-// Filter-Events binden (einmalig nach DOMContentLoaded oder nach Rendern)
-['filterDpName', 'filterDpType', 'filterValue', 'filterTsFrom', 'filterTsTo'].forEach(id => {
-  document.getElementById(id).addEventListener('input', applyTableFilters);
-});
+      handleRowMouseUp() {
+        this.isMouseDown = false;
+        this.mouseSelectStart = null;
+      }
 
-    // filepath: d:\Data\git\NGUI\htdocs\NGUI_Browser.html
-    // Resizable table columns
-    document.addEventListener("DOMContentLoaded", function () {
-      // Select the log table specifically to avoid errors if other tables exist without <th>
-      const table = document.querySelector("table.min-w-full");
-      if (!table) return; // Exit if the table is not found
-      const ths = table.querySelectorAll("th");
-      ths.forEach(function (th) {
-        th.style.position = "relative";
-        const resizer = document.createElement("div");
-        resizer.style.width = "5px";
-        resizer.style.height = "100%";
-        resizer.style.position = "absolute";
-        resizer.style.right = "0";
-        resizer.style.top = "0";
-        resizer.style.cursor = "col-resize";
-        resizer.style.userSelect = "none";
-        resizer.style.zIndex = "10";
-        th.appendChild(resizer);
+      updateSelection() {
+        const dpNames = Array.from(this.selectedRows).map(tr => tr.getAttribute('data-dpname'));
+        this.onSelectionChanged(dpNames);
+      }
 
-        let startX, startWidth;
-        resizer.addEventListener("mousedown", function (e) {
-          startX = e.pageX;
-          startWidth = th.offsetWidth;
-          document.documentElement.style.cursor = "col-resize";
-          document.addEventListener("mousemove", mousemove);
-          document.addEventListener("mouseup", mouseup);
-          e.preventDefault();
+      onSelectionChanged(dpNames) {
+        document.getElementById("deleteBtn").style.display = dpNames.length > 0 ? "block" : "none";
+      }
+
+      enableValueEdit() {
+        document.querySelectorAll('td[id^="VALUE_"]').forEach(td => {
+          td.addEventListener('dblclick', e => this.handleValueDblClick(e, td));
         });
+      }
 
-        function mousemove(e) {
-          const newWidth = startWidth + (e.pageX - startX);
-          th.style.width = newWidth + "px";
-        }
-
-        function mouseup() {
-          document.documentElement.style.cursor = "";
-          document.removeEventListener("mousemove", mousemove);
-          document.removeEventListener("mouseup", mouseup);
-        }
-      });
-    });
-
-
-    var g_NGUI = new NGUIClient();
-    g_NGUI.Connect("ws://localhost:2808", OnAppOpen);
-    var g_DB = g_NGUI.GetDbClient();
-
-    function OnDpConnect(rcv) {
-      if (!rcv.cmd && rcv.data) {
-        function updateValues(dpName, valueObj) {
-          // valueObj kann ein Wert oder ein Objekt mit weiteren Feldern sein
-          if (valueObj && typeof valueObj === "object" && !Array.isArray(valueObj)) {
-            // Prüfe, ob das Objekt ein echtes Value-Objekt ist (mit value und tstamp)
-            if ("value" in valueObj && "tstamp" in valueObj) {
-              const valElem = document.getElementById("VALUE_" + dpName);
-              const tsElem = document.getElementById("TS_" + dpName);
-              if (valElem) valElem.innerHTML = valueObj.value;
-              if (tsElem) {
-              // valueObj.tstamp kann Zahl oder ISO-String sein
-              let date;
-              if (typeof valueObj.tstamp === "number") {
-                // UNIX-Zeitstempel in Sekunden oder Millisekunden?
-                date = valueObj.tstamp > 1e12
-                ? new Date(valueObj.tstamp)
-                : new Date(valueObj.tstamp * 1000);
-              } else {
-                date = new Date(valueObj.tstamp);
-              }
-              // Format: YYYY-MM-DD HH:mm:ss.SSS (lokale Zeit)
-              const pad = n => n.toString().padStart(2, "0");
-              const padMs = n => n.toString().padStart(3, "0");
-              const formatted = 
-                date.getFullYear() + "-" +
-                pad(date.getMonth() + 1) + "-" +
-                pad(date.getDate()) + " " +
-                pad(date.getHours()) + ":" +
-                pad(date.getMinutes()) + ":" +
-                pad(date.getSeconds()) + "." +
-                padMs(date.getMilliseconds());
-              tsElem.innerHTML = formatted;
-              }
-            } else {
-              // Sonst: Rekursiv für alle Keys
-              for (const key in valueObj) {
-                if (valueObj.hasOwnProperty(key)) {
-                  updateValues(dpName + "." + key, valueObj[key]);
-                }
+      handleValueDblClick(e, td) {
+        const oldValue = td.innerText;
+        const dpName = td.id.substring("VALUE_".length);
+        const tr = td.parentElement;
+        const dpType = tr.children[1]?.innerText?.trim();
+        const input = document.createElement('input');
+        input.type = "text";
+        input.value = oldValue;
+        input.className = "w-full py-0.5 border rounded text-xs";
+        input.style.boxSizing = "border-box";
+        input.style.width = "100%";
+        input.style.height = "100%";
+        input.style.minWidth = "0";
+        input.style.fontSize = "inherit";
+        input.style.background = "inherit";
+        input.style.margin = "0";
+        input.style.padding = "0 2px";
+        input.style.border = "none";
+        input.style.outline = "none";
+        input.style.boxShadow = "none";
+        input.style.display = "block";
+        td.innerHTML = "";
+        td.appendChild(input);
+        input.focus();
+        input.select();
+        let finished = false;
+        const finishEdit = (apply, tabPressed = false) => {
+          if (finished) return;
+          finished = true;
+          const newValue = input.value;
+          if (apply && newValue !== oldValue) {
+            this.onValueEdited(dpName, oldValue, newValue, dpType, td);
+          } else if (!apply) {
+            td.innerHTML = oldValue;
+          }
+          if (tabPressed) {
+            let nextTr = tr.nextElementSibling;
+            while (nextTr && !nextTr.querySelector('td[id^="VALUE_"]')) {
+              nextTr = nextTr.nextElementSibling;
+            }
+            if (nextTr) {
+              const nextTd = nextTr.querySelector('td[id^="VALUE_"]');
+              if (nextTd) {
+                setTimeout(() => nextTd.dispatchEvent(new Event('dblclick')), 0);
               }
             }
           }
-        }
-        updateValues(rcv.data.dpName, rcv.data.value);
-      }
-    }
-
-    const DpType = {
-      STRING: 1,
-      NUMBER: 2,
-      BOOLEAN: 3,
-      STRUCT: 4
-    };
-
-    const DpTypeReverse = {
-      1: 'STRING',
-      2: 'NUMBER',
-      3: 'BOOLEAN',
-      4: 'STRUCT'
-    };
-
-    const DpTypeForward = {
-      STRING: 1,
-      NUMBER: 2,
-      BOOLEAN: 3,
-      STRUCT: 4
-    };
-
-    function OnDpNames(rcv) {
-      var html = "";
-
-      // Rekursive Hilfsfunktion für den Baum
-      function renderDp(dp, level, parentPath, parentId) {
-        const fullPath = parentPath ? parentPath + "." + dp.DpName : dp.DpName;
-        const rowId = "ROW_" + fullPath;
-        const hasChildren = dp.children && dp.children.length > 0;
-        const padding = 20 * level;
-        let dpTypeText = `STRUCT (${dp.DpType})`;
-        if (dp.valueType)
-          dpTypeText = DpTypeReverse[dp.valueType];
-
-        // Lucide chevron-right SVG
-        const chevronRight = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
-        // Lucide chevron-down SVG
-        const chevronDown = `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
-
-        const chevronCircle = `<svg class="lucide lucide-dot inline w-3 h-3 align-middle" fill="currentColor" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /></svg>`;
-
-        // Toggle-Button für Knoten mit Kindern
-        let toggle = "";
-        if (hasChildren) {
-          toggle = `<span class="toggle-btn cursor-pointer select-none" data-target="${rowId}" data-state="closed">${chevronRight}</span>`;
-        }
-        else {
-          toggle = `<span class="select-none"  data-state="closed">${chevronCircle}</span>`;
-        }
-
-        html += `<tr id="${rowId}" class="log-entry" data-level="DpName" data-parent="${parentId || ''}" style="${level > 0 ? 'display:none;' : ''}">
-    <td class="border border-gray-300 px-4 py-1 text-black-500" style="padding-left:${padding}px;">
-      ${toggle} ${dp.DpName}
-    </td>
-    <td class="border border-gray-300 px-4 py-1 text-green-500">${dpTypeText}</td>
-    <td class="border border-gray-300 px-4 py-1" id="VALUE_${fullPath}"></td>
-    <td class="border border-gray-300 px-4 py-1 text-gray-500" id="TS_${fullPath}"></td>
-    <td class="border border-gray-300 px-4 py-1 text-gray-600 text-center">
-      <!-- Lucide simple "sliders-horizontal" icon SVG -->
-      <svg xmlns="http://www.w3.org/2000/svg"
-         class="lucide lucide-sliders-horizontal inline w-5 h-5 cursor-pointer hover:text-blue-500"
-         fill="none" viewBox="0 0 24 24" stroke="currentColor"
-         onclick="OnDpSettings('${fullPath}')">
-        <line x1="21" y1="6" x2="3" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <line x1="21" y1="18" x2="7" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-        <circle cx="6" cy="6" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
-        <circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
-        <circle cx="6" cy="18" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
-      </svg>
-    </td>
-  </tr>`;
-
-        if (!fullPath.includes('.')) {
-          g_DB.DpConnect(fullPath, OnDpConnect);
-        }
-
-        if (hasChildren) {
-          for (let i = 0; i < dp.children.length; i++) {
-            renderDp(dp.children[i], level + 1, fullPath, rowId);
+        };
+        input.addEventListener('keydown', evt => {
+          if (evt.key === "Enter") finishEdit(true);
+          else if (evt.key === "Escape") finishEdit(false);
+          else if (evt.key === "Tab") {
+            evt.preventDefault();
+            finishEdit(true, true);
           }
+        });
+        input.addEventListener('blur', () => finishEdit(true));
+      }
+
+      onValueEdited(dpName, oldValue, newValue, dpType, td) {
+        let type = this.DpTypeForward[dpType];
+        let setVal = null;
+        let prevVal = null;
+        switch (type) {
+          case this.DpType.STRING: setVal = newValue; prevVal = oldValue; break;
+          case this.DpType.NUMBER: setVal = Number(newValue); prevVal = Number(oldValue); break;
+          case this.DpType.BOOLEAN: setVal = (newValue === "true" || newValue === "1" || newValue === 1 || newValue === true); prevVal = (oldValue === "true" || oldValue === "1" || oldValue === 1 || oldValue === true); break;
+          default: setVal = newValue; prevVal = oldValue;
         }
-      }
-
-      // ...nach dem Rendern...
-      document.querySelectorAll('.toggle-btn').forEach(btn => {
-        btn.addEventListener('click', function (e) {
-          const targetRowId = btn.getAttribute('data-target');
-          const isCollapsed = btn.getAttribute('data-state') === "closed";
-          btn.innerHTML = isCollapsed ? `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>` : `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
-          btn.setAttribute('data-state', isCollapsed ? "open" : "closed");
-          toggleChildren(targetRowId, isCollapsed);
+        this.g_DB.DpSet(dpName, setVal, rcv => {
+          td.innerHTML = !rcv.err ? setVal : prevVal;
         });
-      });
-
-      // Starte für jeden Root-Knoten
-      for (let i = 0; i < rcv.data.names.length; i++) {
-        renderDp(rcv.data.names[i], 0, "", "");
       }
 
-      document.getElementById("logOutput").innerHTML = html;
-
-
-document.querySelectorAll('td[id^="VALUE_"]').forEach(td => {
-  td.addEventListener('dblclick', function (e) {
-    const oldValue = td.innerText;
-    const dpName = td.id.substring("VALUE_".length);
-    // Hole den dpType aus der Nachbarzelle (zweite Spalte im gleichen <tr>)
-    const tr = td.parentElement;
-    const dpType = tr.children[1]?.innerText?.trim();
-
-    // Erstelle ein Eingabefeld
-    const input = document.createElement('input');
-    input.type = "text";
-    input.value = oldValue;
-    input.className = "w-full py-0.5 border rounded text-xs";
-    input.style.boxSizing = "border-box";
-    input.style.width = "100%";
-    input.style.height = "100%";
-    input.style.minWidth = "0";
-    input.style.fontSize = "inherit";
-    input.style.background = "inherit";
-    input.style.margin = "0";
-    input.style.padding = "0 2px";
-    input.style.border = "none";
-    input.style.outline = "none";
-    input.style.boxShadow = "none";
-    input.style.display = "block";
-    td.innerHTML = "";
-    td.appendChild(input);
-    input.focus();
-    input.select();
-
-    // Callback-Handler
-let finished = false;
-
-function finishEdit(apply, tabPressed = false) {
-  if (finished) return;
-  finished = true;
-  const newValue = input.value;
-  // Wert NICHT direkt ins td schreiben, Backend liefert neuen Wert!
-  if (apply && newValue !== oldValue) {
-    if (typeof OnValueEdited === "function") {
-      OnValueEdited(dpName, oldValue, newValue, dpType, td);
-    }
-  } else if (!apply) {
-    td.innerHTML = oldValue; // Bei Abbruch alten Wert wiederherstellen
-  }
-  // Tab-Logik wie gehabt ...
-  if (tabPressed) {
-    let nextTr = tr.nextElementSibling;
-    while (nextTr && !nextTr.querySelector('td[id^="VALUE_"]')) {
-      nextTr = nextTr.nextElementSibling;
-    }
-    if (nextTr) {
-      const nextTd = nextTr.querySelector('td[id^="VALUE_"]');
-      if (nextTd) {
-        setTimeout(() => nextTd.dispatchEvent(new Event('dblclick')), 0);
-      }
-    }
-  }
-}
-
-    // Enter = übernehmen, Escape = abbrechen, Tab = übernehmen & nächstes Feld
-    input.addEventListener('keydown', function (evt) {
-      if (evt.key === "Enter") {
-        finishEdit(true);
-      } else if (evt.key === "Escape") {
-        finishEdit(false);
-      } else if (evt.key === "Tab") {
-        evt.preventDefault();
-        finishEdit(true, true);
-      }
-    });
-
-    // Bei Fokusverlust übernehmen
-    input.addEventListener('blur', function () {
-      finishEdit(true);
-    });
-  });
-});
-
-      // Toggle-Logik
-      document.querySelectorAll('.toggle-btn').forEach(btn => {
-        btn.addEventListener('click', function (e) {
-          const targetRowId = btn.getAttribute('data-target');
-          const isCollapsed = btn.getAttribute('data-state') === "closed";
-          // Lucide SVGs:
-          const chevronRight = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
-          const chevronDown = `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
-          btn.innerHTML = isCollapsed ? chevronDown : chevronRight;
-          btn.setAttribute('data-state', isCollapsed ? "open" : "closed");
-          toggleChildren(targetRowId, isCollapsed);
+      enableTreeToggle() {
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+          btn.addEventListener('click', e => this.handleTreeToggle(e, btn));
         });
-      });
+      }
 
-      function toggleChildren(parentId, show) {
+      handleTreeToggle(e, btn) {
+        const targetRowId = btn.getAttribute('data-target');
+        const isCollapsed = btn.getAttribute('data-state') === "closed";
+        const chevronRight = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
+        const chevronDown = `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
+        btn.innerHTML = isCollapsed ? chevronDown : chevronRight;
+        btn.setAttribute('data-state', isCollapsed ? "open" : "closed");
+        this.toggleChildren(targetRowId, isCollapsed);
+      }
+
+      toggleChildren(parentId, show) {
         const rows = document.querySelectorAll(`tr[data-parent="${parentId}"]`);
         rows.forEach(row => {
           row.style.display = show ? "" : "none";
-          // Wenn wir einklappen, klappen wir auch alle Kindknoten zu
           if (!show) {
             const toggle = row.querySelector('.toggle-btn');
             if (toggle) {
-              // Lucide chevron-right SVG
               toggle.innerHTML = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
               toggle.setAttribute('data-state', 'closed');
             }
-            toggleChildren(row.id, false);
+            this.toggleChildren(row.id, false);
           }
         });
       }
-      enableRowSelection()
-    }
 
-
-    function OnValueEdited(dpName, oldValue, newValue, dpType, td) {
-      let type = DpTypeForward[dpType];
-      let setVal = null;
-      let prevVal = null;
-      switch(type) {
-        case DpType.STRING:
-          setVal = newValue;
-          break;
-        case DpType.NUMBER:
-          setVal = Number(newValue);
-          break;
-        case DpType.BOOLEAN:
-          setVal = (newValue === "true" || newValue === "1" || newValue === 1 || newValue === true);
-          break;
-        default:
-          setVal = newValue;
+      applyTableFilters() {
+        const dpNameFilter = document.getElementById('filterDpName').value.toLowerCase();
+        const dpTypeFilter = document.getElementById('filterDpType').value.toLowerCase();
+        const valueFilter = document.getElementById('filterValue').value.toLowerCase();
+        const tsFrom = document.getElementById('filterTsFrom').value;
+        const tsTo = document.getElementById('filterTsTo').value;
+        document.querySelectorAll('#logOutput tr').forEach(row => {
+          const dpName = row.children[0]?.innerText?.toLowerCase() || "";
+          const dpType = row.children[1]?.innerText?.toLowerCase() || "";
+          const value = row.children[2]?.innerText?.toLowerCase() || "";
+          const ts = row.children[3]?.innerText?.trim() || "";
+          let show = true;
+          if (dpNameFilter && !dpName.includes(dpNameFilter)) show = false;
+          if (dpTypeFilter && !dpType.includes(dpTypeFilter)) show = false;
+          if (valueFilter && !value.includes(valueFilter)) show = false;
+          if ((tsFrom || tsTo) && ts) {
+            const tsDate = new Date(ts.replace(" ", "T"));
+            if (tsFrom) {
+              const fromDate = new Date(tsFrom.replace(" ", "T"));
+              if (tsDate < fromDate) show = false;
+            }
+            if (tsTo) {
+              const toDate = new Date(tsTo.replace(" ", "T"));
+              if (tsDate > toDate) show = false;
+            }
+          }
+          row.style.display = show ? "" : "none";
+        });
       }
 
-      switch(type) {
-        case DpType.STRING:
-          prevVal = oldValue;
-          break;
-        case DpType.NUMBER:
-          prevVal = Number(oldValue);
-          break;
-        case DpType.BOOLEAN:
-          prevVal = (oldValue === "true" || oldValue === "1" || oldValue === 1 || oldValue === true);
-          break;
-        default:
-          prevVal = oldValue;
-      }      
+      enableColumnResize() {
+        const table = document.querySelector("table.min-w-full");
+        if (!table) return;
+        const ths = table.querySelectorAll("th");
+        ths.forEach(th => {
+          th.style.position = "relative";
+          const resizer = document.createElement("div");
+          resizer.style.width = "5px";
+          resizer.style.height = "100%";
+          resizer.style.position = "absolute";
+          resizer.style.right = "0";
+          resizer.style.top = "0";
+          resizer.style.cursor = "col-resize";
+          resizer.style.userSelect = "none";
+          resizer.style.zIndex = "10";
+          th.appendChild(resizer);
+          let startX, startWidth;
+          resizer.addEventListener("mousedown", function (e) {
+            startX = e.pageX;
+            startWidth = th.offsetWidth;
+            document.documentElement.style.cursor = "col-resize";
+            document.addEventListener("mousemove", mousemove);
+            document.addEventListener("mouseup", mouseup);
+            e.preventDefault();
+          });
+          function mousemove(e) {
+            const newWidth = startWidth + (e.pageX - startX);
+            th.style.width = newWidth + "px";
+          }
+          function mouseup() {
+            document.documentElement.style.cursor = "";
+            document.removeEventListener("mousemove", mousemove);
+            document.removeEventListener("mouseup", mouseup);
+          }
+        });
+      }
 
-      g_NGUI.GetDbClient().DpSet(dpName, setVal, (rcv) => 
-      {
-        if(!rcv.err)
-        {
-          td.innerHTML = setVal;
-          console.log(rcv);
-        }
-        else
-        {
-          td.innerHTML = prevVal;
-          console.log(rcv);
-        }
-      });
-    }    
-
-    function OnDpSettings(dpName)
-    {
-      console.log(dpName)
+      onDpSettings(dpName) {
+        console.log("Settings für", dpName);
+        const tpl = document.getElementById("SettingsTemplate").innerHTML;
+        const window = NGUIWindow.Create('window1_' + dpName, dpName, WB_MINIMIZE | WB_MAXIMIZE | WB_CLOSE, tpl);
+        window.windowElement.style.width = "500px";
+        window.windowElement.style.height = "300px";
+        window.Show();
+      }
     }
 
-function OnDpTypes(rcv) {
-  // Erwartet: rcv.data = Array von Typen, z.B. ["STRING", "NUMBER", "BOOLEAN"]
-  const select = document.getElementById("dpType");
-  if (!select || !rcv.data) return;
-  select.innerHTML = ""; // Vorherige Optionen entfernen
-  rcv.data.types.forEach(type => {
-    const opt = document.createElement("option");
-    opt.value = type;
-    opt.textContent = type;
-    select.appendChild(opt);
-  });
-  // Optional: Auch für Massenanlage das gleiche Select aktualisieren
-  const bulkSelect = document.getElementById("dpBulkType");
-  if (bulkSelect) {
-    bulkSelect.innerHTML = "";
-    rcv.data.types.forEach(type => {
-      const opt = document.createElement("option");
-      opt.value = type;
-      opt.textContent = type;
-      bulkSelect.appendChild(opt);
-    });
-  }
-}
-    function OnAppOpen() {
-      console.log("App opened");
-      //g_NGUI.LoadPage("NGUI_DemoTop.html", "right-top", null);
-
-
-      g_NGUI.GetDbClient().DpNames(null, "*", OnDpNames);
-      g_NGUI.GetDbClient().DpTypes("*", OnDpTypes);
-    }
-
-
+    // Instanz global für onclick im SVG
+    window.browser = new NGUIBrowser();
   </script>
-</body>
 
+<span id="SettingsTemplate" style="display: block;">
+  <form class="w-full h-full p-4 flex flex-col gap-3 text-xs bg-gray-50">
+    <div class="font-semibold text-blue-700 flex items-center gap-2 mb-1">
+      <svg class="inline w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+      Datenpunkt-Konfiguration
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2">
+      <!-- Archiv -->
+      <label class="flex items-center gap-2 col-span-1">
+        <input type="checkbox" class="accent-blue-600 w-4 h-4" id="cfg-archiv">
+        <span>Archivierung</span>
+      </label>
+      <!-- Deadband -->
+      <div class="flex items-center gap-2 col-span-1">
+        <input type="checkbox" class="accent-blue-600 w-4 h-4" id="cfg-deadband-enable">
+        <span>Deadband</span>
+        <input type="number" id="cfg-deadband-value" class="border rounded px-1 py-0.5 w-14 text-xs" min="0" step="any" placeholder="Δ">
+      </div>
+      <!-- Historisierung -->
+      <label class="flex items-center gap-2 col-span-1">
+        <input type="checkbox" class="accent-blue-600 w-4 h-4" id="cfg-historic">
+        <span>Historisierung</span>
+      </label>
+      <!-- Grenzwerte -->
+      <div class="flex flex-col gap-1 col-span-2 md:col-span-3">
+        <div class="flex flex-wrap gap-2">
+          <div class="flex flex-col">
+            <span class="text-gray-500">Min</span>
+            <input type="number" id="cfg-min" class="border rounded px-1 py-0.5 w-16 text-xs" placeholder="Min">
+          </div>
+          <div class="flex flex-col">
+            <span class="text-gray-500">Max</span>
+            <input type="number" id="cfg-max" class="border rounded px-1 py-0.5 w-16 text-xs" placeholder="Max">
+          </div>
+          <div class="flex flex-col">
+            <span class="text-yellow-600">Warn-</span>
+            <input type="number" id="cfg-warn-low" class="border rounded px-1 py-0.5 w-16 text-xs" placeholder="Warn-">
+          </div>
+          <div class="flex flex-col">
+            <span class="text-yellow-600">Warn+</span>
+            <input type="number" id="cfg-warn-high" class="border rounded px-1 py-0.5 w-16 text-xs" placeholder="Warn+">
+          </div>
+          <div class="flex flex-col">
+            <span class="text-red-600">Alarm-</span>
+            <input type="number" id="cfg-alarm-low" class="border rounded px-1 py-0.5 w-16 text-xs" placeholder="Alarm-">
+          </div>
+          <div class="flex flex-col">
+            <span class="text-red-600">Alarm+</span>
+            <input type="number" id="cfg-alarm-high" class="border rounded px-1 py-0.5 w-16 text-xs" placeholder="Alarm+">
+          </div>
+        </div>
+      </div>
+      <!-- Flankenüberwachung -->
+      <div class="flex items-center gap-2 col-span-2 md:col-span-3">
+        <span class="font-medium">Flanke:</span>
+        <label class="flex items-center gap-1">
+          <input type="checkbox" id="cfg-edge-rising" class="accent-blue-600 w-4 h-4">
+          <span>↑</span>
+        </label>
+        <label class="flex items-center gap-1">
+          <input type="checkbox" id="cfg-edge-falling" class="accent-blue-600 w-4 h-4">
+          <span>↓</span>
+        </label>
+      </div>
+      <!-- Zeitstempelquelle -->
+      <div class="flex items-center gap-2 col-span-2 md:col-span-3">
+        <span class="font-medium">Zeitstempel:</span>
+        <label class="flex items-center gap-1">
+          <input type="radio" name="cfg-ts-source" value="sps" class="accent-blue-600" checked>
+          <span>SPS</span>
+        </label>
+        <label class="flex items-center gap-1">
+          <input type="radio" name="cfg-ts-source" value="scada" class="accent-blue-600">
+          <span>SCADA</span>
+        </label>
+      </div>
+      <!-- Archivierungsintervall -->
+      <div class="flex items-center gap-2 col-span-2 md:col-span-3">
+        <span class="font-medium">Intervall:</span>
+        <input type="number" id="cfg-interval" class="border rounded px-1 py-0.5 w-14 text-xs" min="1" placeholder="Sek.">
+        <span class="text-gray-500">Sek.</span>
+        <span class="mx-1 text-gray-400">oder</span>
+        <label class="flex items-center gap-1">
+          <input type="checkbox" id="cfg-onchange" class="accent-blue-600 w-4 h-4">
+          <span>bei Änderung</span>
+        </label>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 mt-2">
+      <button type="button" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs">Speichern</button>
+      <button type="button" class="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-xs">Abbrechen</button>
+    </div>
+  </form>
+</span>
+
+</body>
 </html>
