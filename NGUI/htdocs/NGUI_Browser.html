@@ -80,9 +80,7 @@
       background: #e5e7eb;
     }
 
-    table thead th {
-      border-top: none !important;
-    }
+
 
     #logOutput,
     #logOutput tr,
@@ -92,6 +90,10 @@
       -moz-user-select: none;
       -ms-user-select: none;
     }
+
+
+
+
 
     tr.selected-row {
       background-color: #dbeafe !important;
@@ -107,11 +109,8 @@
       <button id="tabDatapointTypes" class="px-3 py-2 hover:text-blue-600">Datapoint Types</button>
     </div>
 
-
-    <div style="height: calc(100vh - 96px); overflow-y: auto; display:block;" id="DatapointEditor">
-      <!-- Controls & Create Bar -->
-      <div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs flex-wrap gap-2"
-        style="position: sticky; top: 0; z-index: 20;">
+<div class="flex justify-between items-center bg-gray-100 px-4 py-2 text-xs flex-wrap gap-2 border-b"
+     style="position: sticky; top: 0; z-index: 20; border-bottom: 1px solid #e5e7eb;">
         <form id="dpCreateForm"
           class="flex gap-2 items-center flex-wrap bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
           <span class="font-semibold text-gray-700">Neuer Datenpunkt:</span>
@@ -138,35 +137,37 @@
           </svg>
         </button>
       </div>
+
+
+    <div id="DatapointEditor" style="height: calc(100vh - 96px); z-index: 100; overflow-y: auto; display: block;">
+      <!-- Controls & Create Bar -->
+
       <!-- Log Table -->
-      <table class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse">
-        <thead class="bg-gray-200 text-gray-600 uppercase" style="position: sticky; top: 0; z-index: 15;">
-          <tr>
-            <th class="px-4 py-2 border border-gray-300">
-              DpName<br>
-              <input type="text" id="filterDpName" class="w-full px-1 py-0.5 border rounded text-xs"
-                placeholder="Filter...">
-            </th>
-            <th class="px-4 py-2 border border-gray-300">
-              DpType<br>
-              <input type="text" id="filterDpType" class="w-full px-1 py-0.5 border rounded text-xs"
-                placeholder="Filter...">
-            </th>
-            <th class="px-4 py-2 border border-gray-300">
-              Value<br>
-              <input type="text" id="filterValue" class="w-full px-1 py-0.5 border rounded text-xs"
-                placeholder="Filter...">
-            </th>
-            <th class="px-4 py-2 border border-gray-300">
-              timestamp<br>
-              <input type="text" id="filterTsFrom" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="von">
-              <input type="text" id="filterTsTo" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="bis">
-            </th>
-            <th class="px-4 py-2 border border-gray-300">Config</th>
-          </tr>
-        </thead>
-        <tbody id="logOutput" class="bg-white odd:bg-gray-50 even:bg-white"></tbody>
-      </table>
+  <table  class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse border-width:2px;" >
+    <thead class="bg-gray-200 text-gray-600 uppercase" >
+      <tr>
+        <th class="px-4 py-2 border border-gray-300">
+          DpName<br>
+          <input type="text" id="filterDpName" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
+        </th>
+        <th class="px-4 py-2 border border-gray-300">
+          DpType<br>
+          <input type="text" id="filterDpType" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
+        </th>
+        <th class="px-4 py-2 border border-gray-300">
+          Value<br>
+          <input type="text" id="filterValue" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
+        </th>
+        <th class="px-4 py-2 border border-gray-300">
+          timestamp<br>
+          <input type="text" id="filterTsFrom" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="von">
+          <input type="text" id="filterTsTo" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="bis">
+        </th>
+        <th class="px-4 py-2 border border-gray-300">Config</th>
+      </tr>
+    </thead>
+    <tbody id="logOutput" class="bg-white odd:bg-gray-50 even:bg-white" "></tbody>
+  </table>
     </div>
 
 
@@ -288,6 +289,7 @@
           this.enableValueEdit();
           this.enableNameEdit();
           this.enableTreeToggle("#logOutput");
+          this.enableCellCopyOnRightClick();
 
           // 3. Klappstatus wiederherstellen
           this.restoreOpenRows(openRows);
@@ -302,14 +304,32 @@
           return openRows;
         }
 
-        restoreOpenRows(openRows) {
-          openRows.forEach(rowId => {
-            const btn = document.querySelector(`#logOutput .toggle-btn[data-target="${rowId}"]`);
-            if (btn && btn.getAttribute('data-state') === 'closed') {
-              btn.click(); // Triggert das Aufklappen
-            }
-          });
-        }
+restoreOpenRows(openRows) {
+  document.querySelectorAll('#logOutput .toggle-btn').forEach(btn => {
+    const targetId = btn.getAttribute('data-target');
+    if (openRows.has(targetId) && btn.getAttribute('data-state') === 'closed') {
+      btn.click(); // Aufklappen
+    }
+    // Kein else nötig!
+  });
+}
+
+enableCellCopyOnRightClick() {
+  document.querySelectorAll('#logOutput td').forEach(td => {
+    td.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      // DpName-Spalte (erste Spalte)
+      if (td.id && td.id.startsWith('NAME_')) {
+        const tr = td.parentElement;
+        const dpName = tr?.getAttribute('data-dpname') || '';
+        navigator.clipboard.writeText(dpName);
+      } else {
+        // Andere Zellen: Inhalt kopieren
+        navigator.clipboard.writeText(td.innerText.trim());
+      }
+    });
+  });
+}
 
         /**
          * Render all datapoint rows recursively (tree structure).
@@ -329,7 +349,13 @@
             let toggle = hasChildren
               ? `<span class="toggle-btn cursor-pointer select-none" data-target="${rowId}" data-state="closed">${chevronRight}</span>`
               : `<span class="select-none" data-state="closed">${chevronCircle}</span>`;
-            html += `<tr id="${rowId}" class="log-entry" data-level="DpName" data-parent="${parentId || ''}" style="${level > 0 ? 'display:none;' : ''}">
+            html += `<tr id="${rowId}" 
+                          class="log-entry" 
+                          data-dpname="${fullPath}" 
+                          data-dptype="${dpTypeText}"
+                          data-value=""
+                          data-timestamp=""
+                          data-level="DpName" data-parent="${parentId || ''}" style="${level > 0 ? 'display:none;' : ''}">
           <td class="border border-gray-300 px-4 py-1 text-black-500" 
               id="NAME_${fullPath}" 
               data-parent="${parentId}" 
@@ -390,8 +416,13 @@
         setValueAndTimestamp(dpName, value, tstamp) {
           const valElem = document.getElementById("VALUE_" + dpName);
           const tsElem = document.getElementById("TS_" + dpName);
+          const tr = valElem?.parentElement;
           if (valElem) valElem.innerHTML = value;
           if (tsElem) tsElem.innerHTML = this.formatTimestamp(tstamp);
+          if (tr) {
+            tr.setAttribute("data-value", (value ?? "").toString().toLowerCase());
+            tr.setAttribute("data-timestamp", tsElem ? tsElem.innerText : "");
+          }
         }
 
         /**
@@ -672,46 +703,77 @@
           switch (type) {
             case this.DpType.STRING: setVal = newValue; prevVal = oldValue; break;
             case this.DpType.NUMBER: setVal = Number(newValue); prevVal = Number(oldValue); break;
-            case this.DpType.BOOLEAN: setVal = (newValue === "true" || newValue === "1" || newValue === 1 || newValue === true); prevVal = (oldValue === "true" || oldValue === "1" || oldValue === 1 || oldValue === true); break;
+            case this.DpType.BOOLEAN: setVal = (newValue === "true" || newValue === "1" || newValue === 1 || newValue === true); prevVal = (oldValue === "true" || oldValue === "1" || oldValue === true); break;
             default: setVal = newValue; prevVal = oldValue;
           }
           this.g_DB.DpSet(dpName, setVal, rcv => {
             td.innerHTML = !rcv.err ? setVal : prevVal;
+            // Attribut im <tr> aktualisieren:
+            const tr = td.parentElement;
+            if (tr) tr.setAttribute("data-value", (!rcv.err ? setVal : prevVal).toString().toLowerCase());
           });
         }
 
         /**
          * Filtering logic for the datapoint table.
          */
-        applyTableFilters() {
-          const dpNameFilter = document.getElementById('filterDpName').value.toLowerCase();
-          const dpTypeFilter = document.getElementById('filterDpType').value.toLowerCase();
-          const valueFilter = document.getElementById('filterValue').value.toLowerCase();
-          const tsFrom = document.getElementById('filterTsFrom').value;
-          const tsTo = document.getElementById('filterTsTo').value;
-          document.querySelectorAll('#logOutput tr').forEach(row => {
-            const dpName = row.children[0]?.innerText?.toLowerCase() || "";
-            const dpType = row.children[1]?.innerText?.toLowerCase() || "";
-            const value = row.children[2]?.innerText?.toLowerCase() || "";
-            const ts = row.children[3]?.innerText?.trim() || "";
-            let show = true;
-            if (dpNameFilter && !dpName.includes(dpNameFilter)) show = false;
-            if (dpTypeFilter && !dpType.includes(dpTypeFilter)) show = false;
-            if (valueFilter && !value.includes(valueFilter)) show = false;
-            if ((tsFrom || tsTo) && ts) {
-              const tsDate = new Date(ts.replace(" ", "T"));
-              if (tsFrom) {
-                const fromDate = new Date(tsFrom.replace(" ", "T"));
-                if (tsDate < fromDate) show = false;
-              }
-              if (tsTo) {
-                const toDate = new Date(tsTo.replace(" ", "T"));
-                if (tsDate > toDate) show = false;
-              }
-            }
-            row.style.display = show ? "" : "none";
-          });
+    applyTableFilters() {
+      // 1. Klappstatus merken
+      const openRows = this.getOpenRows();
+
+      // 2. Filtern wie gehabt
+      const dpNameFilter = document.getElementById('filterDpName').value.toLowerCase();
+      const dpTypeFilter = document.getElementById('filterDpType').value.toLowerCase();
+      const valueFilter = document.getElementById('filterValue').value.toLowerCase();
+      const tsFrom = document.getElementById('filterTsFrom').value;
+      const tsTo = document.getElementById('filterTsTo').value;
+      document.querySelectorAll('#logOutput tr').forEach(row => {
+        const dpName = row.getAttribute('data-dpname') || "";
+        const dpType = row.getAttribute('data-dptype') || "";
+        const value = row.getAttribute('data-value') || "";
+        const ts = row.getAttribute('data-timestamp')?.trim() || "";
+        let show = true;
+        if (dpNameFilter && !dpName.toLowerCase().includes(dpNameFilter)) show = false;
+        if (dpTypeFilter && !dpType.toLowerCase().includes(dpTypeFilter)) show = false;
+        if (valueFilter && !value.toLowerCase().includes(valueFilter)) show = false;
+        if ((tsFrom || tsTo) && ts) {
+          const tsDate = new Date(ts.replace(" ", "T"));
+          if (tsFrom) {
+            const fromDate = new Date(tsFrom.replace(" ", "T"));
+            if (tsDate < fromDate) show = false;
+          }
+          if (tsTo) {
+            const toDate = new Date(tsTo.replace(" ", "T"));
+            if (tsDate > toDate) show = false;
+          }
         }
+        row.style.display = show ? "" : "none";
+      });
+
+  // 3. Baumstruktur respektieren: Kind-Zeilen ausblenden, wenn Parent zu ist
+  document.querySelectorAll('#logOutput tr').forEach(row => {
+    if (row.style.display === "none") return; // bereits durch Filter ausgeblendet
+    let parentId = row.getAttribute('data-parent');
+    let visible = true;
+    while (parentId) {
+      const parentRow = document.getElementById(parentId);
+      if (parentRow) {
+        const btn = parentRow.querySelector('.toggle-btn');
+        if (btn && btn.getAttribute('data-state') === 'closed') {
+          visible = false;
+          break;
+        }
+        parentId = parentRow.getAttribute('data-parent');
+      } else {
+        break;
+      }
+    }
+    row.style.display = visible ? "" : "none";
+  });
+
+  // 4. Klappstatus wiederherstellen
+  this.restoreOpenRows(openRows);
+    }
 
         /**
          * Open the settings dialog for a datapoint.
