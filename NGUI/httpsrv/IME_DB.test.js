@@ -2,6 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const { IME_Sqlite3DB } = require('./IME_DB');
 
+// Unterdrücke console.error-Ausgaben in allen Tests:
+jest.spyOn(console, 'error').mockImplementation(() => {});
+
 const TEST_DB_PATH = path.join(__dirname, 'test_ime_db.sqlite3');
 
 function cleanupTestDb() {

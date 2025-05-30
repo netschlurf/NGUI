@@ -2,6 +2,9 @@ const NGUI = require('./NGUI');
 const path = require('path');
 const fs = require('fs').promises;
 
+// Unterdrücke console.error-Ausgaben in allen Tests:
+jest.spyOn(console, 'error').mockImplementation(() => {});
+
 jest.mock('fs', () => ({
   promises: {
     access: jest.fn(),

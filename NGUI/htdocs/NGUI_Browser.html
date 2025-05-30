@@ -102,43 +102,43 @@
 <body>
   <div id="MainNav">
     <!-- Tabs -->
-<div class="flex border-b text-xs text-gray-500 bg-gray-50">
-  <button id="tabDatapoints" class="px-3 py-2 border-b-2 border-blue-500 text-blue-600">Datapoints</button>
-  <button id="tabDatapointTypes" class="px-3 py-2 hover:text-blue-600">Datapoint Types</button>
-</div>
+    <div class="flex border-b text-xs text-gray-500 bg-gray-50">
+      <button id="tabDatapoints" class="px-3 py-2 border-b-2 border-blue-500 text-blue-600">Datapoints</button>
+      <button id="tabDatapointTypes" class="px-3 py-2 hover:text-blue-600">Datapoint Types</button>
+    </div>
 
-    
+
     <div style="height: calc(100vh - 96px); overflow-y: auto; display:block;" id="DatapointEditor">
-    <!-- Controls & Create Bar -->
-    <div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs flex-wrap gap-2"
-      style="position: sticky; top: 0; z-index: 20;">
-      <form id="dpCreateForm"
-        class="flex gap-2 items-center flex-wrap bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
-        <span class="font-semibold text-gray-700">Neuer Datenpunkt:</span>
-        <input type="text" id="dpName" placeholder="Name" required class="px-2 py-1 border rounded text-xs w-28"
-          autocomplete="off">
-        <select id="dpType" class="px-2 py-1 border rounded text-xs bg-white" required></select>
-        <button class="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Anlegen</button>
-        <span class="mx-2 text-gray-400">|</span>
-        <span class="font-semibold text-gray-700">Massenanlage:</span>
-        <input type="number" id="dpBulkCount" min="2" max="1000" value="10"
-          class="px-2 py-1 border rounded text-xs w-16" title="Wie viele?">
-        <input type="text" id="dpBulkPattern" placeholder="z.B. myDp_[NUM]_postfix"
-          class="px-2 py-1 border rounded text-xs w-40" autocomplete="off">
-        <select id="dpBulkType" class="px-2 py-1 border rounded text-xs bg-white" required></select>
-        <button type="button" id="dpBulkBtn"
-          class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600">Massenanlage</button>
-      </form>
-      <button id="deleteBtn" class="p-1 rounded hover:bg-red-100 ml-2" style="display:none; z-index:30;"
-        title="Ausgewählte Datenpunkte löschen">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24"
-          stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
-        </svg>
-      </button>
-    </div>      
-    <!-- Log Table -->
+      <!-- Controls & Create Bar -->
+      <div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs flex-wrap gap-2"
+        style="position: sticky; top: 0; z-index: 20;">
+        <form id="dpCreateForm"
+          class="flex gap-2 items-center flex-wrap bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
+          <span class="font-semibold text-gray-700">Neuer Datenpunkt:</span>
+          <input type="text" id="dpName" placeholder="Name" required class="px-2 py-1 border rounded text-xs w-28"
+            autocomplete="off">
+          <select id="dpType" class="px-2 py-1 border rounded text-xs bg-white" required></select>
+          <button class="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Anlegen</button>
+          <span class="mx-2 text-gray-400">|</span>
+          <span class="font-semibold text-gray-700">Massenanlage:</span>
+          <input type="number" id="dpBulkCount" min="2" max="1000" value="10"
+            class="px-2 py-1 border rounded text-xs w-16" title="Wie viele?">
+          <input type="text" id="dpBulkPattern" placeholder="z.B. myDp_[NUM]_postfix"
+            class="px-2 py-1 border rounded text-xs w-40" autocomplete="off">
+          <select id="dpBulkType" class="px-2 py-1 border rounded text-xs bg-white" required></select>
+          <button type="button" id="dpBulkBtn"
+            class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600">Massenanlage</button>
+        </form>
+        <button id="deleteBtn" class="p-1 rounded hover:bg-red-100 ml-2" style="display:block; z-index:30;"
+          title="Ausgewählte Datenpunkte löschen">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
+          </svg>
+        </button>
+      </div>
+      <!-- Log Table -->
       <table class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse">
         <thead class="bg-gray-200 text-gray-600 uppercase" style="position: sticky; top: 0; z-index: 15;">
           <tr>
@@ -170,132 +170,172 @@
     </div>
 
 
-<div id="DatapointTypeEditor" style="display:none;">
-  <!-- Controls & Create Bar for Datapoint Types -->
-  <div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs flex-wrap gap-2" style="position: sticky; top: 0; z-index: 20;">
-    <form id="dpTypeCreateForm" class="flex gap-2 items-center flex-wrap bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
-      <span class="font-semibold text-gray-700">New Type:</span>
-      <input type="text" id="dpTypeName" placeholder="Type Name" required class="px-2 py-1 border rounded text-xs w-32" autocomplete="off">
-      <button class="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Create</button>
-      <span class="mx-2 text-gray-400">|</span>
-      <span class="font-semibold text-gray-700">Selected:</span>
-      <span id="selectedTypeName" class="text-blue-700"></span>
-      <button type="button" id="dpTypeDeleteBtn" class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 ml-2" style="display:none;">Delete</button>
-      <button type="button" id="dpTypeAddChildBtn" class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 ml-2" style="display:none;">Add Child</button>
-      <button type="button" id="dpTypeRenameBtn" class="px-2 py-1 bg-yellow-500 text-white rounded text-xs hover:bg-yellow-600 ml-2" style="display:none;">Rename</button>
-    </form>
-  </div>
-  <!-- Tree Table for Datapoint Types -->
-  <table class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse mt-2">
-    <thead class="bg-gray-200 text-gray-600 uppercase" style="position: sticky; top: 0; z-index: 15;">
-      <tr>
-        <th class="px-4 py-2 border border-gray-300">
-          DPTYPENAME<br>
-          <input type="text" id="filterTypeName" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
-        </th>
-        <th class="px-4 py-2 border border-gray-300">
-          Type<br>
-          <input type="text" id="filterTypeType" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
-        </th>
-        <th class="px-4 py-2 border border-gray-300">
-          Children<br>
-          <input type="text" id="filterTypeChildren" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
-        </th>
-        <th class="px-4 py-2 border border-gray-300">Config</th>
-      </tr>
-    </thead>
-    <tbody id="typeTreeOutput" class="bg-white odd:bg-gray-50 even:bg-white"></tbody>
-  </table>
-</div>
+    <div id="DatapointTypeEditor" style="display:none;">
+      <!-- Controls & Create Bar for Datapoint Types -->
+      <div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs flex-wrap gap-2"
+        style="position: sticky; top: 0; z-index: 20;">
+        <form id="dpTypeCreateForm"
+          class="flex gap-2 items-center flex-wrap bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
+          <span class="font-semibold text-gray-700">New Type:</span>
+          <input type="text" id="dpTypeName" placeholder="Type Name" required
+            class="px-2 py-1 border rounded text-xs w-32" autocomplete="off">
+          <button class="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Create</button>
+          <span class="mx-2 text-gray-400">|</span>
+          <span class="font-semibold text-gray-700">Selected:</span>
+          <span id="selectedTypeName" class="text-blue-700"></span>
+          <button type="button" id="dpTypeDeleteBtn"
+            class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 ml-2"
+            style="display:none;">Delete</button>
+          <button type="button" id="dpTypeAddChildBtn"
+            class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 ml-2" style="display:none;">Add
+            Child</button>
+          <button type="button" id="dpTypeRenameBtn"
+            class="px-2 py-1 bg-yellow-500 text-white rounded text-xs hover:bg-yellow-600 ml-2"
+            style="display:none;">Rename</button>
+        </form>
+      </div>
+      <!-- Tree Table for Datapoint Types -->
+      <table class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse mt-2">
+        <thead class="bg-gray-200 text-gray-600 uppercase" style="position: sticky; top: 0; z-index: 15;">
+          <tr>
+            <th class="px-4 py-2 border border-gray-300">
+              DPTYPENAME<br>
+              <input type="text" id="filterTypeName" class="w-full px-1 py-0.5 border rounded text-xs"
+                placeholder="Filter...">
+            </th>
+            <th class="px-4 py-2 border border-gray-300">
+              Type<br>
+              <input type="text" id="filterTypeType" class="w-full px-1 py-0.5 border rounded text-xs"
+                placeholder="Filter...">
+            </th>
+            <th class="px-4 py-2 border border-gray-300">
+              Children<br>
+              <input type="text" id="filterTypeChildren" class="w-full px-1 py-0.5 border rounded text-xs"
+                placeholder="Filter...">
+            </th>
+            <th class="px-4 py-2 border border-gray-300">Config</th>
+          </tr>
+        </thead>
+        <tbody id="typeTreeOutput" class="bg-white odd:bg-gray-50 even:bg-white"></tbody>
+      </table>
+    </div>
 
 
-<script>
+    <script>
 
 
-
-    /**
-     * NGUIDpBrowser
-     * -------------
-     * Specialized tree grid for NGUI datapoints.
-     * Handles all datapoint-specific logic: backend connection, rendering, filtering, editing, and settings.
-     * 
-     * Features:
-     * - Connects to NGUI backend and fetches datapoint names/types
-     * - Renders hierarchical datapoint table
-     * - Inline editing of values with type handling
-     * - Filtering by name, type, value, timestamp
-     * - Row selection and bulk actions (delete, bulk create)
-     * - Opens settings dialog for datapoints
-     * 
-     * Inherits all generic grid/tree/selection logic from NGUITreeGrid.
-     */
-    class NGUIDpBrowser extends NGUITreeGrid {
-      constructor() {
-        super();
-        this.DpType = { STRING: 1, NUMBER: 2, BOOLEAN: 3, STRUCT: 4 };
-        this.DpTypeReverse = { 1: 'STRING', 2: 'NUMBER', 3: 'BOOLEAN', 4: 'STRUCT' };
-        this.DpTypeForward = { STRING: 1, NUMBER: 2, BOOLEAN: 3, STRUCT: 4 };
-
-        this.g_NGUI = new NGUIClient();
-        this.g_NGUI.Connect("ws://localhost:2808", this.onAppOpen.bind(this));
-        this.g_DB = this.g_NGUI.GetDbClient();
-
-        this.initDpEventHandlers();
-      }
 
       /**
-       * Initialize datapoint-specific event handlers (create, bulk, delete, filters).
+       * NGUIDpBrowser
+       * -------------
+       * Specialized tree grid for NGUI datapoints.
+       * Handles all datapoint-specific logic: backend connection, rendering, filtering, editing, and settings.
+       * 
+       * Features:
+       * - Connects to NGUI backend and fetches datapoint names/types
+       * - Renders hierarchical datapoint table
+       * - Inline editing of values with type handling
+       * - Filtering by name, type, value, timestamp
+       * - Row selection and bulk actions (delete, bulk create)
+       * - Opens settings dialog for datapoints
+       * 
+       * Inherits all generic grid/tree/selection logic from NGUITreeGrid.
        */
-      initDpEventHandlers() {
-        document.getElementById("dpCreateForm").addEventListener("submit", this.onCreateSubmit.bind(this));
-        document.getElementById("dpBulkBtn").addEventListener("click", this.onBulkCreate.bind(this));
-        document.getElementById("deleteBtn").addEventListener("click", this.onDelete.bind(this));
-        ['filterDpName', 'filterDpType', 'filterValue', 'filterTsFrom', 'filterTsTo'].forEach(id => {
-          document.getElementById(id).addEventListener('input', this.applyTableFilters.bind(this));
-        });
-      }
+      class NGUIDpBrowser extends NGUITreeGrid {
+        constructor() {
+          super();
+          this.DpType = { STRING: 1, NUMBER: 2, BOOLEAN: 3, STRUCT: 4 };
+          this.DpTypeReverse = { 1: 'STRING', 2: 'NUMBER', 3: 'BOOLEAN', 4: 'STRUCT' };
+          this.DpTypeForward = { STRING: 1, NUMBER: 2, BOOLEAN: 3, STRUCT: 4 };
 
-      /**
-       * Called when the backend connection is established.
-       */
-      onAppOpen() {
-        this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
-        this.g_DB.DpTypes("*", this.onDpTypes.bind(this));
-      }
+          this.g_NGUI = new NGUIClient();
+          this.g_NGUI.Connect("ws://localhost:2808", this.onAppOpen.bind(this));
+          this.g_DB = this.g_NGUI.GetDbClient();
 
-      /**
-       * Render the datapoint table after fetching names.
-       */
-      onDpNames(rcv) {
-        document.getElementById("logOutput").innerHTML = this.renderDpRows(rcv.data.names);
-        this.enableRowSelection();
-        this.enableValueEdit();
-        this.enableNameEdit();
-        this.enableTreeToggle("#logOutput");
-      }
+          this.initDpEventHandlers();
+        }
 
-      /**
-       * Render all datapoint rows recursively (tree structure).
-       */
-      renderDpRows(names) {
-        let html = "";
-        const render = (dp, level = 0, parentPath = "", parentId = "") => {
-          const fullPath = parentPath ? parentPath + "." + dp.DpName : dp.DpName;
-          const rowId = "ROW_" + fullPath;
-          const hasChildren = dp.children && dp.children.length > 0;
-          const padding = 20 * level;
-          let dpTypeText = `STRUCT (${dp.DpType})`;
-          if (dp.valueType) dpTypeText = this.DpTypeReverse[dp.valueType];
-          const chevronRight = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
-          const chevronDown = `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
-          const chevronCircle = `<svg class="lucide lucide-dot inline w-3 h-3 align-middle" fill="currentColor" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /></svg>`;
-          let toggle = hasChildren
-            ? `<span class="toggle-btn cursor-pointer select-none" data-target="${rowId}" data-state="closed">${chevronRight}</span>`
-            : `<span class="select-none" data-state="closed">${chevronCircle}</span>`;
-          html += `<tr id="${rowId}" class="log-entry" data-level="DpName" data-parent="${parentId || ''}" style="${level > 0 ? 'display:none;' : ''}">
-        <td class="border border-gray-300 px-4 py-1 text-black-500" id="NAME_${fullPath}" style="padding-left:${padding}px;">
-          ${toggle} ${dp.DpName}
-        </td>
+        /**
+         * Initialize datapoint-specific event handlers (create, bulk, delete, filters).
+         */
+        initDpEventHandlers() {
+          document.getElementById("dpCreateForm").addEventListener("submit", this.onCreateSubmit.bind(this));
+          document.getElementById("dpBulkBtn").addEventListener("click", this.onBulkCreate.bind(this));
+          document.getElementById("deleteBtn").addEventListener("click", this.onDelete.bind(this));
+          ['filterDpName', 'filterDpType', 'filterValue', 'filterTsFrom', 'filterTsTo'].forEach(id => {
+            document.getElementById(id).addEventListener('input', this.applyTableFilters.bind(this));
+          });
+        }
+
+        /**
+         * Called when the backend connection is established.
+         */
+        onAppOpen() {
+          this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
+          this.g_DB.DpTypes("*", this.onDpTypes.bind(this));
+        }
+
+        /**
+         * Render the datapoint table after fetching names.
+         */
+        onDpNames(rcv) {
+          // 1. Merke Klappstatus
+          const openRows = this.getOpenRows();
+
+          // 2. Tabelle neu rendern
+          document.getElementById("logOutput").innerHTML = this.renderDpRows(rcv.data.names);
+          this.enableRowSelection();
+          this.enableValueEdit();
+          this.enableNameEdit();
+          this.enableTreeToggle("#logOutput");
+
+          // 3. Klappstatus wiederherstellen
+          this.restoreOpenRows(openRows);
+        }
+
+        getOpenRows() {
+          const openRows = new Set();
+          document.querySelectorAll('#logOutput .toggle-btn[data-state="open"]').forEach(btn => {
+            const targetId = btn.getAttribute('data-target');
+            if (targetId) openRows.add(targetId);
+          });
+          return openRows;
+        }
+
+        restoreOpenRows(openRows) {
+          openRows.forEach(rowId => {
+            const btn = document.querySelector(`#logOutput .toggle-btn[data-target="${rowId}"]`);
+            if (btn && btn.getAttribute('data-state') === 'closed') {
+              btn.click(); // Triggert das Aufklappen
+            }
+          });
+        }
+
+        /**
+         * Render all datapoint rows recursively (tree structure).
+         */
+        renderDpRows(names) {
+          let html = "";
+          const render = (dp, level = 0, parentPath = "", parentId = "") => {
+            const fullPath = parentPath ? parentPath + "." + dp.DpName : dp.DpName;
+            const rowId = "ROW_" + fullPath;
+            const hasChildren = dp.children && dp.children.length > 0;
+            const padding = 20 * level;
+            let dpTypeText = `STRUCT (${dp.DpType})`;
+            if (dp.valueType) dpTypeText = this.DpTypeReverse[dp.valueType];
+            const chevronRight = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
+            const chevronDown = `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
+            const chevronCircle = `<svg class="lucide lucide-dot inline w-3 h-3 align-middle" fill="currentColor" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /></svg>`;
+            let toggle = hasChildren
+              ? `<span class="toggle-btn cursor-pointer select-none" data-target="${rowId}" data-state="closed">${chevronRight}</span>`
+              : `<span class="select-none" data-state="closed">${chevronCircle}</span>`;
+            html += `<tr id="${rowId}" class="log-entry" data-level="DpName" data-parent="${parentId || ''}" style="${level > 0 ? 'display:none;' : ''}">
+          <td class="border border-gray-300 px-4 py-1 text-black-500" 
+              id="NAME_${fullPath}" 
+              data-parent="${parentId}" 
+              style="padding-left:${padding}px;">
+            ${toggle} ${dp.DpName}
+          </td>
         <td class="border border-gray-300 px-4 py-1 text-green-500">${dpTypeText}</td>
         <td class="border border-gray-300 px-4 py-1" id="VALUE_${fullPath}"></td>
         <td class="border border-gray-300 px-4 py-1 text-gray-500" id="TS_${fullPath}"></td>
@@ -313,417 +353,443 @@
           </svg>
         </td>
       </tr>`;
-          if (!fullPath.includes('.')) this.g_DB.DpConnect(fullPath, this.onDpConnect.bind(this));
-          if (hasChildren) dp.children.forEach(child => render(child, level + 1, fullPath, rowId));
-        };
-        names.forEach(dp => render(dp));
-        return html;
-      }
-
-      /**
-       * Called when a datapoint value update is received from backend.
-       */
-      onDpConnect(rcv) {
-        if (!rcv.cmd && rcv.data) {
-          this.updateValues(rcv.data.dpName, rcv.data.value);
+            if (!fullPath.includes('.')) this.g_DB.DpConnect(fullPath, this.onDpConnect.bind(this));
+            if (hasChildren) dp.children.forEach(child => render(child, level + 1, fullPath, rowId));
+          };
+          names.forEach(dp => render(dp));
+          return html;
         }
-      }
 
-      /**
-       * Recursively update values for all datapoints in the tree.
-       */
-      updateValues(dpName, valueObj) {
-        if (valueObj && typeof valueObj === "object" && !Array.isArray(valueObj)) {
-          if ("value" in valueObj && "tstamp" in valueObj) {
-            this.setValueAndTimestamp(dpName, valueObj.value, valueObj.tstamp);
-          } else {
-            Object.keys(valueObj).forEach(key => {
-              this.updateValues(dpName + "." + key, valueObj[key]);
-            });
+        /**
+         * Called when a datapoint value update is received from backend.
+         */
+        onDpConnect(rcv) {
+          if (!rcv.cmd && rcv.data) {
+            this.updateValues(rcv.data.dpName, rcv.data.value);
           }
         }
-      }
 
-      /**
-       * Set value and timestamp in the table for a datapoint.
-       */
-      setValueAndTimestamp(dpName, value, tstamp) {
-        const valElem = document.getElementById("VALUE_" + dpName);
-        const tsElem = document.getElementById("TS_" + dpName);
-        if (valElem) valElem.innerHTML = value;
-        if (tsElem) tsElem.innerHTML = this.formatTimestamp(tstamp);
-      }
-
-      /**
-       * Format a timestamp for display.
-       */
-      formatTimestamp(tstamp) {
-        let date = typeof tstamp === "number"
-          ? (tstamp > 1e12 ? new Date(tstamp) : new Date(tstamp * 1000))
-          : new Date(tstamp);
-        const pad = n => n.toString().padStart(2, "0");
-        const padMs = n => n.toString().padStart(3, "0");
-        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.${padMs(date.getMilliseconds())}`;
-      }
-
-      /**
-       * Called when datapoint types are received from backend.
-       */
-      onDpTypes(rcv) {
-        const types = rcv.data.types || rcv.data;
-        this.fillSelect("dpType", types);
-        this.fillSelect("dpBulkType", types);
-
-        if (window.dpTypeEditor && typeof window.dpTypeEditor.setTypeTreeFromFlatList === "function") {
-          window.dpTypeEditor.setTypeTreeFromFlatList(types);
-        }        
-      }
-
-      /**
-       * Fill a <select> element with options.
-       */
-      fillSelect(id, types) {
-        const select = document.getElementById(id);
-        if (!select) return;
-        select.innerHTML = "";
-        types.forEach(type => {
-          const opt = document.createElement("option");
-          opt.value = type.name;
-          opt.textContent = type.name;
-          select.appendChild(opt);
-        });
-      }
-
-      /**
-       * Handle creation of a new datapoint.
-       */
-      onCreateSubmit(e) {
-        e.preventDefault();
-        const name = document.getElementById("dpName").value.trim();
-        const type = document.getElementById("dpType").value.trim();
-        if (!name) return;
-        this.g_DB.DpCreate(name, type, rcv => {
-          if (!rcv.err) {
-            document.getElementById("dpName").value = "";
-            this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
-          } else {
-            new NGUIModal("Error", "" + (rcv.err || "Unknown error"), MBOK, 'bg-red-600').ShowAsync();
-          }
-        });
-      }
-
-      /**
-       * Handle bulk creation of datapoints.
-       */
-      onBulkCreate() {
-        const count = parseInt(document.getElementById("dpBulkCount").value, 10);
-        const pattern = document.getElementById("dpBulkPattern").value.trim();
-        const type = document.getElementById("dpBulkType").value;
-        if (!pattern || isNaN(count) || count < 2) return;
-        let created = 0;
-        const createNext = i => {
-          if (i > count) {
-            this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
-            return;
-          }
-          const name = pattern.replace(/\[NUM\]/gi, i);
-          this.g_DB.DpCreate(name, type, () => {
-            created++;
-            createNext(i + 1);
-          });
-        };
-        createNext(1);
-      }
-
-      /**
-       * Handle deletion of selected datapoints (with confirmation).
-       */
-      async onDelete() {
-        const dpNames = Array.from(this.selectedRows).map(tr => tr.getAttribute('data-dpname'));
-        if (!dpNames.length) return;
-        const modal = new NGUIModal(
-          "Confirm deletion",
-          `Do you really want to delete the selected ${dpNames.length} datapoints?`,
-          MBYESNO,
-          'bg-red-600'
-        );
-        const result = await modal.ShowAsync();
-        if (result === "yes") {
-          for (const dpName of dpNames) {
-            await new Promise(resolve => {
-              this.g_DB.DpDelete(dpName, () => resolve());
-            });
-          }
-          this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
-        }
-      }
-
-      /**
-       * Called when the row selection changes.
-       */
-      updateSelection() {
-        const dpNames = Array.from(this.selectedRows).map(tr => tr.getAttribute('data-dpname'));
-        this.onSelectionChanged(dpNames);
-      }
-
-      /**
-       * Show/hide the delete button depending on selection.
-       */
-      onSelectionChanged(dpNames) {
-        document.getElementById("deleteBtn").style.display = dpNames.length > 0 ? "block" : "none";
-      }
-
-      /**
-       * Enable inline editing for value cells.
-       */
-      enableValueEdit() {
-        document.querySelectorAll('td[id^="VALUE_"]').forEach(td => {
-          td.addEventListener('dblclick', e => this.handleValueDblClick(e, td));
-        });
-      }
-
-      enableNameEdit() {
-        document.querySelectorAll('td[id^="NAME_"]').forEach(td => {
-          td.addEventListener('dblclick', e => this.handleNameDblClick(e, td));
-        });
-      }      
-
-handleNameDblClick(e, td) {
-  const oldName = td.innerText.trim();
-  const tr = td.parentElement;
-  const dpName = oldName;
-  const input = document.createElement('input');
-  input.type = "text";
-  input.value = oldName;
-  input.className = "w-full py-0.5 border rounded text-xs";
-  input.style.boxSizing = "border-box";
-  input.style.width = "100%";
-  input.style.height = "100%";
-  input.style.fontSize = "inherit";
-  input.style.background = "inherit";
-  input.style.margin = "0";
-  input.style.padding = "0 2px";
-  input.style.border = "none";
-  input.style.outline = "none";
-  input.style.boxShadow = "none";
-  input.style.display = "block";
-  td.innerHTML = "";
-  td.appendChild(input);
-  input.focus();
-  input.select();
-  let finished = false;
-  const finishEdit = (apply) => {
-    if (finished) return;
-    finished = true;
-    const newName = input.value.trim();
-    if (apply && newName && newName !== oldName) {
-      this.g_DB.DpRename(oldName, newName, rcv => {
-        if (!rcv.err) {
-          td.innerHTML = newName;
-          // Tabelle neu laden, damit alles konsistent ist
-          this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
-        } else {
-          td.innerHTML = oldName;
-          alert("Rename failed: " + (rcv.err || "Unknown error"));
-        }
-      });
-    } else {
-      td.innerHTML = oldName;
-    }
-  };
-  input.addEventListener('keydown', evt => {
-    if (evt.key === "Enter") finishEdit(true);
-    else if (evt.key === "Escape") finishEdit(false);
-  });
-  input.addEventListener('blur', () => finishEdit(true));
-}      
-
-      /**
-       * Handle double-click on value cell for editing.
-       */
-      handleValueDblClick(e, td) {
-        const oldValue = td.innerText;
-        const dpName = td.id.substring("VALUE_".length);
-        const tr = td.parentElement;
-        const dpType = tr.children[1]?.innerText?.trim();
-        const input = document.createElement('input');
-        input.type = "text";
-        input.value = oldValue;
-        input.className = "w-full py-0.5 border rounded text-xs";
-        input.style.boxSizing = "border-box";
-        input.style.width = "100%";
-        input.style.height = "100%";
-        input.style.minWidth = "0";
-        input.style.fontSize = "inherit";
-        input.style.background = "inherit";
-        input.style.margin = "0";
-        input.style.padding = "0 2px";
-        input.style.border = "none";
-        input.style.outline = "none";
-        input.style.boxShadow = "none";
-        input.style.display = "block";
-        td.innerHTML = "";
-        td.appendChild(input);
-        input.focus();
-        input.select();
-        let finished = false;
-        const finishEdit = (apply, tabPressed = false) => {
-          if (finished) return;
-          finished = true;
-          const newValue = input.value;
-          if (apply && newValue !== oldValue) {
-            this.onValueEdited(dpName, oldValue, newValue, dpType, td);
-          } else if (!apply) {
-            td.innerHTML = oldValue;
-          }
-          if (tabPressed) {
-            let nextTr = tr.nextElementSibling;
-            while (nextTr && !nextTr.querySelector('td[id^="VALUE_"]')) {
-              nextTr = nextTr.nextElementSibling;
+        /**
+         * Recursively update values for all datapoints in the tree.
+         */
+        updateValues(dpName, valueObj) {
+          if (valueObj && typeof valueObj === "object" && !Array.isArray(valueObj)) {
+            if ("value" in valueObj && "tstamp" in valueObj) {
+              this.setValueAndTimestamp(dpName, valueObj.value, valueObj.tstamp);
+            } else {
+              Object.keys(valueObj).forEach(key => {
+                this.updateValues(dpName + "." + key, valueObj[key]);
+              });
             }
-            if (nextTr) {
-              const nextTd = nextTr.querySelector('td[id^="VALUE_"]');
-              if (nextTd) {
-                setTimeout(() => nextTd.dispatchEvent(new Event('dblclick')), 0);
+          }
+        }
+
+        /**
+         * Set value and timestamp in the table for a datapoint.
+         */
+        setValueAndTimestamp(dpName, value, tstamp) {
+          const valElem = document.getElementById("VALUE_" + dpName);
+          const tsElem = document.getElementById("TS_" + dpName);
+          if (valElem) valElem.innerHTML = value;
+          if (tsElem) tsElem.innerHTML = this.formatTimestamp(tstamp);
+        }
+
+        /**
+         * Format a timestamp for display.
+         */
+        formatTimestamp(tstamp) {
+          let date = typeof tstamp === "number"
+            ? (tstamp > 1e12 ? new Date(tstamp) : new Date(tstamp * 1000))
+            : new Date(tstamp);
+          const pad = n => n.toString().padStart(2, "0");
+          const padMs = n => n.toString().padStart(3, "0");
+          return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}.${padMs(date.getMilliseconds())}`;
+        }
+
+        /**
+         * Called when datapoint types are received from backend.
+         */
+        onDpTypes(rcv) {
+          const types = rcv.data.types || rcv.data;
+          this.fillSelect("dpType", types);
+          this.fillSelect("dpBulkType", types);
+
+          if (window.dpTypeEditor && typeof window.dpTypeEditor.setTypeTreeFromFlatList === "function") {
+            window.dpTypeEditor.setTypeTreeFromFlatList(types);
+          }
+        }
+
+        /**
+         * Fill a <select> element with options.
+         */
+        fillSelect(id, types) {
+          const select = document.getElementById(id);
+          if (!select) return;
+          select.innerHTML = "";
+          types.forEach(type => {
+            const opt = document.createElement("option");
+            opt.value = type.name;
+            opt.textContent = type.name;
+            select.appendChild(opt);
+          });
+        }
+
+        /**
+         * Handle creation of a new datapoint.
+         */
+        onCreateSubmit(e) {
+          e.preventDefault();
+          const name = document.getElementById("dpName").value.trim();
+          const type = document.getElementById("dpType").value.trim();
+          if (!name) return;
+          this.g_DB.DpCreate(name, type, rcv => {
+            if (!rcv.err) {
+              document.getElementById("dpName").value = "";
+              this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
+            } else {
+              new NGUIModal("Error", "" + (rcv.err || "Unknown error"), MBOK, 'bg-red-600').ShowAsync();
+            }
+          });
+        }
+
+        /**
+         * Handle bulk creation of datapoints.
+         */
+        onBulkCreate() {
+          const count = parseInt(document.getElementById("dpBulkCount").value, 10);
+          const pattern = document.getElementById("dpBulkPattern").value.trim();
+          const type = document.getElementById("dpBulkType").value;
+          if (!pattern || isNaN(count) || count < 2) return;
+          let created = 0;
+          const createNext = i => {
+            if (i > count) {
+              this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
+              return;
+            }
+            const name = pattern.replace(/\[NUM\]/gi, i);
+            this.g_DB.DpCreate(name, type, () => {
+              created++;
+              createNext(i + 1);
+            });
+          };
+          createNext(1);
+        }
+
+        /**
+         * Handle deletion of selected datapoints (with confirmation).
+         */
+        async onDelete() {
+          const dpNames = Array.from(this.selectedRows).map(tr => tr.getAttribute('data-dpname'));
+          if (!dpNames.length) return;
+          const modal = new NGUIModal(
+            "Confirm deletion",
+            `Do you really want to delete the selected ${dpNames.length} datapoints?`,
+            MBYESNO,
+            'bg-red-600'
+          );
+          const result = await modal.ShowAsync();
+          if (result === "yes") {
+            for (const dpName of dpNames) {
+              await new Promise(resolve => {
+                this.g_DB.DpDelete(dpName, () => resolve());
+              });
+            }
+            this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
+          }
+        }
+
+        /**
+         * Called when the row selection changes.
+         */
+        updateSelection() {
+          const dpNames = Array.from(this.selectedRows).map(tr => tr.getAttribute('data-dpname'));
+          this.onSelectionChanged(dpNames);
+        }
+
+        /**
+         * Show/hide the delete button depending on selection.
+         */
+        onSelectionChanged(dpNames) {
+          document.getElementById("deleteBtn").style.display = dpNames.length > 0 ? "block" : "none";
+        }
+
+        /**
+         * Enable inline editing for value cells.
+         */
+        enableValueEdit() {
+          document.querySelectorAll('td[id^="VALUE_"]').forEach(td => {
+            td.addEventListener('dblclick', e => this.handleValueDblClick(e, td));
+          });
+        }
+
+        enableNameEdit() {
+          document.querySelectorAll('td[id^="NAME_"]').forEach(td => {
+            // Nur Root-Elemente erlauben
+            if (td.getAttribute('data-parent')) return;
+            td.addEventListener('dblclick', e => this.handleNameDblClick(e, td));
+          });
+        }
+
+        handleNameDblClick(e, td) {
+          const toggleSpan = td.querySelector('.toggle-btn');
+          // Finde den Textknoten nach dem Pfeilchen
+          let nameNode = null;
+          for (const node of td.childNodes) {
+            if (node.nodeType === 3 && node.textContent.trim() !== "") {
+              nameNode = node;
+              break;
+            }
+            if (node.nodeType === 1 && node !== toggleSpan && node.tagName !== "SPAN") {
+              nameNode = node;
+              break;
+            }
+          }
+          const oldName = nameNode ? nameNode.textContent.trim() : td.innerText.trim();
+
+          // Erzeuge das Input-Feld mit Value-Style, aber OHNE w-full!
+          const input = document.createElement('input');
+          input.type = "text";
+          input.value = oldName;
+          input.className = "py-0.5 border rounded text-xs";
+          input.style.display = "inline";
+          input.style.fontSize = "inherit";
+          input.style.background = "inherit";
+          input.style.margin = "0 0 0 4px";
+          input.style.padding = "0 2px";
+          input.style.border = "none";
+          input.style.outline = "none";
+          input.style.boxShadow = "none";
+          input.style.maxWidth = "calc(100% - 28px)"; // Platz für Pfeilchen
+
+          // Entferne alten Namen, aber lasse das Pfeilchen stehen
+          if (nameNode) {
+            td.removeChild(nameNode);
+          }
+          // Füge das Input-Feld direkt nach dem Pfeilchen ein
+          if (toggleSpan && toggleSpan.nextSibling) {
+            td.insertBefore(input, toggleSpan.nextSibling);
+          } else {
+            td.appendChild(input);
+          }
+          input.focus();
+          input.select();
+
+          let finished = false;
+          const finishEdit = (apply) => {
+            if (finished) return;
+            finished = true;
+            const newName = input.value.trim();
+            if (apply && newName && newName !== oldName) {
+              this.g_DB.DpRename(oldName, newName, rcv => {
+                if (!rcv.err) {
+                  input.replaceWith(document.createTextNode(" " + newName));
+                  //this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
+                } else {
+                  input.replaceWith(document.createTextNode(" " + oldName));
+                  new NGUIModal("Error", "Rename failed: " + (rcv.err || "Unknown error"), MBOK, 'bg-red-600').ShowAsync();
+                }
+              });
+            } else {
+              input.replaceWith(document.createTextNode(" " + oldName));
+            }
+          };
+          input.addEventListener('keydown', evt => {
+            if (evt.key === "Enter") finishEdit(true);
+            else if (evt.key === "Escape") finishEdit(false);
+          });
+          input.addEventListener('blur', () => finishEdit(true));
+        }
+
+        /**
+         * Handle double-click on value cell for editing.
+         */
+        handleValueDblClick(e, td) {
+          const oldValue = td.innerText;
+          const dpName = td.id.substring("VALUE_".length);
+          const tr = td.parentElement;
+          const dpType = tr.children[1]?.innerText?.trim();
+          const input = document.createElement('input');
+          input.type = "text";
+          input.value = oldValue;
+          input.className = "w-full py-0.5 border rounded text-xs";
+          input.style.boxSizing = "border-box";
+          input.style.width = "100%";
+          input.style.height = "100%";
+          input.style.minWidth = "0";
+          input.style.fontSize = "inherit";
+          input.style.background = "inherit";
+          input.style.margin = "0";
+          input.style.padding = "0 2px";
+          input.style.border = "none";
+          input.style.outline = "none";
+          input.style.boxShadow = "none";
+          input.style.display = "block";
+          td.innerHTML = "";
+          td.appendChild(input);
+          input.focus();
+          input.select();
+          let finished = false;
+          const finishEdit = (apply, tabPressed = false) => {
+            if (finished) return;
+            finished = true;
+            const newValue = input.value;
+            if (apply && newValue !== oldValue) {
+              this.onValueEdited(dpName, oldValue, newValue, dpType, td);
+            } else if (!apply) {
+              td.innerHTML = oldValue;
+            }
+            if (tabPressed) {
+              let nextTr = tr.nextElementSibling;
+              while (nextTr && !nextTr.querySelector('td[id^="VALUE_"]')) {
+                nextTr = nextTr.nextElementSibling;
+              }
+              if (nextTr) {
+                const nextTd = nextTr.querySelector('td[id^="VALUE_"]');
+                if (nextTd) {
+                  setTimeout(() => nextTd.dispatchEvent(new Event('dblclick')), 0);
+                }
               }
             }
-          }
-        };
-        input.addEventListener('keydown', evt => {
-          if (evt.key === "Enter") finishEdit(true);
-          else if (evt.key === "Escape") finishEdit(false);
-          else if (evt.key === "Tab") {
-            evt.preventDefault();
-            finishEdit(true, true);
-          }
-        });
-        input.addEventListener('blur', () => finishEdit(true));
-      }
-
-      /**
-       * Called when a value was edited inline.
-       */
-      onValueEdited(dpName, oldValue, newValue, dpType, td) {
-        let type = this.DpTypeForward[dpType];
-        let setVal = null;
-        let prevVal = null;
-        switch (type) {
-          case this.DpType.STRING: setVal = newValue; prevVal = oldValue; break;
-          case this.DpType.NUMBER: setVal = Number(newValue); prevVal = Number(oldValue); break;
-          case this.DpType.BOOLEAN: setVal = (newValue === "true" || newValue === "1" || newValue === 1 || newValue === true); prevVal = (oldValue === "true" || oldValue === "1" || oldValue === 1 || oldValue === true); break;
-          default: setVal = newValue; prevVal = oldValue;
+          };
+          input.addEventListener('keydown', evt => {
+            if (evt.key === "Enter") finishEdit(true);
+            else if (evt.key === "Escape") finishEdit(false);
+            else if (evt.key === "Tab") {
+              evt.preventDefault();
+              finishEdit(true, true);
+            }
+          });
+          input.addEventListener('blur', () => finishEdit(true));
         }
-        this.g_DB.DpSet(dpName, setVal, rcv => {
-          td.innerHTML = !rcv.err ? setVal : prevVal;
-        });
-      }
 
-      /**
-       * Filtering logic for the datapoint table.
-       */
-      applyTableFilters() {
-        const dpNameFilter = document.getElementById('filterDpName').value.toLowerCase();
-        const dpTypeFilter = document.getElementById('filterDpType').value.toLowerCase();
-        const valueFilter = document.getElementById('filterValue').value.toLowerCase();
-        const tsFrom = document.getElementById('filterTsFrom').value;
-        const tsTo = document.getElementById('filterTsTo').value;
-        document.querySelectorAll('#logOutput tr').forEach(row => {
-          const dpName = row.children[0]?.innerText?.toLowerCase() || "";
-          const dpType = row.children[1]?.innerText?.toLowerCase() || "";
-          const value = row.children[2]?.innerText?.toLowerCase() || "";
-          const ts = row.children[3]?.innerText?.trim() || "";
-          let show = true;
-          if (dpNameFilter && !dpName.includes(dpNameFilter)) show = false;
-          if (dpTypeFilter && !dpType.includes(dpTypeFilter)) show = false;
-          if (valueFilter && !value.includes(valueFilter)) show = false;
-          if ((tsFrom || tsTo) && ts) {
-            const tsDate = new Date(ts.replace(" ", "T"));
-            if (tsFrom) {
-              const fromDate = new Date(tsFrom.replace(" ", "T"));
-              if (tsDate < fromDate) show = false;
-            }
-            if (tsTo) {
-              const toDate = new Date(tsTo.replace(" ", "T"));
-              if (tsDate > toDate) show = false;
-            }
+        /**
+         * Called when a value was edited inline.
+         */
+        onValueEdited(dpName, oldValue, newValue, dpType, td) {
+          let type = this.DpTypeForward[dpType];
+          let setVal = null;
+          let prevVal = null;
+          switch (type) {
+            case this.DpType.STRING: setVal = newValue; prevVal = oldValue; break;
+            case this.DpType.NUMBER: setVal = Number(newValue); prevVal = Number(oldValue); break;
+            case this.DpType.BOOLEAN: setVal = (newValue === "true" || newValue === "1" || newValue === 1 || newValue === true); prevVal = (oldValue === "true" || oldValue === "1" || oldValue === 1 || oldValue === true); break;
+            default: setVal = newValue; prevVal = oldValue;
           }
-          row.style.display = show ? "" : "none";
-        });
+          this.g_DB.DpSet(dpName, setVal, rcv => {
+            td.innerHTML = !rcv.err ? setVal : prevVal;
+          });
+        }
+
+        /**
+         * Filtering logic for the datapoint table.
+         */
+        applyTableFilters() {
+          const dpNameFilter = document.getElementById('filterDpName').value.toLowerCase();
+          const dpTypeFilter = document.getElementById('filterDpType').value.toLowerCase();
+          const valueFilter = document.getElementById('filterValue').value.toLowerCase();
+          const tsFrom = document.getElementById('filterTsFrom').value;
+          const tsTo = document.getElementById('filterTsTo').value;
+          document.querySelectorAll('#logOutput tr').forEach(row => {
+            const dpName = row.children[0]?.innerText?.toLowerCase() || "";
+            const dpType = row.children[1]?.innerText?.toLowerCase() || "";
+            const value = row.children[2]?.innerText?.toLowerCase() || "";
+            const ts = row.children[3]?.innerText?.trim() || "";
+            let show = true;
+            if (dpNameFilter && !dpName.includes(dpNameFilter)) show = false;
+            if (dpTypeFilter && !dpType.includes(dpTypeFilter)) show = false;
+            if (valueFilter && !value.includes(valueFilter)) show = false;
+            if ((tsFrom || tsTo) && ts) {
+              const tsDate = new Date(ts.replace(" ", "T"));
+              if (tsFrom) {
+                const fromDate = new Date(tsFrom.replace(" ", "T"));
+                if (tsDate < fromDate) show = false;
+              }
+              if (tsTo) {
+                const toDate = new Date(tsTo.replace(" ", "T"));
+                if (tsDate > toDate) show = false;
+              }
+            }
+            row.style.display = show ? "" : "none";
+          });
+        }
+
+        /**
+         * Open the settings dialog for a datapoint.
+         */
+        onDpSettings(dpName) {
+          console.log("Settings for", dpName);
+          const tpl = document.getElementById("SettingsTemplate").innerHTML;
+          const window = NGUIWindow.Create('window1_' + dpName, dpName, WB_MINIMIZE | WB_MAXIMIZE | WB_CLOSE, tpl);
+          window.windowElement.style.width = "500px";
+          window.windowElement.style.height = "300px";
+          window.Show();
+        }
       }
 
       /**
-       * Open the settings dialog for a datapoint.
+       * NGUIDpTypeEditor
+       * ----------------
+       * Specialized tree grid for editing datapoint types (tree structures).
+       * Allows creating, renaming, deleting, and managing child types.
+       * Uses NGUITreeGrid for selection, tree, and UI logic.
        */
-      onDpSettings(dpName) {
-        console.log("Settings for", dpName);
-        const tpl = document.getElementById("SettingsTemplate").innerHTML;
-        const window = NGUIWindow.Create('window1_' + dpName, dpName, WB_MINIMIZE | WB_MAXIMIZE | WB_CLOSE, tpl);
-        window.windowElement.style.width = "500px";
-        window.windowElement.style.height = "300px";
-        window.Show();
-      }
-    }
+      class NGUIDpTypeEditor extends NGUITreeGrid {
+        constructor() {
+          super();
+          this.typeTree = [];
+          this.selectedType = null;
+          this.initTypeEventHandlers();
+          this.loadTypeTree();
+        }
 
-/**
- * NGUIDpTypeEditor
- * ----------------
- * Specialized tree grid for editing datapoint types (tree structures).
- * Allows creating, renaming, deleting, and managing child types.
- * Uses NGUITreeGrid for selection, tree, and UI logic.
- */
-class NGUIDpTypeEditor extends NGUITreeGrid {
-  constructor() {
-    super();
-    this.typeTree = [];
-    this.selectedType = null;
-    this.initTypeEventHandlers();
-    this.loadTypeTree();
-  }
+        initTypeEventHandlers() {
+          document.getElementById("dpTypeCreateForm").addEventListener("submit", this.onCreateType.bind(this));
+          document.getElementById("dpTypeDeleteBtn").addEventListener("click", this.onDeleteType.bind(this));
+          document.getElementById("dpTypeAddChildBtn").addEventListener("click", this.onAddChildType.bind(this));
+          document.getElementById("dpTypeRenameBtn").addEventListener("click", this.onRenameType.bind(this));
+          ['filterTypeName', 'filterTypeType', 'filterTypeChildren'].forEach(id => {
+            document.getElementById(id).addEventListener('input', this.applyTableFilters.bind(this));
+          });
+        }
 
-  initTypeEventHandlers() {
-    document.getElementById("dpTypeCreateForm").addEventListener("submit", this.onCreateType.bind(this));
-    document.getElementById("dpTypeDeleteBtn").addEventListener("click", this.onDeleteType.bind(this));
-    document.getElementById("dpTypeAddChildBtn").addEventListener("click", this.onAddChildType.bind(this));
-    document.getElementById("dpTypeRenameBtn").addEventListener("click", this.onRenameType.bind(this));
-    ['filterTypeName', 'filterTypeType', 'filterTypeChildren'].forEach(id => {
-      document.getElementById(id).addEventListener('input', this.applyTableFilters.bind(this));
-    });
-  }
+        loadTypeTree() {
+          // Demo data: Replace with backend fetch if needed
+          this.typeTree = [
+            {
+              name: "RootType", type: "struct", parent: null, children: [
+                { name: "ChildType1", type: "number", parent: "RootType", children: [] },
+                {
+                  name: "ChildType2", type: "string", parent: "RootType", children: [
+                    { name: "SubChildType", type: "boolean", parent: "ChildType2", children: [] }
+                  ]
+                }
+              ]
+            }
+          ];
+          this.renderTypeTree();
+        }
 
-  loadTypeTree() {
-    // Demo data: Replace with backend fetch if needed
-    this.typeTree = [
-      { name: "RootType", type: "struct", parent: null, children: [
-        { name: "ChildType1", type: "number", parent: "RootType", children: [] },
-        { name: "ChildType2", type: "string", parent: "RootType", children: [
-          { name: "SubChildType", type: "boolean", parent: "ChildType2", children: [] }
-        ]}
-      ]}
-    ];
-    this.renderTypeTree();
-  }
+        /**
+         * Baut aus einer flachen Typenliste eine Baumstruktur und rendert das Grid.
+         * Erwartet: [{name, type, parent, ...}, ...]
+         */
+        setTypeTreeFromFlatList(types) {
+          this.typeTree = types;
+          this.renderTypeTree();
+        }
 
-    /**
-     * Baut aus einer flachen Typenliste eine Baumstruktur und rendert das Grid.
-     * Erwartet: [{name, type, parent, ...}, ...]
-     */
-    setTypeTreeFromFlatList(types) {
-      this.typeTree = types;
-      this.renderTypeTree();
-    }  
-
-  renderTypeTree() {
-    const tbody = document.getElementById("typeTreeOutput");
-    tbody.innerHTML = "";
-    const render = (type, level = 0, parentId = "") => {
-      const rowId = "TYPE_" + type.name;
-      const hasChildren = type.children && type.children.length > 0;
-      const padding = 20 * level;
-      let toggle = hasChildren
-        ? `<span class="toggle-btn cursor-pointer select-none" data-target="${rowId}" data-state="closed">&#9654;</span>`
-        : `<span class="select-none" data-state="closed">&#9679;</span>`;
-      let childrenNames = type.children.map(child => child.name).join(", ");
-      tbody.innerHTML += `
+        renderTypeTree() {
+          const tbody = document.getElementById("typeTreeOutput");
+          tbody.innerHTML = "";
+          const render = (type, level = 0, parentId = "") => {
+            const rowId = "TYPE_" + type.name;
+            const hasChildren = type.children && type.children.length > 0;
+            const padding = 20 * level;
+            let toggle = hasChildren
+              ? `<span class="toggle-btn cursor-pointer select-none" data-target="${rowId}" data-state="closed">&#9654;</span>`
+              : `<span class="select-none" data-state="closed">&#9679;</span>`;
+            let childrenNames = type.children.map(child => child.name).join(", ");
+            tbody.innerHTML += `
         <tr id="${rowId}" data-type-name="${type.name}" data-type-type="${type.type || ''}" data-type-children="${childrenNames}" data-parent="${parentId}" style="${level > 0 ? 'display:none;' : ''}">
           <td class="border border-gray-300 px-4 py-1" style="padding-left:${padding}px;">
             ${toggle} ${type.name}
@@ -735,169 +801,169 @@ class NGUIDpTypeEditor extends NGUITreeGrid {
           </td>
         </tr>
       `;
-      if (hasChildren) type.children.forEach(child => render(child, level + 1, rowId));
-    };
-    this.typeTree.forEach(type => render(type));
-    this.enableRowSelection();
-    //this.enableTreeToggle("#typeTreeOutput");
-    this.applyTableFilters();
-  }
+            if (hasChildren) type.children.forEach(child => render(child, level + 1, rowId));
+          };
+          this.typeTree.forEach(type => render(type));
+          this.enableRowSelection();
+          //this.enableTreeToggle("#typeTreeOutput");
+          this.applyTableFilters();
+        }
 
-  onCreateType(e) {
-    e.preventDefault();
-    const name = document.getElementById("dpTypeName").value.trim();
-    if (!name) return;
-    // Prompt for type
-    const type = prompt("Type for new datapoint type:", "struct") || "struct";
-    this.typeTree.push({ name, type, parent: null, children: [] });
-    document.getElementById("dpTypeName").value = "";
-    this.renderTypeTree();
-  }
+        onCreateType(e) {
+          e.preventDefault();
+          const name = document.getElementById("dpTypeName").value.trim();
+          if (!name) return;
+          // Prompt for type
+          const type = prompt("Type for new datapoint type:", "struct") || "struct";
+          this.typeTree.push({ name, type, parent: null, children: [] });
+          document.getElementById("dpTypeName").value = "";
+          this.renderTypeTree();
+        }
 
-  selectType(typeName) {
-    this.selectedType = this.findTypeByName(typeName, this.typeTree);
-    document.getElementById("selectedTypeName").textContent = typeName;
-    document.getElementById("dpTypeDeleteBtn").style.display = "inline-block";
-    document.getElementById("dpTypeAddChildBtn").style.display = "inline-block";
-    document.getElementById("dpTypeRenameBtn").style.display = "inline-block";
-    document.querySelectorAll("#typeTreeOutput tr").forEach(tr => {
-      tr.classList.toggle("selected-row", tr.getAttribute("data-type-name") === typeName);
-    });
-  }
-
-  onDeleteType() {
-    if (!this.selectedType) return;
-    this.deleteTypeByName(this.selectedType.name, this.typeTree);
-    this.selectedType = null;
-    document.getElementById("selectedTypeName").textContent = "";
-    document.getElementById("dpTypeDeleteBtn").style.display = "none";
-    document.getElementById("dpTypeAddChildBtn").style.display = "none";
-    document.getElementById("dpTypeRenameBtn").style.display = "none";
-    this.renderTypeTree();
-  }
-
-  onAddChildType() {
-    if (!this.selectedType) return;
-    const childName = prompt("Child type name:");
-    if (!childName) return;
-    const childType = prompt("Type for child:", "struct") || "struct";
-    if (!this.selectedType.children) this.selectedType.children = [];
-    this.selectedType.children.push({ name: childName, type: childType, parent: this.selectedType.name, children: [] });
-    this.renderTypeTree();
-  }
-
-  onRenameType() {
-    if (!this.selectedType) return;
-    const newName = prompt("New type name:", this.selectedType.name);
-    if (!newName || newName === this.selectedType.name) return;
-    this.renameType(this.selectedType.name, newName, this.typeTree);
-    this.selectedType = this.findTypeByName(newName, this.typeTree);
-    document.getElementById("selectedTypeName").textContent = newName;
-    this.renderTypeTree();
-  }
-
-  findTypeByName(name, tree) {
-    for (const type of tree) {
-      if (type.name === name) return type;
-      if (type.children) {
-        const found = this.findTypeByName(name, type.children);
-        if (found) return found;
-      }
-    }
-    return null;
-  }
-
-  deleteTypeByName(name, tree) {
-    for (let i = 0; i < tree.length; i++) {
-      if (tree[i].name === name) {
-        tree.splice(i, 1);
-        return true;
-      }
-      if (tree[i].children && this.deleteTypeByName(name, tree[i].children)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  renameType(oldName, newName, tree) {
-    for (const type of tree) {
-      if (type.name === oldName) {
-        type.name = newName;
-        if (type.children) {
-          type.children.forEach(child => {
-            if (child.parent === oldName) child.parent = newName;
+        selectType(typeName) {
+          this.selectedType = this.findTypeByName(typeName, this.typeTree);
+          document.getElementById("selectedTypeName").textContent = typeName;
+          document.getElementById("dpTypeDeleteBtn").style.display = "inline-block";
+          document.getElementById("dpTypeAddChildBtn").style.display = "inline-block";
+          document.getElementById("dpTypeRenameBtn").style.display = "inline-block";
+          document.querySelectorAll("#typeTreeOutput tr").forEach(tr => {
+            tr.classList.toggle("selected-row", tr.getAttribute("data-type-name") === typeName);
           });
         }
+
+        onDeleteType() {
+          if (!this.selectedType) return;
+          this.deleteTypeByName(this.selectedType.name, this.typeTree);
+          this.selectedType = null;
+          document.getElementById("selectedTypeName").textContent = "";
+          //document.getElementById("dpTypeDeleteBtn").style.display = "none";
+          document.getElementById("dpTypeAddChildBtn").style.display = "none";
+          document.getElementById("dpTypeRenameBtn").style.display = "none";
+          this.renderTypeTree();
+        }
+
+        onAddChildType() {
+          if (!this.selectedType) return;
+          const childName = prompt("Child type name:");
+          if (!childName) return;
+          const childType = prompt("Type for child:", "struct") || "struct";
+          if (!this.selectedType.children) this.selectedType.children = [];
+          this.selectedType.children.push({ name: childName, type: childType, parent: this.selectedType.name, children: [] });
+          this.renderTypeTree();
+        }
+
+        onRenameType() {
+          if (!this.selectedType) return;
+          const newName = prompt("New type name:", this.selectedType.name);
+          if (!newName || newName === this.selectedType.name) return;
+          this.renameType(this.selectedType.name, newName, this.typeTree);
+          this.selectedType = this.findTypeByName(newName, this.typeTree);
+          document.getElementById("selectedTypeName").textContent = newName;
+          this.renderTypeTree();
+        }
+
+        findTypeByName(name, tree) {
+          for (const type of tree) {
+            if (type.name === name) return type;
+            if (type.children) {
+              const found = this.findTypeByName(name, type.children);
+              if (found) return found;
+            }
+          }
+          return null;
+        }
+
+        deleteTypeByName(name, tree) {
+          for (let i = 0; i < tree.length; i++) {
+            if (tree[i].name === name) {
+              tree.splice(i, 1);
+              return true;
+            }
+            if (tree[i].children && this.deleteTypeByName(name, tree[i].children)) {
+              return true;
+            }
+          }
+          return false;
+        }
+
+        renameType(oldName, newName, tree) {
+          for (const type of tree) {
+            if (type.name === oldName) {
+              type.name = newName;
+              if (type.children) {
+                type.children.forEach(child => {
+                  if (child.parent === oldName) child.parent = newName;
+                });
+              }
+            }
+            if (type.children) {
+              this.renameType(oldName, newName, type.children);
+            }
+          }
+        }
+
+        // Filter logic for the type table
+        applyTableFilters() {
+          const nameFilter = document.getElementById('filterTypeName').value.toLowerCase();
+          const typeFilter = document.getElementById('filterTypeType').value.toLowerCase();
+          const childrenFilter = document.getElementById('filterTypeChildren').value.toLowerCase();
+          document.querySelectorAll('#typeTreeOutput tr').forEach(row => {
+            const typeName = row.getAttribute('data-type-name')?.toLowerCase() || "";
+            const typeType = row.getAttribute('data-type-type')?.toLowerCase() || "";
+            const typeChildren = row.getAttribute('data-type-children')?.toLowerCase() || "";
+            let show = true;
+            if (nameFilter && !typeName.includes(nameFilter)) show = false;
+            if (typeFilter && !typeType.includes(typeFilter)) show = false;
+            if (childrenFilter && !typeChildren.includes(childrenFilter)) show = false;
+            row.style.display = show ? "" : "none";
+          });
+        }
+
+        updateSelection() {
+          // Optional: implement selection logic if needed
+        }
       }
-      if (type.children) {
-        this.renameType(oldName, newName, type.children);
-      }
-    }
-  }
 
-  // Filter logic for the type table
-  applyTableFilters() {
-    const nameFilter = document.getElementById('filterTypeName').value.toLowerCase();
-    const typeFilter = document.getElementById('filterTypeType').value.toLowerCase();
-    const childrenFilter = document.getElementById('filterTypeChildren').value.toLowerCase();
-    document.querySelectorAll('#typeTreeOutput tr').forEach(row => {
-      const typeName = row.getAttribute('data-type-name')?.toLowerCase() || "";
-      const typeType = row.getAttribute('data-type-type')?.toLowerCase() || "";
-      const typeChildren = row.getAttribute('data-type-children')?.toLowerCase() || "";
-      let show = true;
-      if (nameFilter && !typeName.includes(nameFilter)) show = false;
-      if (typeFilter && !typeType.includes(typeFilter)) show = false;
-      if (childrenFilter && !typeChildren.includes(childrenFilter)) show = false;
-      row.style.display = show ? "" : "none";
-    });
-  }
+      // Make instance globally available for button onclicks
+      //window.dpTypeEditor = new NGUIDpTypeEditor();    
 
-  updateSelection() {
-    // Optional: implement selection logic if needed
-  }
-}
+      // Make instance globally available for SVG onclick
+      window.browser = new NGUIDpBrowser();
 
-// Make instance globally available for button onclicks
-//window.dpTypeEditor = new NGUIDpTypeEditor();    
+      // Tab switching logic
 
-    // Make instance globally available for SVG onclick
-    window.browser = new NGUIDpBrowser();
+      document.addEventListener("DOMContentLoaded", function () {
+        const tabDatapoints = document.getElementById("tabDatapoints");
+        const tabDatapointTypes = document.getElementById("tabDatapointTypes");
+        const editor = document.getElementById("DatapointEditor");
+        const typeEditor = document.getElementById("DatapointTypeEditor");
 
-  // Tab switching logic
-  
-  document.addEventListener("DOMContentLoaded", function () {
-    const tabDatapoints = document.getElementById("tabDatapoints");
-    const tabDatapointTypes = document.getElementById("tabDatapointTypes");
-    const editor = document.getElementById("DatapointEditor");
-    const typeEditor = document.getElementById("DatapointTypeEditor");
+        function showDatapoints() {
+          tabDatapoints.classList.add("border-b-2", "border-blue-500", "text-blue-600");
+          tabDatapoints.classList.remove("hover:text-blue-600");
+          tabDatapointTypes.classList.remove("border-b-2", "border-blue-500", "text-blue-600");
+          tabDatapointTypes.classList.add("hover:text-blue-600");
+          editor.style.display = "block";
+          typeEditor.style.display = "none";
+        }
 
-    function showDatapoints() {
-      tabDatapoints.classList.add("border-b-2", "border-blue-500", "text-blue-600");
-      tabDatapoints.classList.remove("hover:text-blue-600");
-      tabDatapointTypes.classList.remove("border-b-2", "border-blue-500", "text-blue-600");
-      tabDatapointTypes.classList.add("hover:text-blue-600");
-      editor.style.display = "block";
-      typeEditor.style.display = "none";
-    }
+        function showDatapointTypes() {
+          tabDatapointTypes.classList.add("border-b-2", "border-blue-500", "text-blue-600");
+          tabDatapointTypes.classList.remove("hover:text-blue-600");
+          tabDatapoints.classList.remove("border-b-2", "border-blue-500", "text-blue-600");
+          tabDatapoints.classList.add("hover:text-blue-600");
+          editor.style.display = "none";
+          typeEditor.style.display = "block";
+        }
 
-    function showDatapointTypes() {
-      tabDatapointTypes.classList.add("border-b-2", "border-blue-500", "text-blue-600");
-      tabDatapointTypes.classList.remove("hover:text-blue-600");
-      tabDatapoints.classList.remove("border-b-2", "border-blue-500", "text-blue-600");
-      tabDatapoints.classList.add("hover:text-blue-600");
-      editor.style.display = "none";
-      typeEditor.style.display = "block";
-    }
+        tabDatapoints.addEventListener("click", showDatapoints);
+        tabDatapointTypes.addEventListener("click", showDatapointTypes);
 
-    tabDatapoints.addEventListener("click", showDatapoints);
-    tabDatapointTypes.addEventListener("click", showDatapointTypes);
+        // Initial state
+        showDatapoints();
+      });
 
-    // Initial state
-    showDatapoints();
-  });    
-
-  </script>
+    </script>
 </body>
 
 </html>

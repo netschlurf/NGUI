@@ -1,5 +1,8 @@
 const IME_DBHandler = require('./IME_DBHandler');
 
+// Unterdrücke console.error-Ausgaben in allen Tests:
+jest.spyOn(console, 'error').mockImplementation(() => {});
+
 describe('IME_DBHandler', () => {
   let dbMock, handler, wsMock, sendResponseSpy;
 
@@ -29,9 +32,9 @@ describe('IME_DBHandler', () => {
   describe('OnHandle', () => {
     it('should dispatch to the correct command handler and return true', () => {
       const msg = { cmd: 'DpGet', args: { dpName: 'foo' } };
-      handler.DpGet = jest.fn();
-      expect(handler.OnHandle(wsMock, msg)).toBe(true);
-      expect(handler.DpGet).toHaveBeenCalledWith(msg, wsMock);
+handler.commandMap.DpGet = jest.fn();
+expect(handler.OnHandle(wsMock, msg)).toBe(true);
+expect(handler.commandMap.DpGet).toHaveBeenCalledWith(msg, wsMock);
     });
 
     it('should return false for unknown command', () => {

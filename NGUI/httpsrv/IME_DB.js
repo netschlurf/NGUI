@@ -25,10 +25,11 @@ class IME_DB {
   DpTypeCreate(name, description) { throw new Error('DpTypeCreate method must be implemented by subclass'); }
   DpTypeDelete(typeName) { throw new Error('DpTypeDelete method must be implemented by subclass'); }
 
-  isValidDpName(name) {
-    if (!name || typeof name !== 'string') return false;
-    return /^[a-zA-Z0-9_.-]+$/.test(name);
-  }
+isValidDpName(name) {
+  if (!name || typeof name !== 'string') return false;
+  // Nur Buchstaben, Zahlen, Unterstrich und Bindestrich sind erlaubt, KEIN Punkt!
+  return /^[a-zA-Z0-9_-]+$/.test(name);
+}
 
 sanitizeDpName(name) {
   if (!name || typeof name !== 'string') return 'default_dp';
@@ -170,22 +171,48 @@ Connect() {
     }
   }
 
-  DpRename(dpName, newName) {
-      // Benennt einen Datenpunkt um
-      const stmt = this.#db.prepare('UPDATE DataPoints SET name = ? WHERE name = ?');
-      const result = stmt.run(newName, dpName);
+DpRename(dpName, newName) {
+    if (!this.isValidDpName(newName)) {
+      throw new Error(`Invalid typeName '${newName}': Only letters, numbers, '-', and '_' are allowed`);
+    }
+    // Prüfen ob der neue Name schon existiert (nur auf Root-Ebene!)
+    if (this.#dpIdentificationTable.has(newName)) {
+      throw new Error(`DataPoint '${newName}' already exists`);
+    }
+    // Hole das Entry
+    const entry = this.#dpIdentificationTable.get(dpName);
+    if (!entry) return { oldName: dpName, newName, changes: 0 };
 
-      // Cache aktualisieren:
-      if (result.changes > 0) {
-          // Finde alten Eintrag im Cache
-          const entry = this.#dpIdentificationTable.get(dpName);
-          if (entry) {
-              this.#dpIdentificationTable.delete(dpName);
-              this.#dpIdentificationTable.set(newName, { ...entry });
-          }
-      }
-      return { oldName: dpName, newName: newName, changes: result.changes };
-  }
+    // Nur Root-DPs erlauben
+    if (dpName.includes('.')) {
+        throw new Error('Nur Root-Datenpunkte dürfen umbenannt werden!');
+    }
+
+    // Hole alle Children rekursiv (alte Pfade)
+    const oldPaths = [];
+    for (const path of this.#dpIdentificationTable.keys()) {
+        if (path === dpName || path.startsWith(dpName + '.')) {
+            oldPaths.push(path);
+        }
+    }
+
+    // Benenne Root in DB um
+    const stmt = this.#db.prepare('UPDATE DataPoints SET name = ? WHERE name = ? AND parent_id IS NULL');
+    const result = stmt.run(newName, dpName);
+
+    // Cache: Alle alten Pfade entfernen und mit neuen Namen wieder eintragen
+    const updates = [];
+    for (const oldPath of oldPaths) {
+        const relPath = oldPath === dpName ? '' : oldPath.substring(dpName.length + 1);
+        const newPath = relPath ? (newName + '.' + relPath) : newName;
+        const entry = this.#dpIdentificationTable.get(oldPath);
+        this.#dpIdentificationTable.delete(oldPath);
+        this.#dpIdentificationTable.set(newPath, entry);
+        updates.push({ oldPath, newPath });
+    }
+
+    return { oldName: dpName, newName, changes: result.changes, updates };
+}
 
   DpTypeCreate(name, description) {
     if (!this.isValidDpName(name)) {
@@ -246,10 +273,11 @@ Connect() {
     }
   }
 
-  DpCreate(dpName, dpTypeName) {
+DpCreate(dpName, dpTypeName) {
     if (!this.isValidDpName(dpName)) {
       throw new Error(`Invalid dpName '${dpName}'`);
     }
+    // Prüfen ob der Name schon existiert
     if (this.DpExists(dpName)) {
       throw new Error(`DataPoint '${dpName}' already exists`);
     }
@@ -263,7 +291,7 @@ Connect() {
     });
     transaction();
     return result;
-  }
+}
 
   #createDataPoint(dpName, dpTypeName, pathPrefix, parentId = null, isTopLevel = false) {
     const typeEntry = this.#dpTypeIdentificationTable.get(dpTypeName);
