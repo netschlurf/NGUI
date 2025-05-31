@@ -87,6 +87,7 @@ class NGUIConnection {
         cb.callback = callback;
         this.callBacks.push(cb);
         this.Connection.send(JSON.stringify(msg));
+        return cb.tok; // Return the token for reference
     }
 
     Log(str, lvl) {
@@ -122,6 +123,11 @@ class NGUIConnection {
                 for (var i = 0; i < this.callBacks.length; i++) {
                     if (rcv.tok == this.callBacks[i].tok) {
                         rcv.target = this.callBacks[i].target;
+                        if(this.callBacks[i].callback === undefined) {
+                            this.callBacks.splice(i, 1);
+                            continue;
+                        }
+
                         this.callBacks[i].callback(rcv);
                         if (!this.callBacks[i].persistent) {
                             this.callBacks.splice(i, 1);
@@ -476,13 +482,13 @@ class IME_DBClient {
         this.Connection.SendCustomCommand("DpSet", request, callback);
     }
 
-    OnDpConnect(rcv) {
-        if (rcv.data.rc == 200) {
-            if (this.DpConnectionTable.has(rcv.data.dpName)) {
-                var callbacks = this.DpConnectionTable.get(rcv.data.dpName);
-                for (var i = 0; i < callbacks.length; i++) {
-                    callbacks[i](rcv);
-                }
+OnDpConnect(rcv) {
+    // Einzel-DP-Antwort (altes Format)
+    if (rcv.data && !Array.isArray(rcv.data) ) {
+        if (this.DpConnectionTable.has(rcv.data.dpName)) {
+            var callbacks = this.DpConnectionTable.get(rcv.data.dpName);
+            for (var i = 0; i < callbacks.length; i++) {
+                callbacks[i](rcv);
             }
         }
         var obj = null;
@@ -492,7 +498,6 @@ class IME_DBClient {
             obj = rcv.data.data;
 
         if (obj) {
-            // Alle Keys durchgehen und prüfen, ob sie in obj.dpName enthalten sind (Substring-Match)
             for (let [key, callbacks] of this.DpConnectionTable.entries()) {
                 if (obj.dpName && obj.dpName.includes(key)) {
                     for (let i = 0; i < callbacks.length; i++) {
@@ -501,50 +506,93 @@ class IME_DBClient {
                 }
             }
         }
+        return;
     }
 
-    OnDpDisconnect(rcv) {
-        if (rcv.data.rc == 200) {
-            return; // connection confirmation good
-        }
-        if (this.DpConnectionTable.has(rcv.data.data.dpName)) {
-            var callbacks = this.DpConnectionTable.get(rcv.data.data.dpName);
-            for (var i = 0; i < callbacks.length; i++) {
-                callbacks[i](rcv.data);
-            }
-        }
-    }
-
-    DpConnect(dpName, callback) {
-        if (this.DpConnectionTable.has(dpName)) {
-            this.DpConnectionTable.get(dpName).push(callback);
-            return;
-        }
-        else {
-            var dpCallbacks = new Array();
-            dpCallbacks.push(callback);
-            this.DpConnectionTable.set(dpName, dpCallbacks);
-            const request = { dpName: dpName };
-            this.Connection.SendCustomCommand("DpConnect", request, this.OnDpConnect.bind(this), true);
-        }
-    }
-
-    DpDisconnect(dpName, callback) {
-        const request = { dpName: dpName };
-        if (this.DpConnectionTable.has(dpName)) {
-            if (this.DpConnectionTable.get(dpName).length > 0) {
-                var callbacks = this.DpConnectionTable.get(dpName);
+    // Mehrfach-DP-Antwort (neues Format)
+    if (Array.isArray(rcv.data)) {
+        for (const dpObj of rcv.data) {
+            // Callback für exakten dpName
+            if (this.DpConnectionTable.has(dpObj.dpName)) {
+                var callbacks = this.DpConnectionTable.get(dpObj.dpName);
                 for (var i = 0; i < callbacks.length; i++) {
-                    if (callbacks[i] == callback) {
-                        callbacks.splice(i, 1);
-                        break;
+                    callbacks[i]({ data: dpObj });
+                }
+            }
+            // Substring-Match wie bisher
+            for (let [key, callbacks] of this.DpConnectionTable.entries()) {
+                if (dpObj.dpName && dpObj.dpName.includes(key)) {
+                    for (let i = 0; i < callbacks.length; i++) {
+                        callbacks[i](dpObj);
                     }
                 }
             }
         }
-        if (this.DpConnectionTable.has(dpName) && this.DpConnectionTable.get(dpName).length == 0) {
+    }
+}
+
+DpDisconnect(dpName, callback, tok) {
+    if (Array.isArray(dpName)) {
+        // Callbacks für alle Namen entfernen
+        for (const name of dpName) {
+            if (this.DpConnectionTable.has(name)) {
+                let callbacks = this.DpConnectionTable.get(name);
+                
+                for(var i=0;i<callbacks.length;i++) {
+                    if (callbacks[i] === callback) {
+                        callbacks.splice(i, 1);
+                        break; // Callback gefunden und entfernt, Schleife beenden
+                    }
+                }
+                for(var i=0;i<this.Connection.callBacks.length;i++) {
+                    if (this.Connection.callBacks[i].tok === tok) {
+                        this.Connection.callBacks.splice(i, 1);
+                        break; // Callback gefunden und entfernt, Schleife beenden
+                    }
+                }                
+                if (callbacks.length === 0) {
+                    const request = { dpName: dpName };
+                    this.Connection.SendCustomCommand("DpDisconnect", request, this.OnDpDisconnect, true)
+                }
+            }
+        }
+        return;
+    }
+    const request = { dpName: dpName };
+    if (this.DpConnectionTable.has(dpName)) {
+        let callbacks = this.DpConnectionTable.get(dpName);
+        callbacks = callbacks.filter(cb => cb !== callback);
+        if (callbacks.length === 0) {
             this.DpConnectionTable.delete(dpName);
             this.Connection.SendCustomCommand("DpDisconnect", request, this.OnDpDisconnect.bind(this), true);
+        } else {
+            this.DpConnectionTable.set(dpName, callbacks);
+        }
+    }
+}
+
+    DpConnect(dpName, callback) {
+        if (Array.isArray(dpName)) {
+            // Callback für jeden Namen eintragen
+            for (const name of dpName) {
+                if (this.DpConnectionTable.has(name)) {
+                    this.DpConnectionTable.get(name).push(callback);
+                } else {
+                    this.DpConnectionTable.set(name, [callback]);
+                }
+            }
+            // EINEN Multi-Request senden!
+            const request = { dpName: dpName };
+            return this.Connection.SendCustomCommand("DpConnect", request, this.OnDpConnect.bind(this), true);
+        }
+        // Einzel-DP wie gehabt
+        if (this.DpConnectionTable.has(dpName)) {
+            this.DpConnectionTable.get(dpName).push(callback);
+            return -1;
+        } else {
+            this.DpConnectionTable.set(dpName, [callback]);
+            const request = { dpName: dpName };
+            return this.Connection.SendCustomCommand("DpConnect", request, this.OnDpConnect.bind(this), true);
         }
     }
 

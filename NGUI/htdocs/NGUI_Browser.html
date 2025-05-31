@@ -260,6 +260,7 @@
           this.g_DB = this.g_NGUI.GetDbClient();
           this.sortState = { col: null, dir: 1 }; // dir: 1 = absteigend, -1 = aufsteigend
           this.initDpEventHandlers();
+          this.currentDpConnects =[];
         }
 
       // 1. Toggle-Handler (angepasst für Virtualisierung)
@@ -328,10 +329,11 @@ onToggleExpand(fullPath) {
   var h = rowHeight * firstRow + "px";
   html += `<tr style='height: ${h}'><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>`;
   html += this.renderDpRows(visibleRows);
+  
   h = rowHeight * (totalRows - lastRow) + "px";
   html += `<tr style='height: ${h}'><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>`;
   document.getElementById("logOutput").innerHTML = html;
-
+  this.g_NGUI.RenderDpConnectElements();
   // Event-Handler für Chevron
   document.querySelectorAll('.toggle-btn').forEach(btn => {
     btn.onclick = (e) => {
@@ -471,58 +473,73 @@ sortTree(nodes, col, dir) {
          * Render all datapoint rows recursively (tree structure).
          */
         renderDpRows(rows) {
-  let html = "";
-  for (const { dp, level, fullPath } of rows) {
-    const rowId = "ROW_" + fullPath;
-    const hasChildren = dp.children && dp.children.length > 0;
-    const padding = 20 * level;
-    let dpTypeText = dp.DpType;
-    if (dp.valueType) dpTypeText = this.DpTypeReverse[dp.valueType];
-    const chevronRight = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
-    const chevronDown = `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
-    const chevronCircle = `<svg class="lucide lucide-dot inline w-3 h-3 align-middle" fill="currentColor" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /></svg>`;
-    let toggle = hasChildren
-      ? `<span class="toggle-btn cursor-pointer select-none" data-target="${rowId}" data-state="${dp.expanded ? "open" : "closed"}">${dp.expanded ? chevronDown : chevronRight}</span>`
-      : `<span class="select-none" data-state="closed">${chevronCircle}</span>`;
-    html += `<tr id="${rowId}" 
-                  class="log-entry" 
-                  data-dpname="${fullPath}" 
-                  data-dptype="${dpTypeText}"
-                  data-value=""
-                  data-timestamp=""
-                  data-level="DpName">
-      <td class="border border-gray-300 px-4 py-1 text-black-500" 
-          id="NAME_${fullPath}" 
-          style="padding-left:${padding}px;">
-        ${toggle} ${dp.DpName}
-      </td>
-      <td class="border border-gray-300 px-4 py-1 text-green-500">${dpTypeText}</td>
-      <td class="border border-gray-300 px-4 py-1" id="VALUE_${fullPath}"></td>
-      <td class="border border-gray-300 px-4 py-1 text-gray-500" id="TS_${fullPath}"></td>
-      <td class="border border-gray-300 px-4 py-1 text-gray-600 text-center">
-        <svg xmlns="http://www.w3.org/2000/svg"
-          class="lucide lucide-sliders-horizontal inline w-5 h-5 cursor-pointer hover:text-blue-500"
-          fill="none" viewBox="0 0 24 24" stroke="currentColor"
-          onclick="browser.onDpSettings('${fullPath}')">
-          <line x1="21" y1="6" x2="3" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <line x1="21" y1="18" x2="7" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          <circle cx="6" cy="6" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
-          <circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
-          <circle cx="6" cy="18" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
-        </svg>
-      </td>
-    </tr>`;
-  }
-  // Optional: DpConnect-Logik ggf. anpassen/entfernen, falls nicht mehr benötigt
-  return html;
-}
+          let html = "";
+          for (const { dp, level, fullPath } of rows) {
+            const rowId = "ROW_" + fullPath;
+            const hasChildren = dp.children && dp.children.length > 0;
+            const padding = 20 * level;
+            let dpTypeText = dp.DpType;
+            if (dp.valueType) dpTypeText = this.DpTypeReverse[dp.valueType];
+            const chevronRight = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
+            const chevronDown = `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
+            const chevronCircle = `<svg class="lucide lucide-dot inline w-3 h-3 align-middle" fill="currentColor" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /></svg>`;
+
+            
+            let toggle = hasChildren
+              ? `<span class="toggle-btn cursor-pointer select-none" data-target="${rowId}" data-state="${dp.expanded ? "open" : "closed"}">${dp.expanded ? chevronDown : chevronRight}</span>`
+              : `<span class="select-none" data-state="closed">${chevronCircle}</span>`;
+            html += `<tr id="${rowId}" 
+                          class="log-entry" 
+                          data-dpname="${fullPath}" 
+                          data-dptype="${dpTypeText}"
+                          data-value=""
+                          data-timestamp=""
+                          data-level="DpName">
+              <td class="border border-gray-300 px-4 py-1 text-black-500" 
+                  id="NAME_${fullPath}" 
+                  style="padding-left:${padding}px;">
+                ${toggle} ${dp.DpName}
+              </td>
+              <td class="border border-gray-300 px-4 py-1 text-green-500">${dpTypeText}</td>
+              <td class="border border-gray-300 px-4 py-1" id="VALUE_${fullPath}"></td>
+              <td class="border border-gray-300 px-4 py-1 text-gray-500" id="TS_${fullPath}"></td>
+              <td class="border border-gray-300 px-4 py-1 text-gray-600 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                  class="lucide lucide-sliders-horizontal inline w-5 h-5 cursor-pointer hover:text-blue-500"
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                  onclick="browser.onDpSettings('${fullPath}')">
+                  <line x1="21" y1="6" x2="3" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <line x1="21" y1="18" x2="7" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <circle cx="6" cy="6" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
+                  <circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
+                  <circle cx="6" cy="18" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
+                </svg>
+              </td>
+            </tr>`;
+          }
+          // Optional: DpConnect-Logik ggf. anpassen/entfernen, falls nicht mehr benötigt
+          
+          if(this.currentDpConnects.length)
+            this.g_DB.DpDisconnect(this.currentDpConnects, this.localCB, this.localCBTok);
+          var connectNames = new Array();
+          for(var i=0;i<rows.length;i++)
+          {
+            var name = rows[i].fullPath;
+            if(!name.includes("."))
+              connectNames.push(name);
+          }
+          this.localCB = this.onDpConnect.bind(this);
+          this.localCBTok = this.g_DB.DpConnect(connectNames, this.localCB);
+          this.currentDpConnects = connectNames;
+          return html;
+        }
 
         /**
          * Called when a datapoint value update is received from backend.
          */
         onDpConnect(rcv) {
-          if (!rcv.cmd && rcv.data) {
+          if (rcv.data) {
             this.updateValues(rcv.data.dpName, rcv.data.value);
           }
         }
