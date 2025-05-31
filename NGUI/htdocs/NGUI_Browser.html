@@ -145,31 +145,28 @@
       <!-- Log Table -->
       <table
         class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse border-width:2px;">
-        <thead class="bg-gray-200 text-gray-600 uppercase">
-          <tr>
-            <th class="px-4 py-2 border border-gray-300" onclick="OnSort('DpName')">
-              DpName<br>
-              <input type="text" id="filterDpName" class="w-full px-1 py-0.5 border rounded text-xs"
-                placeholder="Filter...">
-            </th>
-            <th class="px-4 py-2 border border-gray-300">
-              DpType<br>
-              <input type="text" id="filterDpType" class="w-full px-1 py-0.5 border rounded text-xs"
-                placeholder="Filter...">
-            </th>
-            <th class="px-4 py-2 border border-gray-300">
-              Value<br>
-              <input type="text" id="filterValue" class="w-full px-1 py-0.5 border rounded text-xs"
-                placeholder="Filter...">
-            </th>
-            <th class="px-4 py-2 border border-gray-300">
-              timestamp<br>
-              <input type="text" id="filterTsFrom" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="von">
-              <input type="text" id="filterTsTo" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="bis">
-            </th>
-            <th class="px-4 py-2 border border-gray-300">Config</th>
-          </tr>
-        </thead>
+          <thead class="bg-gray-200 text-gray-600 uppercase">
+            <tr>
+              <th class="px-4 py-2 border border-gray-300 cursor-pointer" onclick="browser.OnSort('DpName')">
+                DpName<span id="sortIcon_DpName"></span><br>
+                <input type="text" id="filterDpName" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
+              </th>
+              <th class="px-4 py-2 border border-gray-300 cursor-pointer" onclick="browser.OnSort('DpType')">
+                DpType<span id="sortIcon_DpType"></span><br>
+                <input type="text" id="filterDpType" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
+              </th>
+              <th class="px-4 py-2 border border-gray-300 cursor-pointer" onclick="browser.OnSort('Value')">
+                Value<span id="sortIcon_Value"></span><br>
+                <input type="text" id="filterValue" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
+              </th>
+              <th class="px-4 py-2 border border-gray-300 cursor-pointer" onclick="browser.OnSort('timestamp')">
+                timestamp<span id="sortIcon_timestamp"></span><br>
+                <input type="text" id="filterTsFrom" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="von">
+                <input type="text" id="filterTsTo" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="bis">
+              </th>
+              <th class="px-4 py-2 border border-gray-300">Config</th>
+            </tr>
+          </thead>
         <tbody id="logOutput" class="bg-white odd:bg-gray-50 even:bg-white" "></tbody>
   </table>
     </div>
@@ -229,61 +226,11 @@
 
     <script>
 
-      function OnSort(col)
-      {
-        window.browser.allNames;
-        window.browser.allNames.sort((a, b) => {
-          const nameA = a.DpName.toUpperCase(); // ignore case
-          const nameB = b.DpName.toUpperCase(); // ignore case
-          if (nameA > nameB) {
-            return -1;
-          }
-          if (nameA < nameB) {
-            return 1;
-          }
-          return 0; // names must be equal
-        });   
-        window.browser.allNames;     
-      }
-
-      document.getElementById("DatapointEditor").addEventListener('scroll', () => {
-        const rowHeight = 29; // px, anpassen!
-
-        const totalRows = window.browser.allNames.length; // z.B. dein Array mit allen Datenpunkten
 
 
-        var scrollArea = document.getElementById("DatapointEditor")
-        const scrollTop = scrollArea.scrollTop;
-        const clientHeight = scrollArea.clientHeight;
 
-        const firstRow = Math.floor(scrollTop / rowHeight);
-        const lastRow = Math.min(totalRows, Math.ceil((scrollTop + clientHeight) / rowHeight));
 
-        // Slice die sichtbaren Zeilen
-        const visibleRows = window.browser.allNames.slice(firstRow, lastRow);
-        console.log(visibleRows[0].DpName,visibleRows[visibleRows.length-1].DpName)
 
-        var html = "";
-        var h = rowHeight*firstRow +"px"
-        html += `<tr style='height: ${h}'><td>&nbsp</td>
-          <td></td>
-          <td></td>
-          <td></td>
-          <td></td></tr>`
-
-        html += window.browser.renderDpRows(visibleRows)
-
-        h = rowHeight*(totalRows - lastRow) +"px"
-        html += `<tr style='height: ${h}'><td>&nbsp</td><td></td><td></td><td></td><td></td></tr>`       
-
-          document.getElementById("logOutput").innerHTML = html;
-        
-        //const totalHeight = window.browser.allNames.length * rowHeight;
-        //document.getElementById("logOutput").style.height = `${totalHeight}px`
-        //document.getElementById("logOutput").style.transform = `translateY(${firstRow * rowHeight}px)`;
-        // Baue das HTML für die sichtbaren Zeilen
-        //document.getElementById('logOutput').innerHTML = visibleRows.map(renderRow).join('');
-      });
 
       /**
        * NGUIDpBrowser
@@ -307,16 +254,43 @@
           this.DpType = { STRING: 1, NUMBER: 2, BOOLEAN: 3, STRUCT: 4 };
           this.DpTypeReverse = { 1: 'STRING', 2: 'NUMBER', 3: 'BOOLEAN', 4: 'STRUCT' };
           this.DpTypeForward = { STRING: 1, NUMBER: 2, BOOLEAN: 3, STRUCT: 4 };
-
+          this.dpConnects = new Array();
           this.g_NGUI = new NGUIClient();
           this.g_NGUI.Connect("ws://localhost:2808", this.onAppOpen.bind(this));
           this.g_DB = this.g_NGUI.GetDbClient();
-
+          this.sortState = { col: null, dir: 1 }; // dir: 1 = absteigend, -1 = aufsteigend
           this.initDpEventHandlers();
         }
 
+      // 1. Toggle-Handler (angepasst für Virtualisierung)
+onToggleExpand(fullPath) {
+  const findAndToggle = (nodes, parentPath = "") => {
+    for (const dp of nodes) {
+      const currentPath = parentPath ? parentPath + "." + dp.DpName : dp.DpName;
+      if (currentPath === fullPath) {
+        dp.expanded = !dp.expanded;
+        return true;
+      }
+      if (dp.children && findAndToggle(dp.children, currentPath)) return true;
+    }
+    return false;
+  };
+  findAndToggle(this.allNames);
+  this.OnScroll();
+}
 
-
+      // 2. Im Rendern: Nur expandierte Knoten und deren Kinder aufnehmen
+      buildVisibleRows(nodes, level = 0, parentPath = "") {
+        let rows = [];
+        for (const dp of nodes) {
+          const fullPath = parentPath ? parentPath + "." + dp.DpName : dp.DpName;
+          rows.push({ dp, level, fullPath });
+          if (dp.expanded && dp.children) {
+            rows = rows.concat(this.buildVisibleRows(dp.children, level + 1, fullPath));
+          }
+        }
+        return rows;
+      }
         /**
          * Initialize datapoint-specific event handlers (create, bulk, delete, filters).
          */
@@ -327,7 +301,110 @@
           ['filterDpName', 'filterDpType', 'filterValue', 'filterTsFrom', 'filterTsTo'].forEach(id => {
             document.getElementById(id).addEventListener('input', this.applyTableFilters.bind(this));
           });
+          document.getElementById("DatapointEditor").addEventListener('scroll', () => {
+            this.OnScroll();
+          });          
         }
+
+ OnScroll() {
+  const rowHeight = 29;
+  var scrollArea = document.getElementById("DatapointEditor");
+  const scrollTop = scrollArea.scrollTop;
+  const clientHeight = scrollArea.clientHeight;
+
+  // 1. Alle sichtbaren Zeilen (expandierte Knoten) berechnen:
+  const allVisibleRows = this.buildVisibleRows(this.allNames);
+
+  // 2. Virtualisierung: nur die sichtbaren Zeilen im Viewport berechnen
+  const totalRows = allVisibleRows.length;
+  const firstRow = Math.floor(scrollTop / rowHeight);
+  const lastRow = Math.min(totalRows, Math.ceil((scrollTop + clientHeight) / rowHeight));
+
+  // 3. Slice für den Viewport
+  const visibleRows = allVisibleRows.slice(firstRow, lastRow);
+
+  // 4. Dummy-Zeilen für Platzhalter oben/unten
+  var html = "";
+  var h = rowHeight * firstRow + "px";
+  html += `<tr style='height: ${h}'><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>`;
+  html += this.renderDpRows(visibleRows);
+  h = rowHeight * (totalRows - lastRow) + "px";
+  html += `<tr style='height: ${h}'><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>`;
+  document.getElementById("logOutput").innerHTML = html;
+
+  // Event-Handler für Chevron
+  document.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.onclick = (e) => {
+      const tr = btn.closest('tr');
+      if (!tr) return;
+      const dpName = tr.getAttribute('data-dpname');
+      if (dpName) window.browser.onToggleExpand(dpName);
+      e.stopPropagation();
+    };
+  });
+}
+
+sortTree(nodes, col, dir) {
+  nodes.sort((a, b) => {
+    let va, vb;
+    switch (col) {
+      case "DpName":
+        va = a.DpName?.toUpperCase() || "";
+        vb = b.DpName?.toUpperCase() || "";
+        break;
+      case "DpType":
+        va = a.DpType?.toUpperCase() || "";
+        vb = b.DpType?.toUpperCase() || "";
+        break;
+      case "Value":
+        va = (a.value ?? "").toString().toUpperCase();
+        vb = (b.value ?? "").toString().toUpperCase();
+        break;
+      case "timestamp":
+        va = a.tstamp || 0;
+        vb = b.tstamp || 0;
+        break;
+      default:
+        va = "";
+        vb = "";
+    }
+    if (va > vb) return -1 * dir;
+    if (va < vb) return 1 * dir;
+    return 0;
+  });
+  // Rekursiv auf Kinder anwenden
+  for (const node of nodes) {
+    if (Array.isArray(node.children) && node.children.length) {
+      this.sortTree(node.children, col, dir);
+    }
+  }
+}
+
+ OnSort(col) {
+  if (this.sortState.col === col) {
+    this.sortState.dir *= -1;
+  } else {
+    this.sortState.col = col;
+    this.sortState.dir = 1;
+  }
+  const dir = this.sortState.dir;
+  this.sortTree(this.allNames, col, dir); // <-- Rekursive Sortierung!
+  this.OnScroll();
+  this.updateSortIndicators();
+}
+
+        updateSortIndicators() {
+          const cols = ["DpName", "DpType", "Value", "timestamp"];
+          cols.forEach(col => {
+            const icon = document.getElementById("sortIcon_" + col);
+            if (!icon) return;
+            if (this.sortState.col === col) {
+              icon.innerHTML = this.sortState.dir === 1 ? "&#9650;" : "&#9660;"; // ▲ ▼
+            } else {
+              icon.innerHTML = "";
+            }
+          });
+        }        
 
         /**
          * Called when the backend connection is established.
@@ -342,27 +419,23 @@
          */
         onDpNames(rcv) {
           // 1. Merke Klappstatus
-          const openRows = this.getOpenRows();
+          //const openRows = this.getOpenRows();
           this.allNames = rcv.data.names;
+          this.OnScroll();
           // 2. Tabelle neu rendern
-          document.getElementById("logOutput").innerHTML = this.renderDpRows(rcv.data.names);
-          this.enableRowSelection();
-          this.enableValueEdit();
-          this.enableNameEdit();
-          this.enableTreeToggle("#logOutput");
-          this.enableCellCopyOnRightClick();
+          // document.getElementById("logOutput").innerHTML = this.renderDpRows(rcv.data.names);
+          // this.enableRowSelection();
+          // this.enableValueEdit();
+          // this.enableNameEdit();
+          // this.enableTreeToggle("#logOutput");
+          // this.enableCellCopyOnRightClick();
 
           // 3. Klappstatus wiederherstellen
-          this.restoreOpenRows(openRows);
+          //this.restoreOpenRows(openRows);
         }
 
         getOpenRows() {
-          const openRows = new Set();
-          document.querySelectorAll('#logOutput .toggle-btn[data-state="open"]').forEach(btn => {
-            const targetId = btn.getAttribute('data-target');
-            if (targetId) openRows.add(targetId);
-          });
-          return openRows;
+
         }
 
 
@@ -397,57 +470,53 @@
         /**
          * Render all datapoint rows recursively (tree structure).
          */
-        renderDpRows(names) {
-          let html = "";
-          const render = (dp, level = 0, parentPath = "", parentId = "") => {
-            const fullPath = parentPath ? parentPath + "." + dp.DpName : dp.DpName;
-            const rowId = "ROW_" + fullPath;
-            const hasChildren = dp.children && dp.children.length > 0;
-            const padding = 20 * level;
-            let dpTypeText = `STRUCT (${dp.DpType})`;
-            if (dp.valueType) dpTypeText = this.DpTypeReverse[dp.valueType];
-            const chevronRight = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
-            const chevronDown = `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
-            const chevronCircle = `<svg class="lucide lucide-dot inline w-3 h-3 align-middle" fill="currentColor" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /></svg>`;
-            let toggle = hasChildren
-              ? `<span class="toggle-btn cursor-pointer select-none" data-target="${rowId}" data-state="closed">${chevronRight}</span>`
-              : `<span class="select-none" data-state="closed">${chevronCircle}</span>`;
-            html += `<tr id="${rowId}" 
-                          class="log-entry" 
-                          data-dpname="${fullPath}" 
-                          data-dptype="${dpTypeText}"
-                          data-value=""
-                          data-timestamp=""
-                          data-level="DpName" data-parent="${parentId || ''}" style="${level > 0 ? 'display:none;' : ''}">
-          <td class="border border-gray-300 px-4 py-1 text-black-500" 
-              id="NAME_${fullPath}" 
-              data-parent="${parentId}" 
-              style="padding-left:${padding}px;">
-            ${toggle} ${dp.DpName}
-          </td>
-        <td class="border border-gray-300 px-4 py-1 text-green-500">${dpTypeText}</td>
-        <td class="border border-gray-300 px-4 py-1" id="VALUE_${fullPath}"></td>
-        <td class="border border-gray-300 px-4 py-1 text-gray-500" id="TS_${fullPath}"></td>
-        <td class="border border-gray-300 px-4 py-1 text-gray-600 text-center">
-          <svg xmlns="http://www.w3.org/2000/svg"
-            class="lucide lucide-sliders-horizontal inline w-5 h-5 cursor-pointer hover:text-blue-500"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor"
-            onclick="browser.onDpSettings('${fullPath}')">
-            <line x1="21" y1="6" x2="3" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <line x1="21" y1="18" x2="7" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="6" cy="6" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
-            <circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
-            <circle cx="6" cy="18" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
-          </svg>
-        </td>
-      </tr>`;
-            if (!fullPath.includes('.')) this.g_DB.DpConnect(fullPath, this.onDpConnect.bind(this));
-            if (hasChildren) dp.children.forEach(child => render(child, level + 1, fullPath, rowId));
-          };
-          names.forEach(dp => render(dp));
-          return html;
-        }
+        renderDpRows(rows) {
+  let html = "";
+  for (const { dp, level, fullPath } of rows) {
+    const rowId = "ROW_" + fullPath;
+    const hasChildren = dp.children && dp.children.length > 0;
+    const padding = 20 * level;
+    let dpTypeText = dp.DpType;
+    if (dp.valueType) dpTypeText = this.DpTypeReverse[dp.valueType];
+    const chevronRight = `<svg class="lucide lucide-chevron-right inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/></svg>`;
+    const chevronDown = `<svg class="lucide lucide-chevron-down inline w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>`;
+    const chevronCircle = `<svg class="lucide lucide-dot inline w-3 h-3 align-middle" fill="currentColor" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /></svg>`;
+    let toggle = hasChildren
+      ? `<span class="toggle-btn cursor-pointer select-none" data-target="${rowId}" data-state="${dp.expanded ? "open" : "closed"}">${dp.expanded ? chevronDown : chevronRight}</span>`
+      : `<span class="select-none" data-state="closed">${chevronCircle}</span>`;
+    html += `<tr id="${rowId}" 
+                  class="log-entry" 
+                  data-dpname="${fullPath}" 
+                  data-dptype="${dpTypeText}"
+                  data-value=""
+                  data-timestamp=""
+                  data-level="DpName">
+      <td class="border border-gray-300 px-4 py-1 text-black-500" 
+          id="NAME_${fullPath}" 
+          style="padding-left:${padding}px;">
+        ${toggle} ${dp.DpName}
+      </td>
+      <td class="border border-gray-300 px-4 py-1 text-green-500">${dpTypeText}</td>
+      <td class="border border-gray-300 px-4 py-1" id="VALUE_${fullPath}"></td>
+      <td class="border border-gray-300 px-4 py-1 text-gray-500" id="TS_${fullPath}"></td>
+      <td class="border border-gray-300 px-4 py-1 text-gray-600 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg"
+          class="lucide lucide-sliders-horizontal inline w-5 h-5 cursor-pointer hover:text-blue-500"
+          fill="none" viewBox="0 0 24 24" stroke="currentColor"
+          onclick="browser.onDpSettings('${fullPath}')">
+          <line x1="21" y1="6" x2="3" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <line x1="21" y1="18" x2="7" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="6" cy="6" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
+          <circle cx="8" cy="12" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
+          <circle cx="6" cy="18" r="2" stroke="currentColor" stroke-width="2" fill="white"/>
+        </svg>
+      </td>
+    </tr>`;
+  }
+  // Optional: DpConnect-Logik ggf. anpassen/entfernen, falls nicht mehr benötigt
+  return html;
+}
 
         /**
          * Called when a datapoint value update is received from backend.
@@ -549,25 +618,27 @@
         /**
          * Handle bulk creation of datapoints.
          */
+
         onBulkCreate() {
           const count = parseInt(document.getElementById("dpBulkCount").value, 10);
           const pattern = document.getElementById("dpBulkPattern").value.trim();
           const type = document.getElementById("dpBulkType").value;
           if (!pattern || isNaN(count) || count < 2) return;
-          let created = 0;
-          const createNext = i => {
-            if (i > count) {
-              this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
-              return;
-            }
-            const name = pattern.replace(/\[NUM\]/gi, i);
-            this.g_DB.DpCreate(name, type, () => {
-              created++;
-              createNext(i + 1);
-            });
-          };
-          createNext(1);
+
+          // Arrays für Namen und Typen bauen
+          const names = [];
+          const types = [];
+          for (let i = 1; i <= count; ++i) {
+            names.push(pattern.replace(/\[NUM\]/gi, i));
+            types.push(type);
+          }
+
+          // Neue API: Mehrfach-Create
+          this.g_DB.DpCreate(names, types, () => {
+            this.g_DB.DpNames(null, "*", this.onDpNames.bind(this));
+          });
         }
+
 
         /**
          * Handle deletion of selected datapoints (with confirmation).
@@ -781,61 +852,7 @@
          * Filtering logic for the datapoint table.
          */
         applyTableFilters() {
-          // 1. Klappstatus merken
-          const openRows = this.getOpenRows();
-
-          // 2. Filtern wie gehabt
-          const dpNameFilter = document.getElementById('filterDpName').value.toLowerCase();
-          const dpTypeFilter = document.getElementById('filterDpType').value.toLowerCase();
-          const valueFilter = document.getElementById('filterValue').value.toLowerCase();
-          const tsFrom = document.getElementById('filterTsFrom').value;
-          const tsTo = document.getElementById('filterTsTo').value;
-          document.querySelectorAll('#logOutput tr').forEach(row => {
-            const dpName = row.getAttribute('data-dpname') || "";
-            const dpType = row.getAttribute('data-dptype') || "";
-            const value = row.getAttribute('data-value') || "";
-            const ts = row.getAttribute('data-timestamp')?.trim() || "";
-            let show = true;
-            if (dpNameFilter && !dpName.toLowerCase().includes(dpNameFilter)) show = false;
-            if (dpTypeFilter && !dpType.toLowerCase().includes(dpTypeFilter)) show = false;
-            if (valueFilter && !value.toLowerCase().includes(valueFilter)) show = false;
-            if ((tsFrom || tsTo) && ts) {
-              const tsDate = new Date(ts.replace(" ", "T"));
-              if (tsFrom) {
-                const fromDate = new Date(tsFrom.replace(" ", "T"));
-                if (tsDate < fromDate) show = false;
-              }
-              if (tsTo) {
-                const toDate = new Date(tsTo.replace(" ", "T"));
-                if (tsDate > toDate) show = false;
-              }
-            }
-            row.style.display = show ? "" : "none";
-          });
-
-          // 3. Baumstruktur respektieren: Kind-Zeilen ausblenden, wenn Parent zu ist
-          document.querySelectorAll('#logOutput tr').forEach(row => {
-            if (row.style.display === "none") return; // bereits durch Filter ausgeblendet
-            let parentId = row.getAttribute('data-parent');
-            let visible = true;
-            while (parentId) {
-              const parentRow = document.getElementById(parentId);
-              if (parentRow) {
-                const btn = parentRow.querySelector('.toggle-btn');
-                if (btn && btn.getAttribute('data-state') === 'closed') {
-                  visible = false;
-                  break;
-                }
-                parentId = parentRow.getAttribute('data-parent');
-              } else {
-                break;
-              }
-            }
-            row.style.display = visible ? "" : "none";
-          });
-
-          // 4. Klappstatus wiederherstellen
-          this.restoreOpenRows(openRows);
+          
         }
 
         /**

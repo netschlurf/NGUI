@@ -40,7 +40,7 @@ function CreateSampleDatabase()
     ["boolean2", "boolean"],       
   ];  
 
-  for(var i=0;i<50;i++)
+  for(var i=0;i<2;i++)
   {
     dps.push(["num" + i, "number"])
   }
@@ -67,6 +67,6 @@ function Simulate()
   }, 1000);
 }
 
-//CreateSampleDatabase();
+CreateSampleDatabase();
 
-Simulate();
+//Simulate();
