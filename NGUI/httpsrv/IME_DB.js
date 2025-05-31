@@ -686,6 +686,7 @@ class IME_Sqlite3DB extends IME_DB {
     function clean(node) {
       const cleanedChildren = node.children.map(clean).sort((a, b) => a.DpName.localeCompare(b.DpName));
       return {
+        DpId: node.id,
         DpName: node.path.split('.').pop(),
         DpType: node.typeName,
         dpTypeId: node.type_id,

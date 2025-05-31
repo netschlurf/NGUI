@@ -93,12 +93,25 @@
 
 
 
+td[id^="VALUE_"], th:has(#sortIcon_Value) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px; /* oder eine andere passende Breite */
+}
 
 
+td[id^="VALUE_"], th:has(#sortIcon_DpId) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px; /* oder eine andere passende Breite */
+}
 
     tr.selected-row {
       background-color: #dbeafe !important;
     }
+
   </style>
 </head>
 
@@ -148,28 +161,34 @@
         class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse border-width:2px;">
           <thead class="bg-gray-200 text-gray-600 uppercase">
             <tr>
-              <th class="px-4 py-2 border border-gray-300">
+              <th class="px-4 py-2 border border-gray-300" style="width: 40px;">
+                <span style="cursor:pointer;" onclick="browser.OnSort('DpId')">
+                  DpId<span id="sortIcon_DpId"></span>
+                </span><br>
+                <input type="text" id="filterDpId" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
+              </th>              
+              <th class="px-4 py-2 border border-gray-300" style="width: 220px;">
                 <span style="cursor:pointer;" onclick="browser.OnSort('DpName')">
                   DpName<span id="sortIcon_DpName"></span>
                 </span><br>
                 <input type="text" id="filterDpName" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
               </th>
-              <th class="px-4 py-2 border border-gray-300">
+              <th class="px-4 py-2 border border-gray-300" style="width: 120px;">
                 <span style="cursor:pointer;" onclick="browser.OnSort('DpType')">
                   DpType<span id="sortIcon_DpType"></span>
                 </span><br>
                 <input type="text" id="filterDpType" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
               </th>
-              <th class="px-4 py-2 border border-gray-300" style="color:#aaa; cursor:not-allowed;">
+              <th class="px-4 py-2 border border-gray-300" style="width: 200px; color:#aaa; cursor:not-allowed;">
                 Value<span id="sortIcon_Value"></span><br>
                 <input type="text" id="filterValue" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter..." disabled>
               </th>
-              <th class="px-4 py-2 border border-gray-300" style="color:#aaa; cursor:not-allowed;">
+              <th class="px-4 py-2 border border-gray-300" style="width: 160px; color:#aaa; cursor:not-allowed;">
                 timestamp<span id="sortIcon_timestamp"></span><br>
                 <input type="text" id="filterTsFrom" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="von" disabled>
                 <input type="text" id="filterTsTo" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="bis" disabled>
               </th>
-              <th class="px-4 py-2 border border-gray-300">Config</th>
+              <th class="px-4 py-2 border border-gray-300" style="width: 60px;">Config</th>
             </tr>
           </thead>
         <tbody id="logOutput" class="bg-white odd:bg-gray-50 even:bg-white" "></tbody>
@@ -332,11 +351,11 @@ onToggleExpand(fullPath) {
   // 4. Dummy-Zeilen für Platzhalter oben/unten
   var html = "";
   var h = rowHeight * firstRow + "px";
-  html += `<tr style='height: ${h}'><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>`;
+  html += `<tr style='height: ${h}'><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>`;
   html += this.renderDpRows(visibleRows);
   
   h = rowHeight * (totalRows - lastRow) + "px";
-  html += `<tr style='height: ${h}'><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>`;
+  html += `<tr style='height: ${h}'><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>`;
   document.getElementById("logOutput").innerHTML = html;
   
 
@@ -385,6 +404,10 @@ sortTree(nodes, col, dir) {
   nodes.sort((a, b) => {
     let va, vb;
     switch (col) {
+      case "DpId":
+        va = a.DpId ?? 0;
+        vb = b.DpId ?? 0;
+        break;
       case "DpName":
         va = a.DpName?.toUpperCase() || "";
         vb = b.DpName?.toUpperCase() || "";
@@ -430,18 +453,18 @@ sortTree(nodes, col, dir) {
   this.updateSortIndicators();
 }
 
-        updateSortIndicators() {
-          const cols = ["DpName", "DpType", "Value", "timestamp"];
-          cols.forEach(col => {
-            const icon = document.getElementById("sortIcon_" + col);
-            if (!icon) return;
-            if (this.sortState.col === col) {
-              icon.innerHTML = this.sortState.dir === 1 ? "&#9650;" : "&#9660;"; // ▲ ▼
-            } else {
-              icon.innerHTML = "";
-            }
-          });
-        }        
+updateSortIndicators() {
+  const cols = ["DpId", "DpName", "DpType", "Value", "timestamp"];
+  cols.forEach(col => {
+    const icon = document.getElementById("sortIcon_" + col);
+    if (!icon) return;
+    if (this.sortState.col === col) {
+      icon.innerHTML = this.sortState.dir === 1 ? "&#9650;" : "&#9660;"; // ▲ ▼
+    } else {
+      icon.innerHTML = "";
+    }
+  });
+}
 
         /**
          * Called when the backend connection is established.
@@ -509,7 +532,7 @@ sortTree(nodes, col, dir) {
          */
         renderDpRows(rows) {
           let html = "";
-          for (const { dp, level, fullPath } of rows) {
+          for (const { id, dp, level, fullPath } of rows) {
             const rowId = "ROW_" + fullPath;
             const hasChildren = dp.children && dp.children.length > 0;
             const padding = 20 * level;
@@ -530,6 +553,7 @@ sortTree(nodes, col, dir) {
                           data-value=""
                           data-timestamp=""
                           data-level="DpName">
+              <td class="border border-gray-300 px-4 py-1 text-green-500">${dp.DpId}</td>    
               <td class="border border-gray-300 px-4 py-1 text-black-500" 
                   id="NAME_${fullPath}" 
                   style="padding-left:${padding}px;">
@@ -824,7 +848,7 @@ sortTree(nodes, col, dir) {
           const oldValue = td.innerText;
           const dpName = td.id.substring("VALUE_".length);
           const tr = td.parentElement;
-          const dpType = tr.children[1]?.innerText?.trim();
+          const dpType = tr.children[2]?.innerText?.trim();
           const input = document.createElement('input');
           input.type = "text";
           input.value = oldValue;
