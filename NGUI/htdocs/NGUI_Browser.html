@@ -95,6 +95,7 @@
 
 
 
+
     tr.selected-row {
       background-color: #dbeafe !important;
     }
@@ -147,22 +148,26 @@
         class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse border-width:2px;">
           <thead class="bg-gray-200 text-gray-600 uppercase">
             <tr>
-              <th class="px-4 py-2 border border-gray-300 cursor-pointer" onclick="browser.OnSort('DpName')">
-                DpName<span id="sortIcon_DpName"></span><br>
+              <th class="px-4 py-2 border border-gray-300">
+                <span style="cursor:pointer;" onclick="browser.OnSort('DpName')">
+                  DpName<span id="sortIcon_DpName"></span>
+                </span><br>
                 <input type="text" id="filterDpName" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
               </th>
-              <th class="px-4 py-2 border border-gray-300 cursor-pointer" onclick="browser.OnSort('DpType')">
-                DpType<span id="sortIcon_DpType"></span><br>
+              <th class="px-4 py-2 border border-gray-300">
+                <span style="cursor:pointer;" onclick="browser.OnSort('DpType')">
+                  DpType<span id="sortIcon_DpType"></span>
+                </span><br>
                 <input type="text" id="filterDpType" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
               </th>
-              <th class="px-4 py-2 border border-gray-300 cursor-pointer" onclick="browser.OnSort('Value')">
+              <th class="px-4 py-2 border border-gray-300" style="color:#aaa; cursor:not-allowed;">
                 Value<span id="sortIcon_Value"></span><br>
-                <input type="text" id="filterValue" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
+                <input type="text" id="filterValue" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter..." disabled>
               </th>
-              <th class="px-4 py-2 border border-gray-300 cursor-pointer" onclick="browser.OnSort('timestamp')">
+              <th class="px-4 py-2 border border-gray-300" style="color:#aaa; cursor:not-allowed;">
                 timestamp<span id="sortIcon_timestamp"></span><br>
-                <input type="text" id="filterTsFrom" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="von">
-                <input type="text" id="filterTsTo" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="bis">
+                <input type="text" id="filterTsFrom" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="von" disabled>
+                <input type="text" id="filterTsTo" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="bis" disabled>
               </th>
               <th class="px-4 py-2 border border-gray-300">Config</th>
             </tr>
@@ -347,6 +352,33 @@ onToggleExpand(fullPath) {
       e.stopPropagation();
     };
   });
+}
+
+setValueAndTimestamp(dpName, value, tstamp) {
+  const valElem = document.getElementById("VALUE_" + dpName);
+  const tsElem = document.getElementById("TS_" + dpName);
+  const tr = valElem?.parentElement;
+  if (valElem) valElem.innerHTML = value;
+  if (tsElem) tsElem.innerHTML = this.formatTimestamp(tstamp);
+  if (tr) {
+    tr.setAttribute("data-value", (value ?? "").toString().toLowerCase());
+    tr.setAttribute("data-timestamp", tsElem ? tsElem.innerText : "");
+  }
+  // NEU: Werte im Tree speichern
+  this.setValueInTree(this.allNames, dpName, value, tstamp);
+}
+
+setValueInTree(nodes, dpName, value, tstamp) {
+  for (const dp of nodes) {
+    if (dpName === dp.DpName || dpName.endsWith("." + dp.DpName)) {
+      // Optional: exakter Pfadvergleich, falls Namen mehrfach vorkommen können
+      dp.value = value;
+      dp.tstamp = tstamp;
+    }
+    if (dp.children && dp.children.length) {
+      this.setValueInTree(dp.children, dpName, value, tstamp);
+    }
+  }
 }
 
 sortTree(nodes, col, dir) {
