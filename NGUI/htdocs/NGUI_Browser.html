@@ -333,7 +333,10 @@ onToggleExpand(fullPath) {
   h = rowHeight * (totalRows - lastRow) + "px";
   html += `<tr style='height: ${h}'><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>`;
   document.getElementById("logOutput").innerHTML = html;
-  this.g_NGUI.RenderDpConnectElements();
+  
+
+  this.enableValueEdit();
+  this.enableNameEdit();  
   // Event-Handler für Chevron
   document.querySelectorAll('.toggle-btn').forEach(btn => {
     btn.onclick = (e) => {
