@@ -109,122 +109,181 @@
       <button id="tabDatapointTypes" class="px-3 py-2 hover:text-blue-600">Datapoint Types</button>
     </div>
 
-<div class="flex justify-between items-center bg-gray-100 px-4 py-2 text-xs flex-wrap gap-2 border-b"
-     style="position: sticky; top: 0; z-index: 20; border-bottom: 1px solid #e5e7eb;">
-        <form id="dpCreateForm"
-          class="flex gap-2 items-center flex-wrap bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
-          <span class="font-semibold text-gray-700">Neuer Datenpunkt:</span>
-          <input type="text" id="dpName" placeholder="Name" required class="px-2 py-1 border rounded text-xs w-28"
-            autocomplete="off">
-          <select id="dpType" class="px-2 py-1 border rounded text-xs bg-white" required></select>
-          <button class="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Anlegen</button>
-          <span class="mx-2 text-gray-400">|</span>
-          <span class="font-semibold text-gray-700">Massenanlage:</span>
-          <input type="number" id="dpBulkCount" min="2" max="1000" value="10"
-            class="px-2 py-1 border rounded text-xs w-16" title="Wie viele?">
-          <input type="text" id="dpBulkPattern" placeholder="z.B. myDp_[NUM]_postfix"
-            class="px-2 py-1 border rounded text-xs w-40" autocomplete="off">
-          <select id="dpBulkType" class="px-2 py-1 border rounded text-xs bg-white" required></select>
-          <button type="button" id="dpBulkBtn"
-            class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600">Massenanlage</button>
-        </form>
-        <button id="deleteBtn" class="p-1 rounded hover:bg-red-100 ml-2" style="display:block; z-index:30;"
-          title="Ausgewählte Datenpunkte löschen">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
-          </svg>
-        </button>
-      </div>
+    <div class="flex justify-between items-center bg-gray-100 px-4 py-2 text-xs flex-wrap gap-2 border-b"
+      style="position: sticky; top: 0; z-index: 20; border-bottom: 1px solid #e5e7eb;">
+      <form id="dpCreateForm"
+        class="flex gap-2 items-center flex-wrap bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
+        <span class="font-semibold text-gray-700">Neuer Datenpunkt:</span>
+        <input type="text" id="dpName" placeholder="Name" required class="px-2 py-1 border rounded text-xs w-28"
+          autocomplete="off">
+        <select id="dpType" class="px-2 py-1 border rounded text-xs bg-white" required></select>
+        <button class="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Anlegen</button>
+        <span class="mx-2 text-gray-400">|</span>
+        <span class="font-semibold text-gray-700">Massenanlage:</span>
+        <input type="number" id="dpBulkCount" min="2" max="1000" value="10"
+          class="px-2 py-1 border rounded text-xs w-16" title="Wie viele?">
+        <input type="text" id="dpBulkPattern" placeholder="z.B. myDp_[NUM]_postfix"
+          class="px-2 py-1 border rounded text-xs w-40" autocomplete="off">
+        <select id="dpBulkType" class="px-2 py-1 border rounded text-xs bg-white" required></select>
+        <button type="button" id="dpBulkBtn"
+          class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600">Massenanlage</button>
+      </form>
+      <button id="deleteBtn" class="p-1 rounded hover:bg-red-100 ml-2" style="display:block; z-index:30;"
+        title="Ausgewählte Datenpunkte löschen">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
+        </svg>
+      </button>
+    </div>
 
 
     <div id="DatapointEditor" style="height: calc(100vh - 96px); z-index: 100; overflow-y: auto; display: block;">
       <!-- Controls & Create Bar -->
 
       <!-- Log Table -->
-  <table  class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse border-width:2px;" >
-    <thead class="bg-gray-200 text-gray-600 uppercase" >
-      <tr>
-        <th class="px-4 py-2 border border-gray-300">
-          DpName<br>
-          <input type="text" id="filterDpName" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
-        </th>
-        <th class="px-4 py-2 border border-gray-300">
-          DpType<br>
-          <input type="text" id="filterDpType" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
-        </th>
-        <th class="px-4 py-2 border border-gray-300">
-          Value<br>
-          <input type="text" id="filterValue" class="w-full px-1 py-0.5 border rounded text-xs" placeholder="Filter...">
-        </th>
-        <th class="px-4 py-2 border border-gray-300">
-          timestamp<br>
-          <input type="text" id="filterTsFrom" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="von">
-          <input type="text" id="filterTsTo" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="bis">
-        </th>
-        <th class="px-4 py-2 border border-gray-300">Config</th>
-      </tr>
-    </thead>
-    <tbody id="logOutput" class="bg-white odd:bg-gray-50 even:bg-white" "></tbody>
-  </table>
-    </div>
-
-
-    <div id="DatapointTypeEditor" style="display:none;">
-      <!-- Controls & Create Bar for Datapoint Types -->
-      <div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs flex-wrap gap-2"
-        style="position: sticky; top: 0; z-index: 20;">
-        <form id="dpTypeCreateForm"
-          class="flex gap-2 items-center flex-wrap bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
-          <span class="font-semibold text-gray-700">New Type:</span>
-          <input type="text" id="dpTypeName" placeholder="Type Name" required
-            class="px-2 py-1 border rounded text-xs w-32" autocomplete="off">
-          <button class="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Create</button>
-          <span class="mx-2 text-gray-400">|</span>
-          <span class="font-semibold text-gray-700">Selected:</span>
-          <span id="selectedTypeName" class="text-blue-700"></span>
-          <button type="button" id="dpTypeDeleteBtn"
-            class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 ml-2"
-            style="display:none;">Delete</button>
-          <button type="button" id="dpTypeAddChildBtn"
-            class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 ml-2" style="display:none;">Add
-            Child</button>
-          <button type="button" id="dpTypeRenameBtn"
-            class="px-2 py-1 bg-yellow-500 text-white rounded text-xs hover:bg-yellow-600 ml-2"
-            style="display:none;">Rename</button>
-        </form>
-      </div>
-      <!-- Tree Table for Datapoint Types -->
-      <table class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse mt-2">
-        <thead class="bg-gray-200 text-gray-600 uppercase" style="position: sticky; top: 0; z-index: 15;">
+      <table
+        class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse border-width:2px;">
+        <thead class="bg-gray-200 text-gray-600 uppercase">
           <tr>
-            <th class="px-4 py-2 border border-gray-300">
-              DPTYPENAME<br>
-              <input type="text" id="filterTypeName" class="w-full px-1 py-0.5 border rounded text-xs"
+            <th class="px-4 py-2 border border-gray-300" onclick="OnSort('DpName')">
+              DpName<br>
+              <input type="text" id="filterDpName" class="w-full px-1 py-0.5 border rounded text-xs"
                 placeholder="Filter...">
             </th>
             <th class="px-4 py-2 border border-gray-300">
-              Type<br>
-              <input type="text" id="filterTypeType" class="w-full px-1 py-0.5 border rounded text-xs"
+              DpType<br>
+              <input type="text" id="filterDpType" class="w-full px-1 py-0.5 border rounded text-xs"
                 placeholder="Filter...">
             </th>
             <th class="px-4 py-2 border border-gray-300">
-              Children<br>
-              <input type="text" id="filterTypeChildren" class="w-full px-1 py-0.5 border rounded text-xs"
+              Value<br>
+              <input type="text" id="filterValue" class="w-full px-1 py-0.5 border rounded text-xs"
                 placeholder="Filter...">
+            </th>
+            <th class="px-4 py-2 border border-gray-300">
+              timestamp<br>
+              <input type="text" id="filterTsFrom" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="von">
+              <input type="text" id="filterTsTo" class="w-20 px-1 py-0.5 border rounded text-xs" placeholder="bis">
             </th>
             <th class="px-4 py-2 border border-gray-300">Config</th>
           </tr>
         </thead>
-        <tbody id="typeTreeOutput" class="bg-white odd:bg-gray-50 even:bg-white"></tbody>
-      </table>
+        <tbody id="logOutput" class="bg-white odd:bg-gray-50 even:bg-white" "></tbody>
+  </table>
+    </div>
+
+
+    <div id=" DatapointTypeEditor" style="display:none;">
+          <!-- Controls & Create Bar for Datapoint Types -->
+          <div class="flex justify-between items-center bg-gray-100 px-4 py-2 border-b text-xs flex-wrap gap-2"
+            style="position: sticky; top: 0; z-index: 20;">
+            <form id="dpTypeCreateForm"
+              class="flex gap-2 items-center flex-wrap bg-white px-2 py-1 rounded border border-gray-200 shadow-sm">
+              <span class="font-semibold text-gray-700">New Type:</span>
+              <input type="text" id="dpTypeName" placeholder="Type Name" required
+                class="px-2 py-1 border rounded text-xs w-32" autocomplete="off">
+              <button class="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">Create</button>
+              <span class="mx-2 text-gray-400">|</span>
+              <span class="font-semibold text-gray-700">Selected:</span>
+              <span id="selectedTypeName" class="text-blue-700"></span>
+              <button type="button" id="dpTypeDeleteBtn"
+                class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 ml-2"
+                style="display:none;">Delete</button>
+              <button type="button" id="dpTypeAddChildBtn"
+                class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600 ml-2"
+                style="display:none;">Add
+                Child</button>
+              <button type="button" id="dpTypeRenameBtn"
+                class="px-2 py-1 bg-yellow-500 text-white rounded text-xs hover:bg-yellow-600 ml-2"
+                style="display:none;">Rename</button>
+            </form>
+          </div>
+          <!-- Tree Table for Datapoint Types -->
+          <table class="min-w-full text-xs font-mono text-left table-auto border border-gray-300 border-collapse mt-2">
+            <thead class="bg-gray-200 text-gray-600 uppercase" style="position: sticky; top: 0; z-index: 15;">
+              <tr>
+                <th class="px-4 py-2 border border-gray-300">
+                  DPTYPENAME<br>
+                  <input type="text" id="filterTypeName" class="w-full px-1 py-0.5 border rounded text-xs"
+                    placeholder="Filter...">
+                </th>
+                <th class="px-4 py-2 border border-gray-300">
+                  Type<br>
+                  <input type="text" id="filterTypeType" class="w-full px-1 py-0.5 border rounded text-xs"
+                    placeholder="Filter...">
+                </th>
+                <th class="px-4 py-2 border border-gray-300">
+                  Children<br>
+                  <input type="text" id="filterTypeChildren" class="w-full px-1 py-0.5 border rounded text-xs"
+                    placeholder="Filter...">
+                </th>
+                <th class="px-4 py-2 border border-gray-300">Config</th>
+              </tr>
+            </thead>
+            <tbody id="typeTreeOutput" class="bg-white odd:bg-gray-50 even:bg-white"></tbody>
+          </table>
     </div>
 
 
     <script>
 
+      function OnSort(col)
+      {
+        window.browser.allNames;
+        window.browser.allNames.sort((a, b) => {
+          const nameA = a.DpName.toUpperCase(); // ignore case
+          const nameB = b.DpName.toUpperCase(); // ignore case
+          if (nameA > nameB) {
+            return -1;
+          }
+          if (nameA < nameB) {
+            return 1;
+          }
+          return 0; // names must be equal
+        });   
+        window.browser.allNames;     
+      }
 
+      document.getElementById("DatapointEditor").addEventListener('scroll', () => {
+        const rowHeight = 29; // px, anpassen!
+
+        const totalRows = window.browser.allNames.length; // z.B. dein Array mit allen Datenpunkten
+
+
+        var scrollArea = document.getElementById("DatapointEditor")
+        const scrollTop = scrollArea.scrollTop;
+        const clientHeight = scrollArea.clientHeight;
+
+        const firstRow = Math.floor(scrollTop / rowHeight);
+        const lastRow = Math.min(totalRows, Math.ceil((scrollTop + clientHeight) / rowHeight));
+
+        // Slice die sichtbaren Zeilen
+        const visibleRows = window.browser.allNames.slice(firstRow, lastRow);
+        console.log(visibleRows[0].DpName,visibleRows[visibleRows.length-1].DpName)
+
+        var html = "";
+        var h = rowHeight*firstRow +"px"
+        html += `<tr style='height: ${h}'><td>&nbsp</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td></tr>`
+
+        html += window.browser.renderDpRows(visibleRows)
+
+        h = rowHeight*(totalRows - lastRow) +"px"
+        html += `<tr style='height: ${h}'><td>&nbsp</td><td></td><td></td><td></td><td></td></tr>`       
+
+          document.getElementById("logOutput").innerHTML = html;
+        
+        //const totalHeight = window.browser.allNames.length * rowHeight;
+        //document.getElementById("logOutput").style.height = `${totalHeight}px`
+        //document.getElementById("logOutput").style.transform = `translateY(${firstRow * rowHeight}px)`;
+        // Baue das HTML für die sichtbaren Zeilen
+        //document.getElementById('logOutput').innerHTML = visibleRows.map(renderRow).join('');
+      });
 
       /**
        * NGUIDpBrowser
@@ -256,6 +315,8 @@
           this.initDpEventHandlers();
         }
 
+
+
         /**
          * Initialize datapoint-specific event handlers (create, bulk, delete, filters).
          */
@@ -282,7 +343,7 @@
         onDpNames(rcv) {
           // 1. Merke Klappstatus
           const openRows = this.getOpenRows();
-
+          this.allNames = rcv.data.names;
           // 2. Tabelle neu rendern
           document.getElementById("logOutput").innerHTML = this.renderDpRows(rcv.data.names);
           this.enableRowSelection();
@@ -304,32 +365,34 @@
           return openRows;
         }
 
-restoreOpenRows(openRows) {
-  document.querySelectorAll('#logOutput .toggle-btn').forEach(btn => {
-    const targetId = btn.getAttribute('data-target');
-    if (openRows.has(targetId) && btn.getAttribute('data-state') === 'closed') {
-      btn.click(); // Aufklappen
-    }
-    // Kein else nötig!
-  });
-}
 
-enableCellCopyOnRightClick() {
-  document.querySelectorAll('#logOutput td').forEach(td => {
-    td.addEventListener('contextmenu', e => {
-      e.preventDefault();
-      // DpName-Spalte (erste Spalte)
-      if (td.id && td.id.startsWith('NAME_')) {
-        const tr = td.parentElement;
-        const dpName = tr?.getAttribute('data-dpname') || '';
-        navigator.clipboard.writeText(dpName);
-      } else {
-        // Andere Zellen: Inhalt kopieren
-        navigator.clipboard.writeText(td.innerText.trim());
-      }
-    });
-  });
-}
+
+        restoreOpenRows(openRows) {
+          document.querySelectorAll('#logOutput .toggle-btn').forEach(btn => {
+            const targetId = btn.getAttribute('data-target');
+            if (openRows.has(targetId) && btn.getAttribute('data-state') === 'closed') {
+              btn.click(); // Aufklappen
+            }
+            // Kein else nötig!
+          });
+        }
+
+        enableCellCopyOnRightClick() {
+          document.querySelectorAll('#logOutput td').forEach(td => {
+            td.addEventListener('contextmenu', e => {
+              e.preventDefault();
+              // DpName-Spalte (erste Spalte)
+              if (td.id && td.id.startsWith('NAME_')) {
+                const tr = td.parentElement;
+                const dpName = tr?.getAttribute('data-dpname') || '';
+                navigator.clipboard.writeText(dpName);
+              } else {
+                // Andere Zellen: Inhalt kopieren
+                navigator.clipboard.writeText(td.innerText.trim());
+              }
+            });
+          });
+        }
 
         /**
          * Render all datapoint rows recursively (tree structure).
@@ -717,63 +780,63 @@ enableCellCopyOnRightClick() {
         /**
          * Filtering logic for the datapoint table.
          */
-    applyTableFilters() {
-      // 1. Klappstatus merken
-      const openRows = this.getOpenRows();
+        applyTableFilters() {
+          // 1. Klappstatus merken
+          const openRows = this.getOpenRows();
 
-      // 2. Filtern wie gehabt
-      const dpNameFilter = document.getElementById('filterDpName').value.toLowerCase();
-      const dpTypeFilter = document.getElementById('filterDpType').value.toLowerCase();
-      const valueFilter = document.getElementById('filterValue').value.toLowerCase();
-      const tsFrom = document.getElementById('filterTsFrom').value;
-      const tsTo = document.getElementById('filterTsTo').value;
-      document.querySelectorAll('#logOutput tr').forEach(row => {
-        const dpName = row.getAttribute('data-dpname') || "";
-        const dpType = row.getAttribute('data-dptype') || "";
-        const value = row.getAttribute('data-value') || "";
-        const ts = row.getAttribute('data-timestamp')?.trim() || "";
-        let show = true;
-        if (dpNameFilter && !dpName.toLowerCase().includes(dpNameFilter)) show = false;
-        if (dpTypeFilter && !dpType.toLowerCase().includes(dpTypeFilter)) show = false;
-        if (valueFilter && !value.toLowerCase().includes(valueFilter)) show = false;
-        if ((tsFrom || tsTo) && ts) {
-          const tsDate = new Date(ts.replace(" ", "T"));
-          if (tsFrom) {
-            const fromDate = new Date(tsFrom.replace(" ", "T"));
-            if (tsDate < fromDate) show = false;
-          }
-          if (tsTo) {
-            const toDate = new Date(tsTo.replace(" ", "T"));
-            if (tsDate > toDate) show = false;
-          }
+          // 2. Filtern wie gehabt
+          const dpNameFilter = document.getElementById('filterDpName').value.toLowerCase();
+          const dpTypeFilter = document.getElementById('filterDpType').value.toLowerCase();
+          const valueFilter = document.getElementById('filterValue').value.toLowerCase();
+          const tsFrom = document.getElementById('filterTsFrom').value;
+          const tsTo = document.getElementById('filterTsTo').value;
+          document.querySelectorAll('#logOutput tr').forEach(row => {
+            const dpName = row.getAttribute('data-dpname') || "";
+            const dpType = row.getAttribute('data-dptype') || "";
+            const value = row.getAttribute('data-value') || "";
+            const ts = row.getAttribute('data-timestamp')?.trim() || "";
+            let show = true;
+            if (dpNameFilter && !dpName.toLowerCase().includes(dpNameFilter)) show = false;
+            if (dpTypeFilter && !dpType.toLowerCase().includes(dpTypeFilter)) show = false;
+            if (valueFilter && !value.toLowerCase().includes(valueFilter)) show = false;
+            if ((tsFrom || tsTo) && ts) {
+              const tsDate = new Date(ts.replace(" ", "T"));
+              if (tsFrom) {
+                const fromDate = new Date(tsFrom.replace(" ", "T"));
+                if (tsDate < fromDate) show = false;
+              }
+              if (tsTo) {
+                const toDate = new Date(tsTo.replace(" ", "T"));
+                if (tsDate > toDate) show = false;
+              }
+            }
+            row.style.display = show ? "" : "none";
+          });
+
+          // 3. Baumstruktur respektieren: Kind-Zeilen ausblenden, wenn Parent zu ist
+          document.querySelectorAll('#logOutput tr').forEach(row => {
+            if (row.style.display === "none") return; // bereits durch Filter ausgeblendet
+            let parentId = row.getAttribute('data-parent');
+            let visible = true;
+            while (parentId) {
+              const parentRow = document.getElementById(parentId);
+              if (parentRow) {
+                const btn = parentRow.querySelector('.toggle-btn');
+                if (btn && btn.getAttribute('data-state') === 'closed') {
+                  visible = false;
+                  break;
+                }
+                parentId = parentRow.getAttribute('data-parent');
+              } else {
+                break;
+              }
+            }
+            row.style.display = visible ? "" : "none";
+          });
+
+          // 4. Klappstatus wiederherstellen
+          this.restoreOpenRows(openRows);
         }
-        row.style.display = show ? "" : "none";
-      });
-
-  // 3. Baumstruktur respektieren: Kind-Zeilen ausblenden, wenn Parent zu ist
-  document.querySelectorAll('#logOutput tr').forEach(row => {
-    if (row.style.display === "none") return; // bereits durch Filter ausgeblendet
-    let parentId = row.getAttribute('data-parent');
-    let visible = true;
-    while (parentId) {
-      const parentRow = document.getElementById(parentId);
-      if (parentRow) {
-        const btn = parentRow.querySelector('.toggle-btn');
-        if (btn && btn.getAttribute('data-state') === 'closed') {
-          visible = false;
-          break;
-        }
-        parentId = parentRow.getAttribute('data-parent');
-      } else {
-        break;
-      }
-    }
-    row.style.display = visible ? "" : "none";
-  });
-
-  // 4. Klappstatus wiederherstellen
-  this.restoreOpenRows(openRows);
-    }
 
         /**
          * Open the settings dialog for a datapoint.
@@ -788,203 +851,6 @@ enableCellCopyOnRightClick() {
         }
       }
 
-      /**
-       * NGUIDpTypeEditor
-       * ----------------
-       * Specialized tree grid for editing datapoint types (tree structures).
-       * Allows creating, renaming, deleting, and managing child types.
-       * Uses NGUITreeGrid for selection, tree, and UI logic.
-       */
-      class NGUIDpTypeEditor extends NGUITreeGrid {
-        constructor() {
-          super();
-          this.typeTree = [];
-          this.selectedType = null;
-          this.initTypeEventHandlers();
-          this.loadTypeTree();
-        }
-
-        initTypeEventHandlers() {
-          document.getElementById("dpTypeCreateForm").addEventListener("submit", this.onCreateType.bind(this));
-          document.getElementById("dpTypeDeleteBtn").addEventListener("click", this.onDeleteType.bind(this));
-          document.getElementById("dpTypeAddChildBtn").addEventListener("click", this.onAddChildType.bind(this));
-          document.getElementById("dpTypeRenameBtn").addEventListener("click", this.onRenameType.bind(this));
-          ['filterTypeName', 'filterTypeType', 'filterTypeChildren'].forEach(id => {
-            document.getElementById(id).addEventListener('input', this.applyTableFilters.bind(this));
-          });
-        }
-
-        loadTypeTree() {
-          // Demo data: Replace with backend fetch if needed
-          this.typeTree = [
-            {
-              name: "RootType", type: "struct", parent: null, children: [
-                { name: "ChildType1", type: "number", parent: "RootType", children: [] },
-                {
-                  name: "ChildType2", type: "string", parent: "RootType", children: [
-                    { name: "SubChildType", type: "boolean", parent: "ChildType2", children: [] }
-                  ]
-                }
-              ]
-            }
-          ];
-          this.renderTypeTree();
-        }
-
-        /**
-         * Baut aus einer flachen Typenliste eine Baumstruktur und rendert das Grid.
-         * Erwartet: [{name, type, parent, ...}, ...]
-         */
-        setTypeTreeFromFlatList(types) {
-          this.typeTree = types;
-          this.renderTypeTree();
-        }
-
-        renderTypeTree() {
-          const tbody = document.getElementById("typeTreeOutput");
-          tbody.innerHTML = "";
-          const render = (type, level = 0, parentId = "") => {
-            const rowId = "TYPE_" + type.name;
-            const hasChildren = type.children && type.children.length > 0;
-            const padding = 20 * level;
-            let toggle = hasChildren
-              ? `<span class="toggle-btn cursor-pointer select-none" data-target="${rowId}" data-state="closed">&#9654;</span>`
-              : `<span class="select-none" data-state="closed">&#9679;</span>`;
-            let childrenNames = type.children.map(child => child.name).join(", ");
-            tbody.innerHTML += `
-        <tr id="${rowId}" data-type-name="${type.name}" data-type-type="${type.type || ''}" data-type-children="${childrenNames}" data-parent="${parentId}" style="${level > 0 ? 'display:none;' : ''}">
-          <td class="border border-gray-300 px-4 py-1" style="padding-left:${padding}px;">
-            ${toggle} ${type.name}
-          </td>
-          <td class="border border-gray-300 px-4 py-1">${type.type || ""}</td>
-          <td class="border border-gray-300 px-4 py-1">${childrenNames}</td>
-          <td class="border border-gray-300 px-4 py-1">
-            <button class="px-2 py-0.5 bg-green-500 text-white rounded text-xs hover:bg-green-600" onclick="window.dpTypeEditor.selectType('${type.name}')">Select</button>
-          </td>
-        </tr>
-      `;
-            if (hasChildren) type.children.forEach(child => render(child, level + 1, rowId));
-          };
-          this.typeTree.forEach(type => render(type));
-          this.enableRowSelection();
-          //this.enableTreeToggle("#typeTreeOutput");
-          this.applyTableFilters();
-        }
-
-        onCreateType(e) {
-          e.preventDefault();
-          const name = document.getElementById("dpTypeName").value.trim();
-          if (!name) return;
-          // Prompt for type
-          const type = prompt("Type for new datapoint type:", "struct") || "struct";
-          this.typeTree.push({ name, type, parent: null, children: [] });
-          document.getElementById("dpTypeName").value = "";
-          this.renderTypeTree();
-        }
-
-        selectType(typeName) {
-          this.selectedType = this.findTypeByName(typeName, this.typeTree);
-          document.getElementById("selectedTypeName").textContent = typeName;
-          document.getElementById("dpTypeDeleteBtn").style.display = "inline-block";
-          document.getElementById("dpTypeAddChildBtn").style.display = "inline-block";
-          document.getElementById("dpTypeRenameBtn").style.display = "inline-block";
-          document.querySelectorAll("#typeTreeOutput tr").forEach(tr => {
-            tr.classList.toggle("selected-row", tr.getAttribute("data-type-name") === typeName);
-          });
-        }
-
-        onDeleteType() {
-          if (!this.selectedType) return;
-          this.deleteTypeByName(this.selectedType.name, this.typeTree);
-          this.selectedType = null;
-          document.getElementById("selectedTypeName").textContent = "";
-          //document.getElementById("dpTypeDeleteBtn").style.display = "none";
-          document.getElementById("dpTypeAddChildBtn").style.display = "none";
-          document.getElementById("dpTypeRenameBtn").style.display = "none";
-          this.renderTypeTree();
-        }
-
-        onAddChildType() {
-          if (!this.selectedType) return;
-          const childName = prompt("Child type name:");
-          if (!childName) return;
-          const childType = prompt("Type for child:", "struct") || "struct";
-          if (!this.selectedType.children) this.selectedType.children = [];
-          this.selectedType.children.push({ name: childName, type: childType, parent: this.selectedType.name, children: [] });
-          this.renderTypeTree();
-        }
-
-        onRenameType() {
-          if (!this.selectedType) return;
-          const newName = prompt("New type name:", this.selectedType.name);
-          if (!newName || newName === this.selectedType.name) return;
-          this.renameType(this.selectedType.name, newName, this.typeTree);
-          this.selectedType = this.findTypeByName(newName, this.typeTree);
-          document.getElementById("selectedTypeName").textContent = newName;
-          this.renderTypeTree();
-        }
-
-        findTypeByName(name, tree) {
-          for (const type of tree) {
-            if (type.name === name) return type;
-            if (type.children) {
-              const found = this.findTypeByName(name, type.children);
-              if (found) return found;
-            }
-          }
-          return null;
-        }
-
-        deleteTypeByName(name, tree) {
-          for (let i = 0; i < tree.length; i++) {
-            if (tree[i].name === name) {
-              tree.splice(i, 1);
-              return true;
-            }
-            if (tree[i].children && this.deleteTypeByName(name, tree[i].children)) {
-              return true;
-            }
-          }
-          return false;
-        }
-
-        renameType(oldName, newName, tree) {
-          for (const type of tree) {
-            if (type.name === oldName) {
-              type.name = newName;
-              if (type.children) {
-                type.children.forEach(child => {
-                  if (child.parent === oldName) child.parent = newName;
-                });
-              }
-            }
-            if (type.children) {
-              this.renameType(oldName, newName, type.children);
-            }
-          }
-        }
-
-        // Filter logic for the type table
-        applyTableFilters() {
-          const nameFilter = document.getElementById('filterTypeName').value.toLowerCase();
-          const typeFilter = document.getElementById('filterTypeType').value.toLowerCase();
-          const childrenFilter = document.getElementById('filterTypeChildren').value.toLowerCase();
-          document.querySelectorAll('#typeTreeOutput tr').forEach(row => {
-            const typeName = row.getAttribute('data-type-name')?.toLowerCase() || "";
-            const typeType = row.getAttribute('data-type-type')?.toLowerCase() || "";
-            const typeChildren = row.getAttribute('data-type-children')?.toLowerCase() || "";
-            let show = true;
-            if (nameFilter && !typeName.includes(nameFilter)) show = false;
-            if (typeFilter && !typeType.includes(typeFilter)) show = false;
-            if (childrenFilter && !typeChildren.includes(childrenFilter)) show = false;
-            row.style.display = show ? "" : "none";
-          });
-        }
-
-        updateSelection() {
-          // Optional: implement selection logic if needed
-        }
-      }
 
       // Make instance globally available for button onclicks
       //window.dpTypeEditor = new NGUIDpTypeEditor();    
@@ -1006,7 +872,7 @@ enableCellCopyOnRightClick() {
           tabDatapointTypes.classList.remove("border-b-2", "border-blue-500", "text-blue-600");
           tabDatapointTypes.classList.add("hover:text-blue-600");
           editor.style.display = "block";
-          typeEditor.style.display = "none";
+          //typeEditor.style.display = "none";
         }
 
         function showDatapointTypes() {
@@ -1015,7 +881,7 @@ enableCellCopyOnRightClick() {
           tabDatapoints.classList.remove("border-b-2", "border-blue-500", "text-blue-600");
           tabDatapoints.classList.add("hover:text-blue-600");
           editor.style.display = "none";
-          typeEditor.style.display = "block";
+          //typeEditor.style.display = "block";
         }
 
         tabDatapoints.addEventListener("click", showDatapoints);

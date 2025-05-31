@@ -1,6 +1,5 @@
 const IME_DBHandler = require('./IME_DBHandler');
 
-// Unterdrücke console.error-Ausgaben in allen Tests:
 jest.spyOn(console, 'error').mockImplementation(() => {});
 
 describe('IME_DBHandler', () => {
@@ -32,9 +31,9 @@ describe('IME_DBHandler', () => {
   describe('OnHandle', () => {
     it('should dispatch to the correct command handler and return true', () => {
       const msg = { cmd: 'DpGet', args: { dpName: 'foo' } };
-handler.commandMap.DpGet = jest.fn();
-expect(handler.OnHandle(wsMock, msg)).toBe(true);
-expect(handler.commandMap.DpGet).toHaveBeenCalledWith(msg, wsMock);
+      handler.commandMap.DpGet = jest.fn();
+      expect(handler.OnHandle(wsMock, msg)).toBe(true);
+      expect(handler.commandMap.DpGet).toHaveBeenCalledWith(msg, wsMock);
     });
 
     it('should return false for unknown command', () => {
@@ -44,12 +43,23 @@ expect(handler.commandMap.DpGet).toHaveBeenCalledWith(msg, wsMock);
   });
 
   describe('DpGet', () => {
-    it('should call db.DpGet and send response', () => {
-      dbMock.DpGet.mockReturnValue(42);
+    it('should call db.DpGet and send response for single dpName', () => {
+      dbMock.DpGet.mockReturnValue({ value: 42, tstamp: 123 });
       const msg = { cmd: 'DpGet', args: { dpName: 'foo' } };
       handler.DpGet(msg, wsMock);
       expect(dbMock.DpGet).toHaveBeenCalledWith('foo');
-      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, { cmd: 'DpGet', dpName: 'foo', value: 42 });
+      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, { cmd: 'DpGet', dpName: 'foo', value: { value: 42, tstamp: 123 }, rc: 200 });
+    });
+
+    it('should call db.DpGet and send response for array of dpNames', () => {
+      dbMock.DpGet.mockReturnValue([{ value: 42, tstamp: 123 }, { value: 100, tstamp: 124 }]);
+      const msg = { cmd: 'DpGet', args: { dpName: ['foo', 'bar'] } };
+      handler.DpGet(msg, wsMock);
+      expect(dbMock.DpGet).toHaveBeenCalledWith(['foo', 'bar']);
+      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, [
+        { cmd: 'DpGet', dpName: 'foo', value: { value: 42, tstamp: 123 }, rc: 200 },
+        { cmd: 'DpGet', dpName: 'bar', value: { value: 100, tstamp: 124 }, rc: 200 }
+      ]);
     });
 
     it('should handle missing dpName', () => {
@@ -62,16 +72,26 @@ expect(handler.commandMap.DpGet).toHaveBeenCalledWith(msg, wsMock);
       dbMock.DpGet.mockImplementation(() => { throw new Error('fail'); });
       const msg = { cmd: 'DpGet', args: { dpName: 'foo' } };
       handler.DpGet(msg, wsMock);
-      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, null, 'Error getting data point');
+      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, null, { cmd: 'DpGet', dpName: 'foo', msg: 'Error getting data point', rc: 400 });
     });
   });
 
   describe('DpSet', () => {
-    it('should call db.DpSet and send response', () => {
+    it('should call db.DpSet and send response for single dpName', () => {
       const msg = { cmd: 'DpSet', args: { dpName: 'foo', value: 123 } };
       handler.DpSet(msg, wsMock);
       expect(dbMock.DpSet).toHaveBeenCalledWith('foo', 123);
       expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, { cmd: 'DpSet', dpName: 'foo', rc: 200 });
+    });
+
+    it('should call db.DpSet and send response for array of dpNames', () => {
+      const msg = { cmd: 'DpSet', args: { dpName: ['foo', 'bar'], value: [123, 456] } };
+      handler.DpSet(msg, wsMock);
+      expect(dbMock.DpSet).toHaveBeenCalledWith(['foo', 'bar'], [123, 456]);
+      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, [
+        { cmd: 'DpSet', dpName: 'foo', rc: 200 },
+        { cmd: 'DpSet', dpName: 'bar', rc: 200 }
+      ]);
     });
 
     it('should handle missing args', () => {
@@ -158,14 +178,28 @@ expect(handler.commandMap.DpGet).toHaveBeenCalledWith(msg, wsMock);
   });
 
   describe('DpConnect', () => {
-    it('should add connection and call db.DpConnect if new', () => {
-      dbMock.DpGet.mockReturnValue(5);
+    it('should add connection and call db.DpConnect if new for single dpName', () => {
+      dbMock.DpGet.mockReturnValue({ value: 5, tstamp: 123 });
       dbMock.DpConnect.mockImplementation((dpName, cb) => {});
       const msg = { cmd: 'DpConnect', args: { dpName: 'foo' } };
       handler.DpConnect(msg, wsMock);
       expect(handler.DpConnectionMap.has('foo')).toBe(true);
       expect(dbMock.DpConnect).toHaveBeenCalledWith('foo', expect.any(Function));
-      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, { cmd: 'DpConnect', dpName: 'foo', value: 5, rc: 200 });
+      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, { cmd: 'DpConnect', dpName: 'foo', value: { value: 5, tstamp: 123 }, rc: 200 });
+    });
+
+    it('should add connections and call db.DpConnect for array of dpNames', () => {
+      dbMock.DpGet.mockReturnValue([{ value: 5, tstamp: 123 }, { value: 10, tstamp: 124 }]);
+      dbMock.DpConnect.mockImplementation((dpName, cb) => {});
+      const msg = { cmd: 'DpConnect', args: { dpName: ['foo', 'bar'] } };
+      handler.DpConnect(msg, wsMock);
+      expect(handler.DpConnectionMap.has('foo')).toBe(true);
+      expect(handler.DpConnectionMap.has('bar')).toBe(true);
+      expect(dbMock.DpConnect).toHaveBeenCalledWith(['foo', 'bar'], expect.any(Function));
+      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, [
+        { cmd: 'DpConnect', dpName: 'foo', value: { value: 5, tstamp: 123 }, rc: 200 },
+        { cmd: 'DpConnect', dpName: 'bar', value: { value: 10, tstamp: 124 }, rc: 200 }
+      ]);
     });
 
     it('should handle missing dpName', () => {
@@ -184,15 +218,31 @@ expect(handler.commandMap.DpGet).toHaveBeenCalledWith(msg, wsMock);
   });
 
   describe('DpDisconnect', () => {
-    it('should remove connection and call db.DpDisconnect if last', () => {
-      dbMock.DpGet.mockReturnValue(7);
-      dbMock.DpDisconnect.mockImplementation((dpName, cb) => cb());
+    it('should remove connection and call db.DpDisconnect if last for single dpName', () => {
+      dbMock.DpGet.mockReturnValue({ value: 7, tstamp: 123 });
+      dbMock.DpDisconnect.mockImplementation((dpName, cb) => cb && cb());
       const msg = { cmd: 'DpDisconnect', args: { dpName: 'foo' } };
       handler.DpConnectionMap.set('foo', [{ msg, ws: wsMock }]);
       handler.DpDisconnect(msg, wsMock);
       expect(handler.DpConnectionMap.has('foo')).toBe(false);
       expect(dbMock.DpDisconnect).toHaveBeenCalledWith('foo', expect.any(Function));
-      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, { cmd: 'DpDisconnect', dpName: 'foo', value: 7, rc: 200 });
+      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, { cmd: 'DpDisconnect', dpName: 'foo', value: { value: 7, tstamp: 123 }, rc: 200 });
+    });
+
+    it('should remove connections and call db.DpDisconnect for array of dpNames', () => {
+      dbMock.DpGet.mockReturnValue([{ value: 7, tstamp: 123 }, { value: 8, tstamp: 124 }]);
+      dbMock.DpDisconnect.mockImplementation((dpName, cb) => cb && cb());
+      const msg = { cmd: 'DpDisconnect', args: { dpName: ['foo', 'bar'] } };
+      handler.DpConnectionMap.set('foo', [{ msg, ws: wsMock }]);
+      handler.DpConnectionMap.set('bar', [{ msg, ws: wsMock }]);
+      handler.DpDisconnect(msg, wsMock);
+      expect(handler.DpConnectionMap.has('foo')).toBe(false);
+      expect(handler.DpConnectionMap.has('bar')).toBe(false);
+      expect(dbMock.DpDisconnect).toHaveBeenCalledWith(['foo', 'bar']);
+      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, [
+        { cmd: 'DpDisconnect', dpName: 'foo', value: { value: 7, tstamp: 123 }, rc: 200 },
+        { cmd: 'DpDisconnect', dpName: 'bar', value: { value: 8, tstamp: 124 }, rc: 200 }
+      ]);
     });
 
     it('should handle missing dpName', () => {
@@ -202,7 +252,7 @@ expect(handler.commandMap.DpGet).toHaveBeenCalledWith(msg, wsMock);
     });
 
     it('should handle db error', () => {
-      dbMock.DpGet.mockReturnValue(1);
+      dbMock.DpGet.mockReturnValue({ value: 1, tstamp: 123 });
       dbMock.DpDisconnect.mockImplementation(() => { throw new Error('fail'); });
       const msg = { cmd: 'DpDisconnect', args: { dpName: 'foo' } };
       handler.DpConnectionMap.set('foo', [{ msg, ws: wsMock }]);
@@ -218,12 +268,23 @@ expect(handler.commandMap.DpGet).toHaveBeenCalledWith(msg, wsMock);
   });
 
   describe('DpCreate', () => {
-    it('should call db.DpCreate and send response', () => {
+    it('should call db.DpCreate and send response for single dpName', () => {
       dbMock.DpCreate.mockReturnValue({ name: 'foo', typeName: 'bar' });
       const msg = { cmd: 'DpCreate', args: { dpName: 'foo', type: 'bar' } };
       handler.DpCreate(msg, wsMock);
       expect(dbMock.DpCreate).toHaveBeenCalledWith('foo', 'bar');
-      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, { name: 'foo', type: 'bar' });
+      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, { name: 'foo', type: 'bar', rc: 200 });
+    });
+
+    it('should call db.DpCreate and send response for array of dpNames', () => {
+      dbMock.DpCreate.mockReturnValue([{ name: 'foo', typeName: 'bar' }, { name: 'baz', typeName: 'bar' }]);
+      const msg = { cmd: 'DpCreate', args: { dpName: ['foo', 'baz'], type: ['bar', 'bar'] } };
+      handler.DpCreate(msg, wsMock);
+      expect(dbMock.DpCreate).toHaveBeenCalledWith(['foo', 'baz'], ['bar', 'bar']);
+      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, [
+        { name: 'foo', type: 'bar', rc: 200 },
+        { name: 'baz', type: 'bar', rc: 200 }
+      ]);
     });
 
     it('should handle missing args', () => {
@@ -236,96 +297,4 @@ expect(handler.commandMap.DpGet).toHaveBeenCalledWith(msg, wsMock);
       dbMock.DpCreate.mockImplementation(() => { throw new Error('fail'); });
       const msg = { cmd: 'DpCreate', args: { dpName: 'foo', type: 'bar' } };
       handler.DpCreate(msg, wsMock);
-      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, null, 'Error creating data point');
-    });
-  });
-
-  describe('DpDelete', () => {
-    it('should call db.DpDelete and send response', () => {
-      dbMock.DpDelete.mockReturnValue({ name: 'foo' });
-      const msg = { cmd: 'DpDelete', args: { dpName: 'foo', type: 'bar' } };
-      handler.DpDelete(msg, wsMock);
-      expect(dbMock.DpDelete).toHaveBeenCalledWith('foo');
-      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, { name: 'foo' });
-    });
-
-    it('should handle missing args', () => {
-      const msg = { cmd: 'DpDelete', args: { dpName: 'foo' } };
-      handler.DpDelete(msg, wsMock);
-      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, null, { cmd: 'DpDelete', dpName: 'foo', rc: 300 });
-    });
-
-    it('should handle db error', () => {
-      dbMock.DpDelete.mockImplementation(() => { throw new Error('fail'); });
-      const msg = { cmd: 'DpDelete', args: { dpName: 'foo', type: 'bar' } };
-      handler.DpDelete(msg, wsMock);
-      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, null, 'Error creating data point');
-    });
-  });
-
-  describe('DpNames', () => {
-    it('should call db.DpNames and send response', () => {
-      dbMock.DpNames.mockReturnValue(['foo', 'bar']);
-      const msg = { cmd: 'DpNames', args: { typeName: 't', pattern: 'p*' } };
-      handler.DpNames(msg, wsMock);
-      expect(dbMock.DpNames).toHaveBeenCalledWith('t', 'p*');
-      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, { cmd: 'DpNames', names: ['foo', 'bar'], rc: 200 });
-    });
-
-    it('should handle db error', () => {
-      dbMock.DpNames.mockImplementation(() => { throw new Error('fail'); });
-      const msg = { cmd: 'DpNames', args: {} };
-      handler.DpNames(msg, wsMock);
-      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, null, 'Error getting data point names');
-    });
-  });
-
-  describe('DpTypes', () => {
-    it('should call db.DpTypes and send response', () => {
-      dbMock.DpTypes.mockReturnValue(['t1', 't2']);
-      const msg = { cmd: 'DpTypes', args: { pattern: 't*' } };
-      handler.DpTypes(msg, wsMock);
-      expect(dbMock.DpTypes).toHaveBeenCalledWith('t*');
-      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, { cmd: 'DpTypes', types: ['t1', 't2'], rc: 200 });
-    });
-
-    it('should handle db error', () => {
-      dbMock.DpTypes.mockImplementation(() => { throw new Error('fail'); });
-      const msg = { cmd: 'DpTypes', args: {} };
-      handler.DpTypes(msg, wsMock);
-      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, msg, null, 'Error getting data point types');
-    });
-  });
-
-  describe('OnWebsocketClosed', () => {
-    it('should remove ws from all DpConnectionMap entries and call db.DpDisconnect if none left', () => {
-      const ws1 = {};
-      const ws2 = {};
-      dbMock.DpDisconnect.mockImplementation((dpName, cb) => cb && cb());
-      handler.DpConnectionMap.set('foo', [{ msg: {}, ws: ws1 }, { msg: {}, ws: ws2 }]);
-      handler.OnWebsocketClosed(ws1);
-      expect(handler.DpConnectionMap.get('foo')).toEqual([{ msg: {}, ws: ws2 }]);
-      handler.OnWebsocketClosed(ws2);
-      expect(handler.DpConnectionMap.has('foo')).toBe(false);
-      expect(dbMock.DpDisconnect).toHaveBeenCalledWith('foo', expect.any(Function));
-    });
-
-    it('should handle errors gracefully', () => {
-      handler.DpConnectionMap.set('foo', [{ msg: {}, ws: wsMock }]);
-      dbMock.DpDisconnect.mockImplementation(() => { throw new Error('fail'); });
-      expect(() => handler.OnWebsocketClosed(wsMock)).not.toThrow();
-    });
-  });
-
-  describe('OnDpConnect', () => {
-    it('should send response to all callbacks', () => {
-      const callBacks = [
-        { msg: { cmd: 'DpConnect' }, ws: wsMock },
-        { msg: { cmd: 'DpConnect' }, ws: wsMock }
-      ];
-      handler.OnDpConnect('foo', 123, callBacks);
-      expect(sendResponseSpy).toHaveBeenCalledTimes(2);
-      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock, callBacks[0].msg, { data: { cmd: 'DpConnect', dpName: 'foo', value: 123 } });
-    });
-  });
-});
+      expect(sendResponseSpy).toHaveBeenCalledWith(wsMock
